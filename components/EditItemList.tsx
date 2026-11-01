@@ -20,7 +20,6 @@ import {
   changeCategoryTypeByIndex,
   delCategoryTypeByIndex,
 } from "../redux/categoriesSlice";
-import ColorModal from "./ColorModal";
 export const EditItemList = ({
   item,
   setRefresh,
@@ -49,19 +48,12 @@ export const EditItemList = ({
   const [enableEditing, setEnableEditing] = useState(false);
   const dispatch = useDispatch();
   const [newNameInput, setNewNameInput] = useState(item.label || "");
-  const [isColorVisible, setIsColorVisible] = useState(false);
-  const [itemColors, setItemColors] = useState([item.color || "#fff"]);
+  const [] = useState(false);
+  const [] = useState([item.color || "#fff"]);
   return (
     <View
       style={[styles.container, containerStyle, { backgroundColor: "#ffffff" }]}
     >
-      <ColorModal
-        colors={itemColors}
-        setColors={setItemColors}
-        visible={isColorVisible}
-        setVisible={setIsColorVisible}
-        colorSelection={0}
-      />
       {enableEditing ? (
         <View style={styles.inputWrapper}>
           <CustomInput
@@ -76,16 +68,6 @@ export const EditItemList = ({
         <ThemeText customStyle={[styles.itemLabel, { color: "#111111" }]}>
           {item.label}
         </ThemeText>
-      )}
-      {enableEditing && !isCatType && (
-        <View style={styles.paletteWrapper}>
-          <TouchableOpacity
-            onPress={() => setIsColorVisible(true)}
-            style={styles.paletteButton}
-          >
-            <Icon name="palette" size={30} color="#111111" />
-          </TouchableOpacity>
-        </View>
       )}
 
       {(currentIndex ?? 0) >= (ignoreNum ?? 0) && (
@@ -107,7 +89,7 @@ export const EditItemList = ({
                         updateCollection({
                           name: item.label,
                           newName: newNameInput || item.label,
-                          color: itemColors[0],
+                          color: item.color,
                         }),
                       )
                     : dispatch(

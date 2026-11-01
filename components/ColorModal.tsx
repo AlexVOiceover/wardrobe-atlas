@@ -65,7 +65,7 @@ const ColorModal = ({
         <View style={[{ height: 280, padding: 16 }]}>
           <ColorPicker
             onInteractionStart={() => Keyboard.dismiss()}
-            color="#111111"
+            color={draftColor}
             onColorChange={updateDraftColor}
             thumbSize={40}
             sliderSize={40}
@@ -78,7 +78,7 @@ const ColorModal = ({
         </View>
         <TextInput
           mode="outlined"
-          theme={{ roundness: 10 }}
+          theme={{ roundness: 0 }}
           label="HEX"
           value={inputValue}
           onChangeText={handleInputChange}
