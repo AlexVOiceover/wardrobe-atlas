@@ -1,6 +1,6 @@
 # Feature: Android releases and in-app updates
 
-Status: In progress — owner explicitly authorized implementation on 2026-11-01.
+Status: Ready for review — implementation and PR build verified 2026-11-01. Awaiting owner-approved merge and manual Android update test.
 
 ## Goal and motivation
 After every push to `main`, GitHub Actions must build and publish an installable Wardrobe Atlas APK as a GitHub Release. On opening/resuming the Android app, check the newest published release and, if newer, download the APK and hand it to Android's system installer.
@@ -50,6 +50,10 @@ After every push to `main`, GitHub Actions must build and publish an installable
 - Test release tag parsing, build comparison, download URL safety and bad responses.
 - Run available local static checks; obtain CI build logs and manual APK test after merge (CI cannot publish an actual `main` release before authorization).
 - Manual: approve PR/merge only on request; download first published APK from Releases; install; push another commit to `main` with authorization; reopen app; confirm download and Android installer prompt; verify data remains.
+
+## CI verification
+- PR workflow run #7 succeeded: six update-selection tests passed; signed ARM64 APK generated and uploaded as a workflow artifact.
+- End-to-end update installation on a phone remains unverified until the user installs an initial build and a newer `main` release exists.
 
 ## Decisions / limitations
 - User requested automatic installation. Android installation approval cannot be bypassed; app automates check and download then asks the operating system to install.
