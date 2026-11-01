@@ -4,10 +4,8 @@ import { Button } from "react-native-paper";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { localization } from "../utils/localization";
-import { colors } from "../utils/colors";
 import { ThemeText } from "./ThemeText";
 import CustomModal from "./CustomModal";
-
 interface ConfirmationDialogProps {
   visible: boolean;
   setVisible: (visible: boolean) => void;
@@ -20,7 +18,6 @@ interface ConfirmationDialogProps {
   confirmDisabled?: boolean;
   confirmColor?: string;
 }
-
 export const ConfirmationDialog = ({
   visible,
   setVisible,
@@ -29,17 +26,14 @@ export const ConfirmationDialog = ({
   message,
   children,
   confirmDisabled = false,
-  confirmColor = colors.red,
 }: ConfirmationDialogProps) => {
   const language =
     useSelector((state: RootState) => state.settings.language) || 0;
-
   const handleConfirm = () => {
     if (confirmDisabled) return;
     onConfirm();
     setVisible(false);
   };
-
   return (
     <CustomModal
       visible={visible}
@@ -62,11 +56,9 @@ export const ConfirmationDialog = ({
         </ScrollView>
         <View style={styles.buttonContainer}>
           <Button
-            mode="contained"
+            mode="outlined"
             onPress={handleConfirm}
             style={styles.button}
-            buttonColor={confirmColor}
-            textColor={colors.white}
             disabled={confirmDisabled}
           >
             {localization.Yes[language]}
@@ -75,8 +67,6 @@ export const ConfirmationDialog = ({
             mode="outlined"
             onPress={() => setVisible(false)}
             style={styles.button}
-            buttonColor={colors.darkblue}
-            textColor={colors.white}
           >
             {localization.No[language]}
           </Button>
@@ -85,7 +75,6 @@ export const ConfirmationDialog = ({
     </CustomModal>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -117,6 +106,5 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    borderRadius: 8,
   },
 });

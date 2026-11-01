@@ -1,12 +1,10 @@
 import { Dispatch, SetStateAction } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { ThemeText } from "./ThemeText";
-import { colors as appColors } from "../utils/colors";
 import { Text } from "react-native-paper";
 import { localization } from "../utils/localization";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-
 const ColorFilter = ({
   colors,
   setColors,
@@ -14,7 +12,9 @@ const ColorFilter = ({
   colors: string[];
   setColors: Dispatch<SetStateAction<string[]>>;
 }) => {
-  const basicColors: { [key: string]: string } = {
+  const basicColors: {
+    [key: string]: string;
+  } = {
     yellow: "#FEFD00",
     yellow_Orange: "#F8A900",
     yellow_Green: "#48FE00",
@@ -33,40 +33,53 @@ const ColorFilter = ({
     unknown: "",
   };
   const storedSettings = useSelector((state: RootState) => state.settings);
-
   return (
     <View>
-      <ThemeText classNameStyle="self-center text-xl font-bold mt-1 my-1">
+      <ThemeText
+        customStyle={[{ alignSelf: "center", marginTop: 4, marginVertical: 4 }]}
+      >
         {localization.FilterByColor[storedSettings.language]}
       </ThemeText>
-      <View className="flex flex-row flex-wrap w-full">
-        {Object.keys(basicColors).map((name) => (
+      <View style={[{ flexDirection: "row", flexWrap: "wrap", width: "100%" }]}>
+        {Object.keys(basicColors).map(name => (
           <TouchableOpacity
             onPress={() => {
               if (!colors.includes(name)) {
-                setColors((prev) => [...prev, name]);
+                setColors(prev => [...prev, name]);
               } else {
-                setColors((prev) => prev.filter((color) => color !== name));
+                setColors(prev => prev.filter(color => color !== name));
               }
             }}
             key={name}
-            className={`flex flex-col justify-center items-center bg-white rounded-md
-            w-16 h-16  m-1 border-solid border-mainCyan ${
-              colors.includes(name) ? "border-[3px]" : ""
-            }`}
+            style={[
+              [
+                {
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: 64,
+                  height: 64,
+                  margin: 4,
+                },
+                colors.includes(name) ? { borderWidth: 3 } : {},
+                {},
+              ],
+            ]}
           >
             <Text
               style={{
                 fontSize: 9,
                 textTransform: "capitalize",
-                color: appColors.black,
+                color: "#111111",
               }}
             >
               {name}
             </Text>
             <View
-              style={{ backgroundColor: basicColors[name] }}
-              className="w-10 h-10"
+              style={[
+                { width: 40, height: 40 },
+                { backgroundColor: basicColors[name] },
+              ]}
             />
           </TouchableOpacity>
         ))}
@@ -74,5 +87,4 @@ const ColorFilter = ({
     </View>
   );
 };
-
 export default ColorFilter;

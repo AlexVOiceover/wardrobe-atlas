@@ -52,11 +52,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>UIAppFonts</key>
-	<array>
-		<string>TSMorabaat-Regular.otf</string>
-		<string>Montserrat-Bold.otf</string>
-		<string>Montserrat-Regular.otf</string>
-	</array>
 </dict>
 </plist>

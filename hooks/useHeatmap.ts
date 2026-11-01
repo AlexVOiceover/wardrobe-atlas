@@ -13,7 +13,7 @@ export default function useHeatmap(itemLogs: string[]) {
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
   const heatmapColor = useMemo(() => {
-    const filteredEventsLastMonth = storedEvents.filter((x) => {
+    const filteredEventsLastMonth = storedEvents.filter(x => {
       const eventDate = new Date(JSON.parse(x.eventDate));
       return (
         eventDate >= oneMonthAgo &&
@@ -22,7 +22,7 @@ export default function useHeatmap(itemLogs: string[]) {
         itemLogs?.includes(x.eventId)
       );
     });
-    const filteredEventsLastWeek = storedEvents.filter((x) => {
+    const filteredEventsLastWeek = storedEvents.filter(x => {
       const eventDate = new Date(JSON.parse(x.eventDate));
       return (
         eventDate >= oneWeekAgo &&
@@ -37,11 +37,11 @@ export default function useHeatmap(itemLogs: string[]) {
     //   });
 
     if (filteredEventsLastWeek.length > 0) {
-      return "rgba(119, 174, 187, 0.5)";
+      return "Used this week";
     } else if (filteredEventsLastMonth.length > 0) {
-      return "rgba(247, 198, 0, 0.5)";
+      return "Used this month";
     } else {
-      return "rgba(211, 0, 71, 0.5)";
+      return "Not used this month";
     }
   }, [itemLogs, storedEvents]);
   return heatmapColor;

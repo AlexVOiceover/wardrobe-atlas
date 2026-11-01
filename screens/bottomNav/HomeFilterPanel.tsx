@@ -3,15 +3,12 @@ import { View, StyleSheet } from "react-native";
 import { Button, RadioButton } from "react-native-paper";
 import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
 import ColorFilter from "../../components/ColorFilter";
-import { colors } from "../../utils/colors";
 import { localization } from "../../utils/localization";
 import { clothesList } from "../../utils/localization";
 import { seasonList } from "../../utils/data";
-
 type SetString = React.Dispatch<React.SetStateAction<string>>;
 type SetBool = React.Dispatch<React.SetStateAction<boolean>>;
 type SetArray<T> = React.Dispatch<React.SetStateAction<T[]>>;
-
 export type HomeFilterState = {
   sortValue: string;
   seasonFilter: string;
@@ -23,7 +20,6 @@ export type HomeFilterState = {
   OpenTypeFilter: boolean;
   OpenColorFilter: boolean;
 };
-
 export type HomeFilterActions = {
   setSortValue: SetString;
   setSeasonFilter: SetString;
@@ -34,7 +30,6 @@ export type HomeFilterActions = {
   setOpenCategoriesFilter: SetBool;
   setOpenTypeFilter: SetBool;
 };
-
 type Props = {
   filterState: HomeFilterState;
   filterActions: HomeFilterActions;
@@ -43,7 +38,6 @@ type Props = {
   storedSettings: any;
   storedCatTypes: any[];
 };
-
 const HomeFilterPanel = ({
   filterState,
   filterActions,
@@ -54,7 +48,6 @@ const HomeFilterPanel = ({
 }: Props) => {
   if (!storedSettings) return null;
   const language = storedSettings.language ?? 0;
-
   const {
     sortValue,
     seasonFilter,
@@ -66,7 +59,6 @@ const HomeFilterPanel = ({
     OpenTypeFilter,
     OpenColorFilter,
   } = filterState;
-
   const {
     setSortValue,
     setSeasonFilter,
@@ -77,9 +69,6 @@ const HomeFilterPanel = ({
     setOpenCategoriesFilter,
     setOpenTypeFilter,
   } = filterActions;
-
-  const radioColor = colors.mainCyan;
-
   return (
     <>
       {OpenColorFilter ? (
@@ -93,31 +82,31 @@ const HomeFilterPanel = ({
             <RadioButton.Item
               label={localization.Last_Added[language]}
               value="LA"
-              color={radioColor}
+              color="#111111"
               labelStyle={styles.radioItem}
             />
             <RadioButton.Item
               label={localization.Name_Asc[language]}
               value="NA"
-              color={radioColor}
+              color="#111111"
               labelStyle={styles.radioItem}
             />
             <RadioButton.Item
               label={localization.Name_Desc[language]}
               value="ND"
-              color={radioColor}
+              color="#111111"
               labelStyle={styles.radioItem}
             />
             <RadioButton.Item
               label={localization.PurchaseDateAsc[language]}
               value="PDA"
-              color={radioColor}
+              color="#111111"
               labelStyle={styles.radioItem}
             />
             <RadioButton.Item
               label={localization.PurchaseDateDesc[language]}
               value="PDD"
-              color={radioColor}
+              color="#111111"
               labelStyle={styles.radioItem}
             />
           </RadioButton.Group>
@@ -136,7 +125,7 @@ const HomeFilterPanel = ({
               setValue={setSeasonFilter}
               theme={colorScheme}
               showBadgeDot={false}
-              badgeTextStyle={{ color: colors.black }}
+              badgeTextStyle={{ color: "#111111" }}
               placeholder="Season filter"
               listMode="SCROLLVIEW"
               style={styles.dropdown}
@@ -154,7 +143,7 @@ const HomeFilterPanel = ({
               multiple={true}
               theme={colorScheme}
               showBadgeDot={false}
-              badgeTextStyle={{ color: colors.black }}
+              badgeTextStyle={{ color: "#111111" }}
               mode="BADGE"
               listMode="SCROLLVIEW"
               placeholder={localization.CategoryFilter[language]}
@@ -183,7 +172,7 @@ const HomeFilterPanel = ({
                 multiple={true}
                 theme={colorScheme}
                 showBadgeDot={false}
-                badgeTextStyle={{ color: colors.black }}
+                badgeTextStyle={{ color: "#111111" }}
                 mode="BADGE"
                 listMode="MODAL"
                 placeholder={localization.TypeFilter[language]}
@@ -193,10 +182,8 @@ const HomeFilterPanel = ({
             </View>
           )}
           <Button
-            mode="contained-tonal"
-            buttonColor={radioColor}
+            mode="outlined"
             style={styles.resetButton}
-            textColor={colors.white}
             onPress={() => {
               setSeasonFilter("");
               setCategoriesFilter([]);
@@ -211,15 +198,12 @@ const HomeFilterPanel = ({
     </>
   );
 };
-
 export default HomeFilterPanel;
-
 const styles = StyleSheet.create({
   // Radio Group
   radioItem: {
     fontSize: 14,
   },
-
   // Dropdown Pickers
   dropdownWrapper: {
     width: "90%",
@@ -228,14 +212,12 @@ const styles = StyleSheet.create({
   zIndex4: { zIndex: 4 },
   zIndex3: { zIndex: 3 },
   zIndex2: { zIndex: 2 },
-
   dropdown: {
-    borderColor: colors.mainGreen,
+    borderColor: "#777777",
   },
   dropdownContainer: {
-    borderColor: colors.mainGreen,
+    borderColor: "#777777",
   },
-
   // Actions
   resetButton: {
     alignSelf: "center",

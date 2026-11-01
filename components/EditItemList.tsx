@@ -1,5 +1,4 @@
 import {
-  Image,
   StyleProp,
   StyleSheet,
   TouchableOpacity,
@@ -17,15 +16,11 @@ import {
   updateCollection,
 } from "../redux/itemsSlice";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { colors as appColors, getContrastColor } from "./../utils/colors";
 import {
   changeCategoryTypeByIndex,
-  changeCategoryTypesIcon,
   delCategoryTypeByIndex,
 } from "../redux/categoriesSlice";
-import { categoryLayoutIcons } from "../utils/data";
 import ColorModal from "./ColorModal";
-
 export const EditItemList = ({
   item,
   setRefresh,
@@ -54,33 +49,11 @@ export const EditItemList = ({
   const [enableEditing, setEnableEditing] = useState(false);
   const dispatch = useDispatch();
   const [newNameInput, setNewNameInput] = useState(item.label || "");
-  const [iconIndex, setIconIndex] = useState((item as any)?.icon ?? 0);
   const [isColorVisible, setIsColorVisible] = useState(false);
   const [itemColors, setItemColors] = useState([item.color || "#fff"]);
-
-  const contrastColor = getContrastColor(item.color || "#fff");
-
-  const handleCategoryIconChange = () => {
-    const nextIconIndex =
-      iconIndex + 1 >= categoryLayoutIcons.length ? 0 : iconIndex + 1;
-
-    setIconIndex(nextIconIndex);
-    dispatch(
-      changeCategoryTypesIcon({
-        index: catIndex ?? 0,
-        typeIndex: (currentIndex ?? 0) - (ignoreNum ?? 0),
-        iconIndex: nextIconIndex,
-      }),
-    );
-  };
-
   return (
     <View
-      style={[
-        styles.container,
-        containerStyle,
-        { backgroundColor: item.color ?? appColors.white },
-      ]}
+      style={[styles.container, containerStyle, { backgroundColor: "#ffffff" }]}
     >
       <ColorModal
         colors={itemColors}
@@ -93,9 +66,6 @@ export const EditItemList = ({
         <View style={styles.inputWrapper}>
           <CustomInput
             mode="outlined"
-            outlineColor={appColors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={appColors.mainGreen}
             textContentType="name"
             style={styles.editInput}
             value={newNameInput}
@@ -103,7 +73,7 @@ export const EditItemList = ({
           />
         </View>
       ) : (
-        <ThemeText customStyle={[styles.itemLabel, { color: contrastColor }]}>
+        <ThemeText customStyle={[styles.itemLabel, { color: "#111111" }]}>
           {item.label}
         </ThemeText>
       )}
@@ -113,23 +83,11 @@ export const EditItemList = ({
             onPress={() => setIsColorVisible(true)}
             style={styles.paletteButton}
           >
-            <Icon name="palette" size={30} color={contrastColor} />
+            <Icon name="palette" size={30} color="#111111" />
           </TouchableOpacity>
         </View>
       )}
-      {isCatType &&
-        (currentIndex ?? 0) >= (ignoreNum ?? 0) &&
-        !enableEditing && (
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={handleCategoryIconChange}
-          >
-            <Image
-              style={styles.iconImage}
-              source={categoryLayoutIcons[iconIndex]}
-            />
-          </TouchableOpacity>
-        )}
+
       {(currentIndex ?? 0) >= (ignoreNum ?? 0) && (
         <View style={styles.actionsRow}>
           <TouchableOpacity
@@ -167,7 +125,7 @@ export const EditItemList = ({
             <Icon
               name={enableEditing ? "check-bold" : "note-edit"}
               size={25}
-              color={contrastColor}
+              color="#111111"
             />
           </TouchableOpacity>
           {!enableEditing && (
@@ -188,15 +146,7 @@ export const EditItemList = ({
                 setRefresh(prev => !prev);
               }}
             >
-              <Icon
-                name="delete"
-                size={30}
-                color={
-                  contrastColor === appColors.white
-                    ? appColors.brightRed
-                    : appColors.red
-                }
-              />
+              <Icon name="delete" size={30} color="#111111" />
             </TouchableOpacity>
           )}
         </View>
@@ -204,16 +154,14 @@ export const EditItemList = ({
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     width: "80%",
     minHeight: 59,
-    borderRadius: 8,
     alignSelf: "center",
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: appColors.mainGreen,
+    borderColor: "#777777",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -241,15 +189,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconButton: {
-    borderColor: appColors.mainGreen,
+    borderColor: "#777777",
     borderWidth: 2,
     borderStyle: "solid",
-    borderRadius: 8,
   },
   iconImage: {
     width: 28,
     height: 28,
-    borderRadius: 6,
   },
   actionsRow: {
     flexDirection: "row",

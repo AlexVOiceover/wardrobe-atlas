@@ -6,11 +6,9 @@ import { RootState } from "../../redux/store";
 import { BackButton } from "../../components/BackButton";
 import { useEffect, useState } from "react";
 import { CustomInput } from "../../components/CustomInput";
-import { colors } from "../../utils/colors";
 import { Button } from "react-native-paper";
 import { addTypeToCategory } from "../../redux/categoriesSlice";
 import { EditItemList } from "../../components/EditItemList";
-
 export const EditCategory = ({ route }: { navigation: any; route: any }) => {
   const { categoryIndex } = route.params;
   const storedSettings = useSelector((state: RootState) => state.settings);
@@ -19,25 +17,21 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
   const [errorsList, setErrorsList] = useState<string[]>([]);
   const [newType, setNewType] = useState("");
   const dispatch = useDispatch();
-
   const storedCatTypes = useSelector(
     (state: RootState) => state.CategoryList?.CategoryCustomTypes ?? [],
   );
-
   useEffect(() => {
     try {
       setCatData([
         ...clothesList[storedSettings.language][categoryIndex],
         ...(storedCatTypes[categoryIndex]?.customTypes || []),
       ]);
-    } catch (e) {
+    } catch {
       setCatData(storedCatTypes[categoryIndex]?.customTypes);
     }
-  }, [refresh, storedCatTypes[categoryIndex]?.customTypes?.length]);
-
+  }, [refresh, storedCatTypes, categoryIndex, storedSettings.language]);
   function addTypeHandler(index: number, allList: any[]) {
     const errors = [];
-
     if (newType.length <= 0) {
       errors.push("Please enter a name for this Type");
     }
@@ -60,18 +54,23 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
     );
     setNewType("");
   }
-
   return (
     <ThemeView>
       <BackButton
         pageTitle={localization.Edit_Category[storedSettings.language]}
       />
-      <View className="flex flex-col items-center gap-y-3 mt-4">
+      <View
+        style={[
+          {
+            flexDirection: "column",
+            alignItems: "center",
+            rowGap: 12,
+            marginTop: 16,
+          },
+        ]}
+      >
         <CustomInput
           mode="outlined"
-          outlineColor={colors.mainGreen}
-          selectionColor="#C0C0C0"
-          activeOutlineColor={colors.mainGreen}
           textContentType="name"
           style={styles.customWidth}
           label={localization.Add_Type[storedSettings.language]}
@@ -82,7 +81,7 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
           <View>
             {errorsList.map((error, index) => {
               return (
-                <Text key={index} className="text-[#C70039]">
+                <Text key={index} style={[{}]}>
                   {error}
                 </Text>
               );
@@ -90,14 +89,12 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
           </View>
         )}
         <Button
-          mode="contained"
-          buttonColor={colors.mainCyan}
-          textColor={colors.white}
+          mode="outlined"
           onPress={() => {
             addTypeHandler(categoryIndex, catData);
             Keyboard.dismiss();
           }}
-          className="mx-10 my-5"
+          style={[{ marginHorizontal: 40, marginVertical: 20 }]}
         >
           {localization.Save[storedSettings.language]}
         </Button>
@@ -134,7 +131,6 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
     </ThemeView>
   );
 };
-
 const styles = StyleSheet.create({
   customWidth: { width: "80%" },
 });

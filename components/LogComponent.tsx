@@ -1,10 +1,5 @@
 import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
-import {
-  View,
-  TouchableOpacity,
-  useColorScheme,
-  StyleSheet,
-} from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { Text } from "react-native-paper";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
@@ -13,7 +8,6 @@ import dayjs from "dayjs";
 import { deleteEventLog, deleteLog } from "../redux/itemsSlice";
 import { colors } from "../utils/colors";
 import { ConfirmationDialog } from "./ConfirmationDialog";
-
 interface LogComponentProps {
   eventName: string;
   eventDate: Date;
@@ -22,7 +16,6 @@ interface LogComponentProps {
   setModalVisible: Dispatch<SetStateAction<boolean>>;
   setModalEventId: Dispatch<SetStateAction<string>>;
 }
-
 export const LogComponent = ({
   eventName,
   eventDate,
@@ -32,33 +25,25 @@ export const LogComponent = ({
   setModalEventId,
 }: LogComponentProps) => {
   const dispatch = useDispatch();
-  const isDarkMode = useColorScheme() === "dark";
   const itemsState = useSelector((state: RootState) => state.itemsList.items);
   const [confirmVisible, setConfirmVisible] = useState(false);
-
   const associatedItems = useMemo(() => {
     return itemsState.filter(item => item.logIds?.some(id => id === eventId));
   }, [itemsState, eventId]);
-
   const handleDelete = () => {
     dispatch(deleteLog({ selectedLogId: eventId }));
     dispatch(deleteEventLog({ selectedLogId: eventId }));
     setRefresh(prev => !prev);
   };
-
   const handlePress = () => {
     setModalVisible(true);
     setModalEventId(eventId);
   };
-
   return (
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.7}
-      style={[
-        styles.container,
-        { backgroundColor: isDarkMode ? "#1C1C1E" : colors.white },
-      ]}
+      style={[styles.container, { backgroundColor: "#ffffff" }]}
     >
       <View style={styles.header}>
         <View style={styles.eventInfo}>
@@ -91,12 +76,7 @@ export const LogComponent = ({
         onConfirm={handleDelete}
       />
 
-      <View
-        style={[
-          styles.itemsGrid,
-          { borderColor: isDarkMode ? "#2C2C2E" : "#F2F2F7" },
-        ]}
-      >
+      <View style={[styles.itemsGrid, { borderColor: "#777777" }]}>
         {associatedItems.length > 0 ? (
           associatedItems.map(item => (
             <View key={`log-item-${item.id}`} style={styles.itemWrapper}>
@@ -122,17 +102,10 @@ export const LogComponent = ({
     </TouchableOpacity>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     width: "100%",
     marginVertical: 8,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
     overflow: "hidden",
   },
   header: {
@@ -146,7 +119,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eventTitle: {
-    color: colors.mainCyan,
+    color: "#111111",
     fontWeight: "bold",
     textTransform: "capitalize",
     marginBottom: 2,
@@ -156,27 +129,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dateText: {
-    color: colors.gray,
+    color: "#111111",
   },
   timeText: {
-    color: colors.gray,
+    color: "#111111",
   },
   separator: {
     width: 1,
     height: 10,
-    backgroundColor: colors.lightGray,
+    backgroundColor: "#ffffff",
     marginHorizontal: 8,
   },
   deleteButton: {
-    backgroundColor: colors.red,
+    backgroundColor: "#ffffff",
     width: 28,
     height: 28,
-    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
   deleteIcon: {
-    color: colors.white,
+    color: "#111111",
     fontSize: 14,
     fontWeight: "900",
     lineHeight: 18,
@@ -184,7 +156,7 @@ const styles = StyleSheet.create({
   itemsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    backgroundColor: "rgba(124, 139, 161, 0.1)", // Subtle tint
+    backgroundColor: "#ffffff", // Subtle tint
     padding: 10,
     justifyContent: "flex-start",
     borderTopWidth: 1,
@@ -199,7 +171,6 @@ const styles = StyleSheet.create({
     width: "100%",
     textAlign: "center",
     marginTop: 20,
-    fontStyle: "italic",
-    color: colors.gray,
+    color: "#111111",
   },
 });

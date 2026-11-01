@@ -8,14 +8,10 @@ import { CustomInput } from "../../components/CustomInput";
 // import { TouchableOpacity } from "react-native-gesture-handler";
 import ColorModal from "../../components/ColorModal";
 import { useDispatch, useSelector } from "react-redux";
-// import { RootState } from "../../redux/store";
-import { ThemeText } from "../../components/ThemeText";
 import { addCategory } from "../../redux/categoriesSlice";
 import { CommonActions } from "@react-navigation/native";
-import { colors as appColors } from "../../utils/colors";
 import { localization } from "../../utils/localization";
 import { RootState } from "../../redux/store";
-
 export const CategoryForm = ({ navigation }: { navigation: any }) => {
   // const navigation = useNavigation<any>();
   const [name, setName] = useState("");
@@ -24,10 +20,8 @@ export const CategoryForm = ({ navigation }: { navigation: any }) => {
   const storedSettings = useSelector((state: RootState) => state.settings);
   const [errorsList, setErrorsList] = useState<string[]>([]);
   const dispatch = useDispatch();
-
   async function addCategoryHandler() {
     const errors = [];
-
     if (name.length <= 0) {
       errors.push("Please enter a name for this Category");
     }
@@ -58,12 +52,13 @@ export const CategoryForm = ({ navigation }: { navigation: any }) => {
           pageTitle={localization.Add_a_Category[storedSettings.language]}
         />
 
-        <View className="flex flex-col items-center gap-y-3">
+        <View
+          style={[
+            { flexDirection: "column", alignItems: "center", rowGap: 12 },
+          ]}
+        >
           <CustomInput
             mode="outlined"
-            outlineColor={appColors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={appColors.mainGreen}
             textContentType="name"
             style={[
               styles.customWidth,
@@ -79,7 +74,7 @@ export const CategoryForm = ({ navigation }: { navigation: any }) => {
             <View>
               {errorsList.map((error, index) => {
                 return (
-                  <Text key={index} className="text-[#C70039]">
+                  <Text key={index} style={[{}]}>
                     {error}
                   </Text>
                 );
@@ -90,11 +85,9 @@ export const CategoryForm = ({ navigation }: { navigation: any }) => {
 
         <Button
           // className="mb-5"
-          mode="contained"
-          buttonColor={appColors.mainCyan}
-          textColor={appColors.white}
+          mode="outlined"
           onPress={addCategoryHandler}
-          className="mx-10 my-5"
+          style={[{ marginHorizontal: 40, marginVertical: 20 }]}
         >
           {localization.Save[storedSettings.language]}
         </Button>
