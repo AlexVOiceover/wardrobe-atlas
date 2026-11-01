@@ -14,6 +14,9 @@ jobs:
   android:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Check out source
