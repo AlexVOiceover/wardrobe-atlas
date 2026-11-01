@@ -47,7 +47,7 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Test APK update selection
-        run: npm test -- --runInBand __tests__/updateService.test.ts
+        run: npm test -- --config jest.config.js --runInBand __tests__/updateService.test.ts
 
       - name: Embed CI build number in the app
         run: |
