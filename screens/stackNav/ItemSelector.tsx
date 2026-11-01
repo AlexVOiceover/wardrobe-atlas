@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   gridItem: {
-    width: "25%",
+    width: "100%",
     alignItems: "center",
     paddingVertical: 5,
   },
@@ -206,8 +206,7 @@ const styles = StyleSheet.create({
     height: 80,
   },
   footer: {
-    position: "absolute",
-    bottom: "2%",
+    padding: 8,
     width: "100%",
     alignItems: "center",
   },

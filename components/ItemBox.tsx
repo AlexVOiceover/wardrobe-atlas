@@ -21,7 +21,7 @@ export const ItemBox = (props: ItemSummaryProps) => {
       onPress={() =>
         navigation.navigate("ItemForm", { editingIndex: props.id })
       }
-      style={{ margin: 4, padding: 8, borderWidth: 1, width: 144 }}
+      style={{ margin: 4, padding: 8, borderWidth: 1, width: "100%" }}
     >
       <ItemSummary {...props} />
     </Pressable>

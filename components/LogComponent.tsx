@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   itemWrapper: {
-    width: "25%",
+    width: "100%",
     alignItems: "center",
     paddingVertical: 4,
   },
