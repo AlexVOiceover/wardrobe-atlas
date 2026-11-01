@@ -47,3 +47,29 @@ Run targeted behavioral tests for changed interaction/state logic, existing upda
 - Interpret “remove colors” as removing UI decoration, while retaining garment color data and controls.
 - Target a single neutral light UI for this baseline, with system fonts and basic layout only.
 - Preserve current functionality; remove visual complexity and unused libraries rather than product features.
+
+
+## Implementation and validation record
+- Replaced animation-driven add/category/drawer UI with static buttons, category lists and a full-screen native filter modal. Disabled navigation transitions and Paper animations.
+- Replaced garment tiles with plain full-width rows retaining photos, names, types, garment color values, usage counts and optional text recency information. Selection follows parent state and remains accessible as a checkbox.
+- Removed appearance-only custom category icon and collection color editors. Existing persisted icon/color fields remain; renaming a collection preserves its saved color. Color wheel, HEX entry, automatic color extraction and garment color filters remain functional.
+- Removed all decorative app image assets, custom typefaces, custom splash screen and NativeWind/Tailwind configuration. Layout now uses static React Native styles, with no CSS utility runtime or replacement styling framework.
+- Removed direct packages: nativewind, tailwindcss, react-native-reanimated, react-native-reanimated-carousel, react-native-worklets, react-native-splash-screen. npm reports 51 installed packages removed.
+- Retained React Native Paper for input/dialog/selection controls, dropdown picker, native date/color selectors, gesture handler for navigation, and icon fonts for functional actions. Android now packages only the font families used by those controls. No production signing, application ID, update service or persisted schema changes.
+- Corrected existing filter type signatures and optional-color handling so TypeScript validates the entire app. Hook dependencies in touched screens now satisfy ESLint.
+- Local validation: TypeScript passes; ESLint has no errors in the application, components, navigation, screens and new tests; 9 tests pass (6 update tests, garment selection, idempotent filter dismissal and real garment-color picker state/save behavior).
+- Android production JS bundle was generated successfully; final signed APK build and size comparison are verified separately in the PR build record.
+
+## Phone acceptance checklist (not yet exercised)
+1. Install the PR artifact over v0.1.10 using the same development signature; existing wardrobe data must still load.
+2. Visit Closet, Add, outfit logs, settings, collection editor, closet statistics and each category.
+3. Add/edit/delete a garment, with and without a photo; camera/import/reset/full photo preview; color wheel and HEX entry; automatic image colors; type/season/fit/size/date fields.
+4. Add garments in bulk; create/edit/delete custom categories and their types.
+5. Create/rename/reorder/delete collections; verify membership, persisted expansion and sorting. Appearance editors are intentionally absent.
+6. Filter/search by name, category, type, season and garment color; close filters with both Close and Android Back.
+7. Select/deselect garments and record/edit/delete an outfit event; verify usage counts/statistics and text recency.
+8. Change laundry/reminder options, clean a garment, and confirm notification behavior.
+9. Export/import an existing wardrobe and export for LLM; invalid input and empty states remain understandable.
+10. Check small-screen scrolling, keyboard access to Save/Next, system dark mode readability and Android update installation.
+
+Manual phone behavior, iOS build and end-to-end APK updating remain unverified. No claim of full parity is made until this checklist is exercised. PR stays unmerged; no release publication is authorized.

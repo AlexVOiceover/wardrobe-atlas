@@ -1,22 +1,13 @@
-import {
-  Keyboard,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 import { Button } from "react-native-paper";
 import { useMemo, useState } from "react";
 import { BackButton } from "../../components/BackButton";
 import { ThemeView } from "../../components/ThemeView";
 import { CustomInput } from "../../components/CustomInput";
-import ColorModal from "../../components/ColorModal";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { ThemeText } from "../../components/ThemeText";
 import { addCollection, moveCollection } from "../../redux/itemsSlice";
-// replaced FlashList with FlatList from react-native
-import Icon2 from "react-native-vector-icons/MaterialIcons";
 import { colors as appColors } from "./../../utils/colors";
 import { localization } from "../../utils/localization";
 import { CollectionList } from "../../components/CollectionList";
@@ -31,8 +22,8 @@ import { setCollectionSortValue } from "../../redux/settingsSlice";
 export const CollectionForm = () => {
   // const navigation = useNavigation<any>();
   const [name, setName] = useState("");
-  const [visible, setVisible] = useState(false);
-  const [colors, setColors] = useState([appColors.defaultCollectionColor]);
+  const [] = useState(false);
+  const [] = useState([appColors.defaultCollectionColor]);
   const [refresh, setRefresh] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const CollectionsState = useSelector(
@@ -97,7 +88,7 @@ export const CollectionForm = () => {
     dispatch(
       addCollection({
         name: name,
-        color: "#111111",
+        color: appColors.defaultCollectionColor,
       }),
     );
   };
@@ -107,25 +98,10 @@ export const CollectionForm = () => {
   };
   return (
     <>
-      <ColorModal
-        colors={colors}
-        setColors={setColors}
-        visible={visible}
-        setVisible={setVisible}
-        colorSelection={0}
-      />
       <ThemeView>
         <BackButton pageTitle={localization.Add_a_collection[language]} />
 
         <View style={styles.formGroup}>
-          <TouchableOpacity
-            style={[styles.colorButton, { backgroundColor: "#ffffff" }]}
-            onPress={() => {
-              setVisible(true);
-            }}
-          >
-            <Icon2 name="colorize" size={30} color="#111111" />
-          </TouchableOpacity>
           <CustomInput
             mode="outlined"
             textContentType="name"
@@ -210,7 +186,7 @@ const styles = StyleSheet.create({
     width: "80%",
   },
   errorText: {
-    color: "#111111",
+    color: appColors.defaultCollectionColor,
   },
   saveButton: {
     marginHorizontal: 40,
