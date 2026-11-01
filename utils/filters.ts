@@ -58,7 +58,7 @@ export function LogFilter(
   array: logsType[],
   search: string,
 ) {
-  let newArray = array.filter((x) =>
+  let newArray = array.filter(x =>
     x.eventName.toLowerCase().includes(search.toLowerCase()),
   );
   switch (sortValue) {
@@ -91,15 +91,25 @@ export type SortValuesType = {
 };
 export function HomeFilter(
   filters: SortValuesType,
+  array: item[][],
+  is2D: true,
+): item[][];
+export function HomeFilter(
+  filters: SortValuesType,
+  array: item[],
+  is2D: false,
+): item[];
+export function HomeFilter(
+  filters: SortValuesType,
   array: item[] | item[][],
   is2D: boolean,
 ) {
   if (is2D) {
-    let newArray: item[][] = array;
+    let newArray = array as item[][];
     for (let i in array) {
       switch (filters.sortValue) {
         case "LA":
-          newArray = array;
+          newArray = array as item[][];
           break;
         case "NA":
           nameAsc(newArray[i], "name");
@@ -116,33 +126,33 @@ export function HomeFilter(
       }
 
       if (filters.categories.length > 0) {
-        newArray[i] = newArray[i].filter((item) =>
+        newArray[i] = newArray[i].filter(item =>
           filters.categories.includes(item.category),
         );
       }
 
       if (filters.types.length > 0) {
-        newArray[i] = newArray[i].filter((item) =>
+        newArray[i] = newArray[i].filter(item =>
           filters.types.includes(item.type),
         );
       }
       if (filters.season != "") {
-        newArray[i] = newArray[i].filter(
-          (item) => filters.season == item.season,
-        );
+        newArray[i] = newArray[i].filter(item => filters.season == item.season);
       }
       if (filters.colors.length > 0) {
         newArray[i] = newArray[i].filter(
-          (item) =>
-            filters.colors.includes(categorizeColor(item.primaryColor)) ||
-            filters.colors.includes(categorizeColor(item.secondaryColor)) ||
-            filters.colors.includes(categorizeColor(item.tertiaryColor)),
+          item =>
+            filters.colors.includes(categorizeColor(item.primaryColor || "")) ||
+            filters.colors.includes(
+              categorizeColor(item.secondaryColor || ""),
+            ) ||
+            filters.colors.includes(categorizeColor(item.tertiaryColor || "")),
         );
       }
     }
     return newArray;
   } else {
-    let newArray: item[] = array;
+    let newArray = array as item[];
     switch (filters.sortValue) {
       case "LA":
         break;
@@ -161,23 +171,23 @@ export function HomeFilter(
     }
 
     if (filters.categories.length > 0) {
-      newArray = newArray.filter((item) =>
+      newArray = newArray.filter(item =>
         filters.categories.includes(item.category),
       );
     }
 
     if (filters.types.length > 0) {
-      newArray = newArray.filter((item) => filters.types.includes(item.type));
+      newArray = newArray.filter(item => filters.types.includes(item.type));
     }
     if (filters.season != "") {
-      newArray = newArray.filter((item) => filters.season == item.season);
+      newArray = newArray.filter(item => filters.season == item.season);
     }
     if (filters.colors.length > 0) {
       newArray = newArray.filter(
-        (item) =>
-          filters.colors.includes(categorizeColor(item.primaryColor)) ||
-          filters.colors.includes(categorizeColor(item.secondaryColor)) ||
-          filters.colors.includes(categorizeColor(item.tertiaryColor)),
+        item =>
+          filters.colors.includes(categorizeColor(item.primaryColor || "")) ||
+          filters.colors.includes(categorizeColor(item.secondaryColor || "")) ||
+          filters.colors.includes(categorizeColor(item.tertiaryColor || "")),
       );
     }
     return newArray;

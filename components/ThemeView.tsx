@@ -1,29 +1,13 @@
-import { ComponentProps, ReactElement } from "react";
-import { useColorScheme, View } from "react-native";
-import { colors } from "../utils/colors";
-
+import { ReactNode } from "react";
+import { View, StyleProp, ViewStyle } from "react-native";
 export const ThemeView = ({
-  classNameStyle,
-  customStyle,
   children,
+  customStyle,
 }: {
-  children: ReactElement[];
-  classNameStyle?: ComponentProps<"div">["className"];
-  customStyle?: {};
-}) => {
-  const isDarkMode = useColorScheme() === "dark";
-  return (
-    <View
-      className={classNameStyle || ""}
-      style={[
-        {
-          flex: 1,
-          backgroundColor: isDarkMode ? colors.darkblue : colors.white,
-        },
-        customStyle,
-      ]}
-    >
-      {children}
-    </View>
-  );
-};
+  children: ReactNode;
+  customStyle?: StyleProp<ViewStyle>;
+}) => (
+  <View style={[{ flex: 1, backgroundColor: "#ffffff" }, customStyle]}>
+    {children}
+  </View>
+);

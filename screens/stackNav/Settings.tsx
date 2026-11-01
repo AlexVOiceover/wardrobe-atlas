@@ -1,4 +1,4 @@
-import { View, useColorScheme, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import { BackButton } from "../../components/BackButton";
 import { ThemeText } from "../../components/ThemeText";
@@ -33,7 +33,6 @@ import { laundryRefresher } from "../../redux/itemsSlice";
 import { localization } from "../../utils/localization";
 import { handleNumberChange } from "../../utils/validators";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
-
 export const Settings = () => {
   const [openLang, setOpenLang] = useState(false);
   const storedSettings = useSelector((state: RootState) => state.settings);
@@ -46,18 +45,14 @@ export const Settings = () => {
     enableHeatMap,
   } = storedSettings;
   const isRtl = language === 1;
-
   const [lang, setLang] = useState(language);
   const dispatch = useDispatch();
-
   useEffect(() => {
     setLang(language);
   }, [language]);
-
   useEffect(() => {
     dispatch(changeLanguage({ lang: lang }));
   }, [lang, dispatch]);
-
   const [visible, setVisible] = useState(false);
   const onToggleSnackBar = () => setVisible(!visible);
   const onDismissSnackBar = () => setVisible(false);
@@ -65,13 +60,11 @@ export const Settings = () => {
   const [checkedLau, setCheckedLau] = useState(enableLaundry);
   const [checkedRem, setCheckedRem] = useState(enableReminder);
   const [checkedHeatMap, setCheckedHeatMap] = useState(enableHeatMap);
-
   const [llmConfirmVisible, setLlmConfirmVisible] = useState(false);
   const [isLLMGenerating, setIsLLMGenerating] = useState(false);
   const [llmSections, setLlmSections] = useState<LLMExportSections>(
     DEFAULT_LLM_EXPORT_SECTIONS,
   );
-
   const setCheckboxes = (
     newEnableLaundry: boolean,
     newEnableReminder: boolean,
@@ -81,24 +74,18 @@ export const Settings = () => {
     setCheckedRem(newEnableReminder);
     setCheckedHeatMap(newEnableHeatMap);
   };
-
   const rowStyle = isRtl ? styles.rowReverse : styles.row;
-
   const toggleLlmSection = (key: keyof LLMExportSections) => {
     setLlmSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
-
   const openLlmExport = () => {
     setLlmSections(DEFAULT_LLM_EXPORT_SECTIONS);
     setLlmConfirmVisible(true);
   };
-
   const confirmAndCopyLLM = () => {
     if (!hasAnyLLMExportSection(llmSections)) return;
-
     setLlmConfirmVisible(false);
     setIsLLMGenerating(true);
-
     // Defer so the loading overlay can paint before sync export work.
     setTimeout(() => {
       try {
@@ -112,7 +99,6 @@ export const Settings = () => {
       }
     }, 0);
   };
-
   const llmSectionOptions: {
     key: keyof LLMExportSections;
     label: string;
@@ -123,7 +109,6 @@ export const Settings = () => {
     { key: "items", label: localization.Items[language] },
     { key: "logs", label: localization.Outfit_Log[language] },
   ];
-
   return (
     <ThemeView>
       <BackButton pageTitle={localization.Settings[language]} />
@@ -141,9 +126,6 @@ export const Settings = () => {
           </ThemeText>
           <CustomInput
             mode="outlined"
-            outlineColor={colors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={colors.mainGreen}
             textContentType="name"
             style={[{ width: "50%" }, { textAlign: isRtl ? "right" : "left" }]}
             label={localization.User_Name[language]}
@@ -168,8 +150,8 @@ export const Settings = () => {
               mode="SIMPLE"
               placeholder="Language"
               style={styles.dropdown}
-              dropDownContainerStyle={{ borderColor: colors.mainGreen }}
-              theme={String(useColorScheme()?.toUpperCase()) as ThemeNameType}
+              dropDownContainerStyle={{ borderColor: "#777777" }}
+              theme={String("LIGHT") as ThemeNameType}
             />
           </View>
         </View>
@@ -184,9 +166,8 @@ export const Settings = () => {
                 onToggleSnackBar();
               }
             }}
-            mode="contained"
+            mode="outlined"
             style={{ width: "50%" }}
-            buttonColor={colors.mainCyan}
           >
             {localization.Export[language]}
           </Button>
@@ -202,9 +183,8 @@ export const Settings = () => {
                 onToggleSnackBar();
               }
             }}
-            mode="contained"
+            mode="outlined"
             style={{ width: "50%" }}
-            buttonColor={colors.mainCyan}
           >
             {localization.Import[language]}
           </Button>
@@ -216,9 +196,6 @@ export const Settings = () => {
           </ThemeText>
           <CustomInput
             mode="outlined"
-            outlineColor={colors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={colors.mainGreen}
             textContentType="name"
             style={styles.laundryInput}
             label={localization.N[language]}
@@ -252,7 +229,7 @@ export const Settings = () => {
           />
         </View>
         <View style={{ flexDirection: isRtl ? "row-reverse" : "row" }}>
-          <Icon name="info-circle" size={15} color={colors.mainCyan} />
+          <Icon name="info-circle" size={15} color="#111111" />
           <ThemeText customStyle={styles.infoText}>
             {localization.ThisWillRemind[language]}
           </ThemeText>
@@ -272,7 +249,7 @@ export const Settings = () => {
 
         <View style={rowStyle}>
           <ThemeText customStyle={styles.textLabel5}>
-            {localization.Enable_heatMap[language]}
+            {language === 2 ? "Mostrar uso reciente" : "Show recent usage"}
           </ThemeText>
           <Checkbox
             status={checkedHeatMap ? "checked" : "unchecked"}
@@ -283,25 +260,26 @@ export const Settings = () => {
           />
         </View>
         <View style={{ flexDirection: isRtl ? "row-reverse" : "row" }}>
-          <Icon name="info-circle" size={15} color={colors.mainCyan} />
+          <Icon name="info-circle" size={15} color="#111111" />
           <ThemeText customStyle={styles.infoText}>
-            {localization.HeatMap_description[language]}
+            {language === 2
+              ? "Indica si usaste una prenda esta semana o este mes."
+              : "Show whether a garment was used this week or this month."}
           </ThemeText>
         </View>
 
         <View style={{ width: "100%" }}>
           <Button
             onPress={openLlmExport}
-            mode="contained"
+            mode="outlined"
             style={{ width: "100%" }}
-            buttonColor={colors.mainCyan}
             disabled={isLLMGenerating}
           >
             {localization.LLMExport[language]}
           </Button>
         </View>
         <View style={{ flexDirection: isRtl ? "row-reverse" : "row" }}>
-          <Icon name="info-circle" size={15} color={colors.mainCyan} />
+          <Icon name="info-circle" size={15} color="#111111" />
           <ThemeText customStyle={styles.infoText}>
             {localization.LLM_info[language]}
           </ThemeText>
@@ -342,7 +320,6 @@ export const Settings = () => {
     </ThemeView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     width: "100%",
@@ -360,7 +337,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-
   textLabel10: {
     paddingBottom: 10,
     fontSize: 15,
@@ -369,26 +345,22 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
     fontSize: 15,
   },
-
   dropdownWrapper: {
     marginBottom: 10,
     width: "50%",
   },
   dropdown: {
-    borderColor: colors.mainGreen,
+    borderColor: "#777777",
     zIndex: 10,
   },
-
   laundryInput: {
     width: 50,
     marginHorizontal: 20,
   },
-
   infoText: {
     fontSize: 12,
     marginHorizontal: 20,
   },
-
   llmSectionsTitle: {
     fontSize: 14,
     fontWeight: "600",

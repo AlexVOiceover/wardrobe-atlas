@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
-import { View, useColorScheme } from "react-native";
-import { colors } from "../utils/colors";
+import { View } from "react-native";
 import { ThemeText } from "./ThemeText";
 import { localization } from "../utils/localization";
 import { useSelector } from "react-redux";
@@ -9,7 +8,6 @@ import { Button, Checkbox, Dialog, Portal } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { CustomInput } from "./CustomInput";
 import { handleNumberChange } from "../utils/validators";
-
 export const LaundryOptionsModal = ({
   openLaundryOpt,
   setOpenLaundryOpt,
@@ -29,10 +27,8 @@ export const LaundryOptionsModal = ({
   maxLaundryNumber: number;
   setMaxLaundryNumber: Dispatch<SetStateAction<number>>;
 }) => {
-  const isDarkMode = useColorScheme() === "dark";
   const storedSettings = useSelector((state: RootState) => state.settings);
   const rtl = storedSettings.language == 1 ? "flex-row-reverse" : "flex-row";
-
   return (
     <Portal>
       <Dialog
@@ -40,37 +36,57 @@ export const LaundryOptionsModal = ({
         onDismiss={() => setOpenLaundryOpt(false)}
         style={{
           minHeight: 200,
-          backgroundColor: isDarkMode ? colors.gray : colors.white,
+          backgroundColor: "#ffffff",
         }}
       >
-        <Dialog.Title className="self-center">
+        <Dialog.Title style={[{ alignSelf: "center" }]}>
           {localization.Laundry_Options[storedSettings.language]}
         </Dialog.Title>
         <Dialog.Content>
-          <View className="gap-y-2">
-            <View className={`flex ${rtl} items-center justify-start`}>
+          <View style={[{ rowGap: 8 }]}>
+            <View
+              style={[
+                [
+                  {},
+                  rtl === "flex-row-reverse"
+                    ? { flexDirection: "row-reverse" }
+                    : { flexDirection: "row" },
+                  { alignItems: "center", justifyContent: "flex-start" },
+                ],
+              ]}
+            >
               <Checkbox
                 status={LaundryCheck ? "checked" : "unchecked"}
                 onPress={() => {
-                  setLandryCheck((prev) => !prev);
+                  setLandryCheck(prev => !prev);
                 }}
-                color={colors.mainGreen}
+                color="#111111"
               />
               <MaterialCommunityIcons
                 name="bell-ring"
                 size={25}
-                color={colors.mainGreen}
+                color="#111111"
               />
-              <ThemeText classNameStyle="mx-1">
+              <ThemeText customStyle={[{ marginHorizontal: 4 }]}>
                 {localization.Washable[storedSettings.language]}
               </ThemeText>
             </View>
-            <View className={`flex ${rtl} justify-start items-center`}>
+            <View
+              style={[
+                [
+                  {},
+                  rtl === "flex-row-reverse"
+                    ? { flexDirection: "row-reverse" }
+                    : { flexDirection: "row" },
+                  { justifyContent: "flex-start", alignItems: "center" },
+                ],
+              ]}
+            >
               <Checkbox
                 disabled={!LaundryCheck}
                 status={overrideMaxLaundry ? "checked" : "unchecked"}
                 onPress={() => {
-                  setOverrideMaxLaundry((prev) => !prev);
+                  setOverrideMaxLaundry(prev => !prev);
                 }}
               />
               <ThemeText>
@@ -78,14 +94,10 @@ export const LaundryOptionsModal = ({
               </ThemeText>
               <CustomInput
                 mode="outlined"
-                outlineColor={colors.mainGreen}
-                selectionColor="#C0C0C0"
-                activeOutlineColor={colors.mainGreen}
                 textContentType="name"
-                className="h-[40px] w-[50px] mx-5"
                 value={String(maxLaundryNumber || 0)}
                 disabled={!overrideMaxLaundry}
-                onChange={(text) =>
+                onChange={text =>
                   handleNumberChange(
                     () => {
                       setMaxLaundryNumber(Number(text.nativeEvent.text));
@@ -96,15 +108,13 @@ export const LaundryOptionsModal = ({
                   )
                 }
                 keyboardType="numeric"
+                style={[{ height: 40, width: 50, marginHorizontal: 20 }]}
               />
             </View>
           </View>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button
-            textColor={colors.white}
-            onPress={() => setOpenLaundryOpt(false)}
-          >
+          <Button onPress={() => setOpenLaundryOpt(false)}>
             {localization.Close[storedSettings.language]}
           </Button>
         </Dialog.Actions>

@@ -9,16 +9,13 @@ import {
 } from "../../utils/localization";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import Animated, { SlideInLeft } from "react-native-reanimated";
 import { Children, ReactNode, useMemo } from "react";
-import { colors } from "../../utils/colors";
 import { defaultCategories } from "./Category";
 import { ItemBox } from "../../components/ItemBox";
 import { item } from "../../redux/itemsSlice";
 import { Category } from "../../redux/categoriesSlice";
 const InfoCardWrapper = ({
   title,
-  index,
   children,
 }: {
   title: string;
@@ -29,33 +26,26 @@ const InfoCardWrapper = ({
     return null;
   }
   return (
-    <Animated.View
-      style={[styles.cardWrapper]}
-      entering={SlideInLeft.delay(index * 200)}
-    >
+    <View style={[styles.cardWrapper]}>
       <ThemeText>{title}</ThemeText>
 
       <View style={styles.row}>{children}</View>
-    </Animated.View>
+    </View>
   );
 };
 const InfoCardNumber = ({
   title,
   value,
-  index,
 }: {
   title: string;
   value: number;
   index: number;
 }) => {
   return (
-    <Animated.View
-      style={[styles.cardNumber]}
-      entering={SlideInLeft.delay(index * 200)}
-    >
-      <ThemeText classNameStyle="text-bold">{title}</ThemeText>
-      <ThemeText classNameStyle="text-[40px]">{String(value)}</ThemeText>
-    </Animated.View>
+    <View style={[styles.cardNumber]}>
+      <ThemeText customStyle={[{}]}>{title}</ThemeText>
+      <ThemeText customStyle={[{}]}>{String(value)}</ThemeText>
+    </View>
   );
 };
 const InfoCardCategories = ({
@@ -70,32 +60,26 @@ const InfoCardCategories = ({
   const counts = Categories.map(
     cat => items.filter(it => cat.index == it.category).length,
   );
-
   return (
     <View>
       {Categories.map((category, index) => (
-        <Animated.View
-          entering={SlideInLeft.delay(index * 300)}
-          key={"Card" + index}
-          style={[styles.cardNumber]}
-        >
+        <View key={"Card" + index} style={[styles.cardNumber]}>
           <ThemeText>
             {category.name[language] + " " + categoryInfo[language]}
           </ThemeText>
           <View style={styles.countRow}>
-            <ThemeText classNameStyle="text-[40px]">
+            <ThemeText customStyle={[{}]}>
               {String(counts[index] || 0)}
             </ThemeText>
-            <ThemeText classNameStyle="text-[10px]">
+            <ThemeText customStyle={[{}]}>
               {" item" + ((counts[index] || 0) > 1 ? "s" : "")}
             </ThemeText>
           </View>
-        </Animated.View>
+        </View>
       ))}
     </View>
   );
 };
-
 export const ClosetInfo = ({}) => {
   const storedSettings = useSelector((state: RootState) => state.settings);
   const storedItems = useSelector((state: RootState) => state.itemsList.items);
@@ -107,7 +91,6 @@ export const ClosetInfo = ({}) => {
     ...defaultCategories,
     ...useSelector((state: RootState) => state.CategoryList.Categories),
   ];
-
   const data = useMemo(() => {
     const sortedItems = [...storedItems].sort(
       (a, b) => (b.logIds?.length || 0) - (a.logIds?.length || 0),
@@ -115,12 +98,10 @@ export const ClosetInfo = ({}) => {
     const currentDate = new Date();
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(currentDate.getMonth() - 1);
-
     const filteredEventsLastMonth = storedEvents.filter(x => {
       const eventDate = new Date(JSON.parse(x.eventDate));
       return eventDate >= oneMonthAgo && eventDate <= currentDate;
     });
-
     const top5LastMonth = sortedItems
       .filter(x => {
         return x.logIds?.some(logId =>
@@ -131,17 +112,15 @@ export const ClosetInfo = ({}) => {
     const top5 = sortedItems
       .filter(x => x.logIds && x.logIds.length > 0)
       .slice(0, 5);
-    let info = [
+    let info: [number, number, number, item[], item[]] = [
       storedItems.length,
       storedEvents.length,
       storedCollections.length,
       top5LastMonth,
       top5,
     ];
-
     return info;
   }, [storedItems, storedEvents, storedCollections]);
-
   return (
     <ThemeView>
       <BackButton
@@ -164,7 +143,7 @@ export const ClosetInfo = ({}) => {
               key={"infoCard" + index}
               title={item}
             >
-              {data[index].map((item: item) => {
+              {(data[index] as item[]).map((item: item) => {
                 return (
                   <ItemBox
                     primary={item.primaryColor || "#fff"}
@@ -194,21 +173,20 @@ export const ClosetInfo = ({}) => {
     </ThemeView>
   );
 };
-
 const styles = StyleSheet.create({
   cardWrapper: {
     flexDirection: "column",
     alignItems: "center",
-    backgroundColor: colors.mainGreen,
-    borderColor: colors.white,
+    backgroundColor: "#ffffff",
+    borderColor: "#777777",
     borderWidth: 1,
     padding: 8,
   },
   cardNumber: {
     flexDirection: "column",
-    backgroundColor: colors.mainCyan,
+    backgroundColor: "#ffffff",
     alignItems: "center",
-    borderColor: colors.white,
+    borderColor: "#777777",
     borderWidth: 1,
     padding: 8,
   },

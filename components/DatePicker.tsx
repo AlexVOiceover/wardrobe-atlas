@@ -1,10 +1,8 @@
-import { Pressable, Text, useColorScheme } from "react-native";
+import { Pressable } from "react-native";
 import { ThemeText } from "./ThemeText";
 import dayjs from "dayjs";
 import { Dispatch, SetStateAction } from "react";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import { colors } from "../utils/colors";
-
 export const DatePicker = ({
   title = "Date",
   isDatePickerVisible,
@@ -20,24 +18,33 @@ export const DatePicker = ({
   setDatePickerVisibility: Dispatch<SetStateAction<boolean>>;
   type?: "date" | "time" | "both";
 }) => {
-  const isDark = useColorScheme() == "dark";
-  const safeDate = (date && (date as any).getTime)
-    ? (date as unknown as Date)
-    : new Date((date as unknown as any) || Date.now());
+  const safeDate =
+    date && (date as any).getTime
+      ? (date as unknown as Date)
+      : new Date((date as unknown as any) || Date.now());
   return (
     <>
       <Pressable
-        className="w-4/5 h-12 border rounded-md border-mainGreen flex flex-row justify-between px-2 items-center"
         onPress={() => {
           setDatePickerVisibility(true);
         }}
-        style={{
-          backgroundColor: isDark ? colors.darkblue : colors.white,
-        }}
+        style={[
+          {
+            width: "80%",
+            height: 48,
+            borderWidth: 1,
+            borderColor: "#777777",
+            flexDirection: "row",
+            justifyContent: "space-between",
+            paddingHorizontal: 8,
+            alignItems: "center",
+          },
+          {
+            backgroundColor: "#ffffff",
+          },
+        ]}
       >
-        <ThemeText lightColor={colors.black} darkColor="#CCCCCC">
-          {title}
-        </ThemeText>
+        <ThemeText>{title}</ThemeText>
         <ThemeText>{date ? dayjs(date).format("DD/MM/YYYY") : ""}</ThemeText>
         {type == "time" ||
           (type == "both" && (

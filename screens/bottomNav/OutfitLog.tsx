@@ -1,11 +1,9 @@
 import {
   Text,
   View,
-  useColorScheme,
   Pressable,
   StyleSheet,
   Keyboard,
-  Image,
   FlatList,
 } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
@@ -20,80 +18,65 @@ import CustomModal from "../../components/CustomModal";
 import { logsType } from "../../redux/itemsSlice";
 import { ThemeText } from "../../components/ThemeText";
 import dayjs from "dayjs";
-import { Dimensions } from "react-native";
-import { useSharedValue } from "react-native-reanimated";
 import { colors } from "../../utils/colors";
 import { SideModal } from "../../components/SideModal";
 import { LogFilter } from "../../utils/filters";
 import { localization } from "../../utils/localization";
-
 export const OutfitLog = () => {
   const [search, setSearch] = useState("");
-  const isDarkMode = useColorScheme() === "dark";
+  const isDarkMode = false;
   const logsState = useSelector((state: RootState) => state.itemsList.logs);
   const [refresh, setRefresh] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalEventId, setModalEventId] = useState("");
   const [modalInfo, setModalInfo] = useState<logsType>();
   const [sortValue, setSortValue] = useState("LA");
-
-  const space = useSharedValue(-20);
-  const { width } = Dimensions.get("window");
   const [isOpen, setIsOpen] = useState(false);
-
   const handleOpenDrawer = () => {
-    // Update the space value to trigger the animation
+    // Open or close the filter panel.
     Keyboard.dismiss();
     setIsOpen(prev => !prev);
-    if (!isOpen) {
-      space.value = width / 2 - 5;
-    }
   };
   useEffect(() => {
     let info = logsState.find(x => x.eventId == modalEventId);
     setModalInfo(info);
-  }, [modalEventId]);
-
+  }, [modalEventId, logsState]);
   const filteredLogs = useMemo(() => {
     return LogFilter(sortValue, logsState, search);
   }, [logsState, search, sortValue]);
-
   const storedSettings = useSelector((state: RootState) => state.settings);
   return (
-    <ThemeView classNameStyle="px-1">
+    <ThemeView customStyle={[{ paddingHorizontal: 4 }]}>
       <CustomModal
         setVisible={setModalVisible}
         visible={modalVisible}
         label={modalInfo?.eventName || "Event Name"}
       >
-        <View className="w-[90%] mr-auto ml-auto">
-          <View className="mt-5 bg-[#77aebb5d] rounded-lg p-5">
-            <ThemeText lightColor={colors.gray} customStyle={styles.dayStyle}>
+        <View
+          style={[{ width: "90%", marginRight: "auto", marginLeft: "auto" }]}
+        >
+          <View style={[{ marginTop: 20, padding: 20 }]}>
+            <ThemeText customStyle={styles.dayStyle}>
               {dayjs(
                 modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
               ).format("dddd")}
             </ThemeText>
-            <ThemeText lightColor={colors.gray} customStyle={styles.date}>
+            <ThemeText customStyle={styles.date}>
               {dayjs(
                 modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
               ).format("MMM DD, YYYY")}
             </ThemeText>
             <View
-              className={`w-[60%] h-[1px] ${
-                isDarkMode ? "bg-white" : "bg-black"
-              }`}
+              style={[[{ width: "60%", height: 1 }, isDarkMode ? {} : {}, {}]]}
             />
-            <View className="flex flex-row items-baseline mt-2">
+            <View style={[{ flexDirection: "row", marginTop: 8 }]}>
               {/* <ThemeText classNameStyle="text-[16px]">Time:</ThemeText> */}
-              <ThemeText
-                lightColor={colors.gray}
-                customStyle={styles.timeStyle}
-              >
+              <ThemeText customStyle={styles.timeStyle}>
                 {dayjs(
                   modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
                 ).format("h:mm ")}
               </ThemeText>
-              <ThemeText lightColor={colors.gray} customStyle={styles.timeA}>
+              <ThemeText customStyle={styles.timeA}>
                 {dayjs(
                   modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
                 ).format("A")}
@@ -102,18 +85,18 @@ export const OutfitLog = () => {
           </View>
 
           {modalInfo?.additionalNotes && (
-            <View className="p-2">
+            <View style={[{ padding: 8 }]}>
               <ThemeText customStyle={styles.notes}>
                 {localization.Additional_notes[storedSettings.language]}
               </ThemeText>
-              <ThemeText classNameStyle="h-fit text-[14px]">
+              <ThemeText customStyle={[{}]}>
                 {modalInfo?.additionalNotes}
               </ThemeText>
             </View>
           )}
         </View>
       </CustomModal>
-      <SideModal space={space} isOpen={isOpen} setIsOpen={setIsOpen}>
+      <SideModal isOpen={isOpen} setIsOpen={setIsOpen}>
         <>
           <RadioButton.Group
             onValueChange={value => setSortValue(value)}
@@ -122,91 +105,113 @@ export const OutfitLog = () => {
             <RadioButton.Item
               label={localization.Last_Added[storedSettings.language]}
               value="LA"
-              color={colors.mainCyan}
+              color="#111111"
               labelStyle={{ fontSize: 14 }}
             />
             <RadioButton.Item
               label={localization.Name_Asc[storedSettings.language]}
               value="NA"
-              color={colors.mainCyan}
+              color="#111111"
               labelStyle={{ fontSize: 14 }}
             />
             <RadioButton.Item
               label={localization.Name_Desc[storedSettings.language]}
               value="ND"
-              color={colors.mainCyan}
+              color="#111111"
               labelStyle={{ fontSize: 14 }}
             />
             <RadioButton.Item
               label={localization.Date_Asc[storedSettings.language]}
               value="DA"
-              color={colors.mainCyan}
+              color="#111111"
               labelStyle={{ fontSize: 14 }}
             />
             <RadioButton.Item
               label={localization.Date_Desc[storedSettings.language]}
               value="DD"
-              color={colors.mainCyan}
+              color="#111111"
               labelStyle={{ fontSize: 14 }}
             />
           </RadioButton.Group>
         </>
       </SideModal>
-      <View className="flex flex-row items-center justify-center w-full h-14 rounded-t-2xl shadow-2xl bg-mainCyan mb-[1%]">
-        <Text className="text-xl text-white font-bold">
-          {localization.Logs[storedSettings.language]}
-        </Text>
-        <View className="w-[1%] h-full bg-white absolute right-[15%]" />
+      <View
+        style={[
+          {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: 56,
+            marginBottom: "1%",
+          },
+        ]}
+      >
+        <Text style={[{}]}>{localization.Logs[storedSettings.language]}</Text>
+        <View
+          style={[
+            { width: "1%", height: "100%", position: "absolute", right: "15%" },
+          ]}
+        />
         <Pressable
           onPress={() => {
             handleOpenDrawer();
           }}
-          className="w-[15%] h-full bg-mainGreen absolute right-0 rounded-tr-2xl flex justify-center items-center"
+          style={[
+            {
+              width: "15%",
+              height: "100%",
+              position: "absolute",
+              right: 0,
+              justifyContent: "center",
+              alignItems: "center",
+            },
+          ]}
         >
-          <Icon name="filter" size={25} color={colors.white} />
+          <Icon name="filter" size={25} color="#111111" />
         </Pressable>
       </View>
       <Searchbar
-        className="w-full"
         theme={{
           roundness: 0,
           colors: {
             onSurfaceVariant: isDarkMode ? colors.white : colors.black,
-            elevation: { level3: "#aebb77b0" },
           },
         }}
         value={search}
-        style={{
-          flexDirection: storedSettings.language == 1 ? "row-reverse" : "row",
-        }}
         inputStyle={{
           textAlign: storedSettings.language == 1 ? "right" : "left",
         }}
-        selectionColor="#C0C0C0"
         // label="Search"
         onChange={text => setSearch(text.nativeEvent.text)}
         onClearIconPress={() => setSearch("")}
+        style={[
+          { width: "100%" },
+          {
+            flexDirection: storedSettings.language == 1 ? "row-reverse" : "row",
+          },
+        ]}
       />
       <View
-        style={{
-          width: "100%",
-          flex: 1,
-          borderBottomLeftRadius: 20,
-          borderBottomRightRadius: 20,
-        }}
-        className="bg-gray mx-auto mt-[1%] px-5"
+        style={[
+          { marginHorizontal: "auto", marginTop: "1%", paddingHorizontal: 20 },
+          {
+            width: "100%",
+            flex: 1,
+          },
+        ]}
       >
         {logsState.length <= 0 && (
-          <View className="flex flex-col w-full justify-center">
-            <Image
-              style={{ width: "100%", height: 150, resizeMode: "contain" }}
-              source={require("../../assets/images/empty.png")}
-            />
-            <ThemeText
-              darkColor={colors.white}
-              lightColor={colors.gray}
-              classNameStyle="self-center"
-            >
+          <View
+            style={[
+              {
+                flexDirection: "column",
+                width: "100%",
+                justifyContent: "center",
+              },
+            ]}
+          >
+            <ThemeText customStyle={[{ alignSelf: "center" }]}>
               {localization.ClosetHistoryEmpty[storedSettings.language]}
             </ThemeText>
           </View>
@@ -232,23 +237,18 @@ export const OutfitLog = () => {
 };
 const styles = StyleSheet.create({
   timeStyle: {
-    fontFamily: "Montserrat-Bold",
-    fontSize: 30,
+    fontSize: 18,
   },
   timeA: {
-    fontFamily: "Montserrat-Regular",
     fontSize: 15,
   },
   date: {
-    fontFamily: "Montserrat-Bold",
-    fontSize: 25,
+    fontSize: 18,
   },
   dayStyle: {
-    fontFamily: "Montserrat-Regular",
     fontSize: 16,
   },
   notes: {
-    fontFamily: "Montserrat-Bold",
     fontSize: 20,
   },
 });
