@@ -1,3 +1,4 @@
+import { localization } from "../utils/localization";
 import useHeatmap from "../hooks/useHeatmap";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
@@ -13,6 +14,7 @@ export function ItemSummary({
   logs,
 }: ItemSummaryProps) {
   const recency = useHeatmap(logs || []);
+  const language = useSelector((s: RootState) => s.settings.language);
   const showRecency = useSelector((s: RootState) => s.settings.enableHeatMap);
   return (
     <View style={{ gap: 4 }}>
@@ -28,7 +30,11 @@ export function ItemSummary({
       <Text style={{ color: "#111111" }}>
         {[primary, secondary, tertiary].filter(Boolean).join(" / ")}
       </Text>
-      {logs && <Text style={{ color: "#111111" }}>Uses: {logs.length}</Text>}
+      {logs && (
+        <Text style={{ color: "#111111" }}>
+          {localization.Uses[language]}: {logs.length}
+        </Text>
+      )}
       {showRecency && logs && (
         <Text style={{ color: "#333333" }}>{recency}</Text>
       )}

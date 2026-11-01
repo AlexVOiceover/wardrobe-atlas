@@ -415,7 +415,9 @@ export const ItemForm = ({
                     },
                   ]}
                 >
-                  <ThemeText>Laundry</ThemeText>
+                  <ThemeText>
+                    {localization.Laundry_Options[storedSettings.language]}
+                  </ThemeText>
                   <ThemeText>{storedItems.laundryCounter}</ThemeText>
                 </TouchableOpacity>
               )}

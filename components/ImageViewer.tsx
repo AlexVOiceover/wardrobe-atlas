@@ -1,3 +1,6 @@
+import { localization } from "../utils/localization";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
 import { Dispatch, SetStateAction, useState } from "react";
 import { Image, Pressable, Text } from "react-native";
 import CustomModal from "./CustomModal";
@@ -10,6 +13,7 @@ export const ImageViewer = ({
   setImageModalVisible: Dispatch<SetStateAction<boolean>>;
 }) => {
   const [showImageFull, setShowImageFull] = useState(false);
+  const language = useSelector((s: RootState) => s.settings.language);
   const width = useWidthScreen();
   return (
     <>
@@ -43,7 +47,9 @@ export const ImageViewer = ({
             style={{ width: 80, height: 80, resizeMode: "contain" }}
           />
         ) : (
-          <Text style={{ color: "#111111" }}>Add photo</Text>
+          <Text style={{ color: "#111111" }}>
+            {localization.AddPhoto[language]}
+          </Text>
         )}
       </Pressable>
     </>

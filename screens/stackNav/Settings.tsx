@@ -249,7 +249,7 @@ export const Settings = () => {
 
         <View style={rowStyle}>
           <ThemeText customStyle={styles.textLabel5}>
-            {language === 2 ? "Mostrar uso reciente" : "Show recent usage"}
+            {localization.RecentUsage[language]}
           </ThemeText>
           <Checkbox
             status={checkedHeatMap ? "checked" : "unchecked"}
@@ -262,9 +262,7 @@ export const Settings = () => {
         <View style={{ flexDirection: isRtl ? "row-reverse" : "row" }}>
           <Icon name="info-circle" size={15} color="#111111" />
           <ThemeText customStyle={styles.infoText}>
-            {language === 2
-              ? "Indica si usaste una prenda esta semana o este mes."
-              : "Show whether a garment was used this week or this month."}
+            {localization.RecentUsageHelp[language]}
           </ThemeText>
         </View>
 

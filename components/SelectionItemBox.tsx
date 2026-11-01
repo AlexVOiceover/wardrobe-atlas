@@ -27,7 +27,7 @@ export const SelectionItemBox = ({
         margin: 4,
         padding: 8,
         borderWidth: selected ? 3 : 1,
-        width: 144,
+        width: "100%",
       }}
     >
       <Text style={{ color: "#111111" }}>{selected ? "[x]" : "[ ]"}</Text>

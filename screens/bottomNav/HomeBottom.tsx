@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     backgroundColor: "#ffffff",
     marginTop: "1%",
-    height: "85%",
+    flex: 1,
     paddingBottom: 10,
   },
   scrollViewContent: {
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   gridItem: {
-    width: "25%",
+    width: "100%",
     alignItems: "center",
     paddingVertical: 5,
   },

@@ -46,13 +46,13 @@ export function Category() {
                 })
               }
             >
-              Edit
+              {localization.Edit_Category[language]}
             </Button>
             {item.index >= 4 && (
               <Button
                 onPress={() => dispatch(delCategory({ index: item.index }))}
               >
-                Delete
+                {localization.Delete[language]}
               </Button>
             )}
           </View>

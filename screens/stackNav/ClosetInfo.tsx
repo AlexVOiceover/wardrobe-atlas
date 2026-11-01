@@ -191,7 +191,8 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   row: {
-    flexDirection: "row",
+    width: "100%",
+    flexDirection: "column",
   },
   countRow: {
     flexDirection: "row",
