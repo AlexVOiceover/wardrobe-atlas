@@ -1,0 +1,93 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Restore and save Gradle build cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install required Android packages
+        run: |
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then echo "Android sdkmanager not found"; exit 1; fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;35.0.0" "ndk;27.1.12297006"
+
+      - name: Install JavaScript dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Test APK update selection
+        run: npm test -- --config jest.config.js --runInBand __tests__/updateService.test.ts
+
+      - name: Embed CI build number in the app
+        run: |
+          printf 'export const BUILD_NUMBER = %s;\n' "$GITHUB_RUN_NUMBER" > utils/buildInfo.ts
+
+      - name: Compile signed Android APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a
+
+      - name: Prepare APK
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk Wardrobe-Atlas.apk
+          sha256sum Wardrobe-Atlas.apk
+
+      - name: Save test APK as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wardrobe-Atlas-${{ github.run_number }}
+          path: Wardrobe-Atlas.apk
+          retention-days: 14
+
+      # Only authorized merges/pushes on main publish releases.
+      # Pull requests can validate the APK without shipping it.
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v0.1.${GITHUB_RUN_NUMBER}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" Wardrobe-Atlas.apk --clobber
+          else
+            gh release create "$TAG" Wardrobe-Atlas.apk \
+              --target "$GITHUB_SHA" \
+              --title "Wardrobe Atlas $TAG" \
+              --notes "Android APK from commit $GITHUB_SHA." \
+              --latest
+          fi
