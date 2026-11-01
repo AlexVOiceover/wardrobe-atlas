@@ -48,8 +48,6 @@ export const EditItemList = ({
   const [enableEditing, setEnableEditing] = useState(false);
   const dispatch = useDispatch();
   const [newNameInput, setNewNameInput] = useState(item.label || "");
-  const [] = useState(false);
-  const [] = useState([item.color || "#fff"]);
   return (
     <View
       style={[styles.container, containerStyle, { backgroundColor: "#ffffff" }]}

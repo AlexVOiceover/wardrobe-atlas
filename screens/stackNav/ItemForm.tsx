@@ -631,7 +631,7 @@ export const ItemForm = ({
                 <View
                   style={[
                     { height: 20, width: 20, borderWidth: 0.2 },
-                    { backgroundColor: "#ffffff" },
+                    { backgroundColor: colors[0] || "#808080" },
                   ]}
                 />
               </Pressable>
@@ -663,7 +663,7 @@ export const ItemForm = ({
                 <View
                   style={[
                     { height: 20, width: 20, borderWidth: 0.2 },
-                    { backgroundColor: "#ffffff" },
+                    { backgroundColor: colors[1] || "#808080" },
                   ]}
                 />
               </Pressable>
@@ -695,7 +695,7 @@ export const ItemForm = ({
                 <View
                   style={[
                     { height: 20, width: 20, borderWidth: 0.2 },
-                    { backgroundColor: "#ffffff" },
+                    { backgroundColor: colors[2] || "#808080" },
                   ]}
                 />
               </Pressable>
