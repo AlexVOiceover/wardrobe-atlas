@@ -11,6 +11,7 @@ import { store, persistor } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
 
 import { colors } from "./utils/colors";
+import { startAutomaticUpdates } from "./utils/updateService";
 
 function App(): ReactElement {
   const isDarkMode = useColorScheme() === "dark";
@@ -24,6 +25,8 @@ function App(): ReactElement {
     I18nManager.forceRTL(false);
     SplashScreen.hide();
   }, []);
+  useEffect(() => startAutomaticUpdates(), []);
+
   return (
     <SafeAreaProvider>
       <ReduxProvider store={store}>
