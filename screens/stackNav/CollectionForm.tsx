@@ -22,8 +22,6 @@ import { setCollectionSortValue } from "../../redux/settingsSlice";
 export const CollectionForm = () => {
   // const navigation = useNavigation<any>();
   const [name, setName] = useState("");
-  const [] = useState(false);
-  const [] = useState([appColors.defaultCollectionColor]);
   const [refresh, setRefresh] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const CollectionsState = useSelector(
