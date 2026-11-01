@@ -85,12 +85,13 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.myclosetx"
+    def atlasBuildNumber = Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "0")
     defaultConfig {
-        applicationId "com.myclosetx"
+        applicationId "com.wardrobeatlas.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10
-        versionName "1.2.0"
+        versionCode Math.max(1, atlasBuildNumber)
+        versionName "0.1.${atlasBuildNumber}"
     }
     signingConfigs {
         debug {
