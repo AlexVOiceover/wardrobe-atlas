@@ -3,7 +3,7 @@ import {
   useWardrobeView,
 } from "../../components/WardrobeSelector";
 import { validWardrobeId } from "../../utils/wardrobes";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button, Switch } from "react-native-paper";
 import { useState } from "react";
 import { BackButton } from "../../components/BackButton";
@@ -26,7 +26,7 @@ import { ThemeView } from "../../components/ThemeView";
 import { ThemeText } from "../../components/ThemeText";
 import { CommonActions } from "@react-navigation/native";
 import { DatePicker } from "../../components/DatePicker";
-import { RandomNamesP1, fitList, sizeList, seasonList } from "../../utils/data";
+import { sizeList } from "../../utils/data";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
 import {
@@ -36,9 +36,6 @@ import {
 import { clothesList, localization } from "../../utils/localization";
 import { defaultCategories } from "./Category";
 import { ImageViewer } from "../../components/ImageViewer";
-export function get_random<T>(list: T[]): T {
-  return list[Math.floor(Math.random() * list.length)];
-}
 export const ItemForm = ({
   navigation,
   route,
@@ -72,8 +69,6 @@ export const ItemForm = ({
   const [name, setName] = useState(storedItems ? storedItems.name : "");
   const [collection, setCollection] = useState(storedItems?.collection ?? []);
   const [type, setType] = useState(storedItems ? storedItems.type : "");
-  const [fit, setFit] = useState(storedItems ? storedItems.fit : "");
-  const [season, setSeason] = useState(storedItems?.season ?? null);
   const [quantity, setQuantity] = useState(
     storedItems ? storedItems.quantity : 1,
   );
@@ -97,8 +92,6 @@ export const ItemForm = ({
   ]);
   const [colorSelection, setColorSelection] = useState(0);
   const [openType, setOpenType] = useState(false);
-  const [openFit, setOpenFit] = useState(false);
-  const [openSeason, setOpenSeason] = useState(false);
   const [openSizeUnit, setOpenSizeUnit] = useState(false);
   const [openCollection, setOpenCollection] = useState(false);
   const [isAutoOn, setIsAutoOn] = useState(
@@ -165,8 +158,8 @@ export const ItemForm = ({
           collection: collection,
           category: selectedCategory,
           type: type,
-          fit: fit,
-          season: season,
+          fit: storedItems?.fit ?? "",
+          season: storedItems?.season,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -186,8 +179,8 @@ export const ItemForm = ({
           collection: collection,
           category: selectedCategory,
           type: type,
-          fit: fit,
-          season: season,
+          fit: storedItems?.fit ?? "",
+          season: storedItems?.season,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -348,309 +341,271 @@ export const ItemForm = ({
               : localization.Adding_an_item[storedSettings.language]
           }
         />
-        <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
-        <View style={[{ alignItems: "center", rowGap: 8 }]}>
-          <View style={{ alignItems: "center", padding: 8 }}>
-            <ImageViewer
-              imageUrl={imageUrl}
-              setImageModalVisible={setImageModalVisible}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
+          <View style={[{ alignItems: "center", rowGap: 8 }]}>
+            <View style={{ alignItems: "center", padding: 8 }}>
+              <ImageViewer
+                imageUrl={imageUrl}
+                setImageModalVisible={setImageModalVisible}
+              />
+            </View>
+            <CustomInput
+              mode="outlined"
+              textContentType="name"
+              style={[
+                styles.customWidth,
+                {
+                  textAlign: "left",
+                },
+              ]}
+              label={localization.Name[storedSettings.language]}
+              value={name}
+              onChange={text => setName(text.nativeEvent.text)}
             />
-          </View>
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            style={[
-              styles.customWidth,
-              {
-                textAlign: "left",
-              },
-            ]}
-            label={localization.Name[storedSettings.language]}
-            value={name}
-            onChange={text => setName(text.nativeEvent.text)}
-            right={
-              <Pressable
-                hitSlop={{ bottom: 20, left: 20, right: 10, top: 20 }}
-                onPress={() => setName(get_random(RandomNamesP1))}
-              >
-                <Icon name="dice" size={15} color="#111111" />
-              </Pressable>
-            }
-          />
-          {combiningTypesData?.length > 0 && (
-            <View style={[{ zIndex: 2 }, styles.customWidth]}>
+            {combiningTypesData?.length > 0 && (
+              <View style={[{ zIndex: 2 }, styles.customWidth]}>
+                <DropDownPicker
+                  open={openType}
+                  value={type}
+                  items={combiningTypesData}
+                  setOpen={setOpenType}
+                  setValue={setType}
+                  mode="SIMPLE"
+                  listMode="MODAL"
+                  placeholder={localization.Type[storedSettings.language]}
+                  style={{ borderColor: "#777777" }}
+                  dropDownContainerStyle={{ borderColor: "#777777" }}
+                  theme={colorScheme}
+                />
+              </View>
+            )}
+            <View
+              style={[
+                {
+                  width: "80%",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  zIndex: 2,
+                },
+              ]}
+            >
+              <CustomInput
+                mode="outlined"
+                style={{ width: "40%" }}
+                label={localization.Quantity[storedSettings.language]}
+                value={String(quantity)}
+                onChange={text => setQuantity(Number(text.nativeEvent.text))}
+                keyboardType="numeric"
+                maxLength={2}
+              />
+              <View style={{ width: "28%" }}>
+                <DropDownPicker
+                  open={openSizeUnit}
+                  value={sizeUnit}
+                  items={sizeList}
+                  setOpen={setOpenSizeUnit}
+                  setValue={setSizeUnit}
+                  mode="SIMPLE"
+                  listMode="MODAL"
+                  placeholder={localization.Unit[storedSettings.language]}
+                  style={{ borderColor: "#777777", marginTop: 5 }}
+                  dropDownContainerStyle={{ borderColor: "#777777" }}
+                  theme={colorScheme}
+                />
+              </View>
+              <CustomInput
+                mode="outlined"
+                style={{ width: "28%" }}
+                label={localization.Size[storedSettings.language]}
+                value={String(size)}
+                onChange={text => setSize(text.nativeEvent.text)}
+                maxLength={6}
+              />
+            </View>
+            <DatePicker
+              title={localization.Purchase_Date[storedSettings.language]}
+              date={purchaseDate}
+              isDatePickerVisible={isDatePickerVisible}
+              setDate={setPurchaseDate}
+              setDatePickerVisibility={setDatePickerVisibility}
+            />
+            <View style={[{ zIndex: 1 }, styles.customWidth]}>
               <DropDownPicker
-                open={openType}
-                value={type}
-                items={combiningTypesData}
-                setOpen={setOpenType}
-                setValue={setType}
-                mode="SIMPLE"
+                open={openCollection}
+                value={collection}
+                items={collectionOptions}
+                setOpen={setOpenCollection}
+                setValue={setCollection}
+                multiple={true}
+                theme={colorScheme}
+                // badgeDotColors={CollectionColors}
+                showBadgeDot={false}
+                badgeTextStyle={{ color: "#111111" }}
+                mode="BADGE"
                 listMode="MODAL"
-                placeholder={localization.Type[storedSettings.language]}
+                placeholder={localization.Collection[storedSettings.language]}
                 style={{ borderColor: "#777777" }}
                 dropDownContainerStyle={{ borderColor: "#777777" }}
-                theme={colorScheme}
               />
             </View>
-          )}
-          {(selectedCategory ?? storedItems?.category) < 2 && (
-            <View
-              style={[
-                {
-                  width: "80%",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  zIndex: 3,
-                },
-              ]}
-            >
-              <View style={{ width: "49%" }}>
-                <DropDownPicker
-                  open={openFit}
-                  value={fit}
-                  items={fitList}
-                  setOpen={setOpenFit}
-                  setValue={setFit}
-                  mode="SIMPLE"
-                  placeholder={localization.Fit[storedSettings.language]}
-                  style={{ borderColor: "#777777" }}
-                  dropDownContainerStyle={{
-                    borderColor: "#777777",
-                  }}
-                  theme={colorScheme}
-                />
-              </View>
-              <View style={{ width: "49%" }}>
-                <DropDownPicker
-                  open={openSeason}
-                  value={season}
-                  items={seasonList[storedSettings.language]}
-                  setOpen={setOpenSeason}
-                  setValue={setSeason}
-                  mode="SIMPLE"
-                  placeholder={localization.Season[storedSettings.language]}
-                  style={{ borderColor: "#777777" }}
-                  dropDownContainerStyle={{
-                    borderColor: "#777777",
-                  }}
-                  theme={colorScheme}
-                />
-              </View>
+
+            <View style={[[{}, { flexDirection: "row" }, {}]]}>
+              <Icon name="info-circle" size={15} color="#111111" />
+              <ThemeText customStyle={[{ marginHorizontal: 8 }]}>
+                {localization.You_can_add[storedSettings.language]}
+              </ThemeText>
             </View>
-          )}
-          <View
-            style={[
-              {
-                width: "80%",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                zIndex: 2,
-              },
-            ]}
-          >
-            <CustomInput
-              mode="outlined"
-              style={{ width: "40%" }}
-              label={localization.Quantity[storedSettings.language]}
-              value={String(quantity)}
-              onChange={text => setQuantity(Number(text.nativeEvent.text))}
-              keyboardType="numeric"
-              maxLength={2}
-            />
-            <View style={{ width: "28%" }}>
-              <DropDownPicker
-                open={openSizeUnit}
-                value={sizeUnit}
-                items={sizeList}
-                setOpen={setOpenSizeUnit}
-                setValue={setSizeUnit}
-                mode="SIMPLE"
-                placeholder={localization.Unit[storedSettings.language]}
-                style={{ borderColor: "#777777", marginTop: 5 }}
-                dropDownContainerStyle={{ borderColor: "#777777" }}
-                theme={colorScheme}
+
+            <View style={[{ flexDirection: "row", alignItems: "center" }]}>
+              <ThemeText>
+                {
+                  localization.Automatic_color_selection[
+                    storedSettings.language
+                  ]
+                }
+              </ThemeText>
+              <Switch
+                color="#111111"
+                value={isAutoOn}
+                onValueChange={onToggleSwitch}
               />
             </View>
-            <CustomInput
-              mode="outlined"
-              style={{ width: "28%" }}
-              label={localization.Size[storedSettings.language]}
-              value={String(size)}
-              onChange={text => setSize(text.nativeEvent.text)}
-              maxLength={6}
-            />
-          </View>
-          <DatePicker
-            title={localization.Purchase_Date[storedSettings.language]}
-            date={purchaseDate}
-            isDatePickerVisible={isDatePickerVisible}
-            setDate={setPurchaseDate}
-            setDatePickerVisibility={setDatePickerVisibility}
-          />
-          <View style={[{ zIndex: 1 }, styles.customWidth]}>
-            <DropDownPicker
-              open={openCollection}
-              value={collection}
-              items={collectionOptions}
-              setOpen={setOpenCollection}
-              setValue={setCollection}
-              multiple={true}
-              theme={colorScheme}
-              // badgeDotColors={CollectionColors}
-              showBadgeDot={false}
-              badgeTextStyle={{ color: "#111111" }}
-              mode="BADGE"
-              listMode="SCROLLVIEW"
-              placeholder={localization.Collection[storedSettings.language]}
-              style={{ borderColor: "#777777" }}
-              dropDownContainerStyle={{ borderColor: "#777777" }}
-            />
-          </View>
 
-          <View style={[[{}, { flexDirection: "row" }, {}]]}>
-            <Icon name="info-circle" size={15} color="#111111" />
-            <ThemeText customStyle={[{ marginHorizontal: 8 }]}>
-              {localization.You_can_add[storedSettings.language]}
-            </ThemeText>
-          </View>
-
-          <View style={[{ flexDirection: "row", alignItems: "center" }]}>
-            <ThemeText>
-              {localization.Automatic_color_selection[storedSettings.language]}
-            </ThemeText>
-            <Switch
-              color="#111111"
-              value={isAutoOn}
-              onValueChange={onToggleSwitch}
-            />
-          </View>
-
-          {!isAutoOn && (
-            <View
-              style={[
-                {
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  borderWidth: 1,
-                  width: "80%",
-                  height: 32,
-                  paddingHorizontal: 20,
-                },
-              ]}
-            >
-              <ThemeText>
-                {localization.Primary_color[storedSettings.language]}
-              </ThemeText>
-              <Pressable
-                onPress={() => {
-                  setVisible(true);
-                  setColorSelection(0);
-                }}
+            {!isAutoOn && (
+              <View
+                style={[
+                  {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderWidth: 1,
+                    width: "80%",
+                    height: 32,
+                    paddingHorizontal: 20,
+                  },
+                ]}
               >
-                <View
-                  style={[
-                    { height: 20, width: 20, borderWidth: 0.2 },
-                    { backgroundColor: colors[0] || "#808080" },
-                  ]}
-                />
-              </Pressable>
-            </View>
-          )}
-          {!isAutoOn && (
-            <View
-              style={[
-                {
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  borderWidth: 1,
-                  width: "80%",
-                  height: 32,
-                  paddingHorizontal: 20,
-                },
-              ]}
-            >
-              <ThemeText>
-                {localization.Secondary_color[storedSettings.language]}
-              </ThemeText>
-              <Pressable
-                onPress={() => {
-                  setVisible(true);
-                  setColorSelection(1);
-                }}
-              >
-                <View
-                  style={[
-                    { height: 20, width: 20, borderWidth: 0.2 },
-                    { backgroundColor: colors[1] || "#808080" },
-                  ]}
-                />
-              </Pressable>
-            </View>
-          )}
-          {!isAutoOn && (
-            <View
-              style={[
-                {
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  borderWidth: 1,
-                  width: "80%",
-                  height: 32,
-                  paddingHorizontal: 20,
-                },
-              ]}
-            >
-              <ThemeText>
-                {localization.Tertiary_color[storedSettings.language]}
-              </ThemeText>
-              <Pressable
-                onPress={() => {
-                  setVisible(true);
-                  setColorSelection(2);
-                }}
-              >
-                <View
-                  style={[
-                    { height: 20, width: 20, borderWidth: 0.2 },
-                    { backgroundColor: colors[2] || "#808080" },
-                  ]}
-                />
-              </Pressable>
-            </View>
-          )}
-
-          {errorsList.length > 0 && (
-            <View>
-              {errorsList.map((error, index) => {
-                return (
-                  <Text key={index} style={[{}]}>
-                    {error}
-                  </Text>
-                );
-              })}
-            </View>
-          )}
-          <View
-            style={[
-              { flexDirection: "row", justifyContent: "center", columnGap: 20 },
-            ]}
-          >
-            <Button mode="outlined" onPress={addItemHandler}>
-              {localization.Save[storedSettings.language]}
-            </Button>
-            {editingIndex && (
-              <Button mode="outlined" onPress={deleteItemHandler}>
-                {localization.Delete[storedSettings.language]}
-              </Button>
+                <ThemeText>
+                  {localization.Primary_color[storedSettings.language]}
+                </ThemeText>
+                <Pressable
+                  onPress={() => {
+                    setVisible(true);
+                    setColorSelection(0);
+                  }}
+                >
+                  <View
+                    style={[
+                      { height: 20, width: 20, borderWidth: 0.2 },
+                      { backgroundColor: colors[0] || "#808080" },
+                    ]}
+                  />
+                </Pressable>
+              </View>
             )}
+            {!isAutoOn && (
+              <View
+                style={[
+                  {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderWidth: 1,
+                    width: "80%",
+                    height: 32,
+                    paddingHorizontal: 20,
+                  },
+                ]}
+              >
+                <ThemeText>
+                  {localization.Secondary_color[storedSettings.language]}
+                </ThemeText>
+                <Pressable
+                  onPress={() => {
+                    setVisible(true);
+                    setColorSelection(1);
+                  }}
+                >
+                  <View
+                    style={[
+                      { height: 20, width: 20, borderWidth: 0.2 },
+                      { backgroundColor: colors[1] || "#808080" },
+                    ]}
+                  />
+                </Pressable>
+              </View>
+            )}
+            {!isAutoOn && (
+              <View
+                style={[
+                  {
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    borderWidth: 1,
+                    width: "80%",
+                    height: 32,
+                    paddingHorizontal: 20,
+                  },
+                ]}
+              >
+                <ThemeText>
+                  {localization.Tertiary_color[storedSettings.language]}
+                </ThemeText>
+                <Pressable
+                  onPress={() => {
+                    setVisible(true);
+                    setColorSelection(2);
+                  }}
+                >
+                  <View
+                    style={[
+                      { height: 20, width: 20, borderWidth: 0.2 },
+                      { backgroundColor: colors[2] || "#808080" },
+                    ]}
+                  />
+                </Pressable>
+              </View>
+            )}
+
+            {errorsList.length > 0 && (
+              <View>
+                {errorsList.map((error, index) => {
+                  return (
+                    <Text key={index} style={[{}]}>
+                      {error}
+                    </Text>
+                  );
+                })}
+              </View>
+            )}
+            <View
+              style={[
+                {
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  columnGap: 20,
+                },
+              ]}
+            >
+              <Button mode="outlined" onPress={addItemHandler}>
+                {localization.Save[storedSettings.language]}
+              </Button>
+              {editingIndex && (
+                <Button mode="outlined" onPress={deleteItemHandler}>
+                  {localization.Delete[storedSettings.language]}
+                </Button>
+              )}
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </ThemeView>
     </>
   );
