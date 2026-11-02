@@ -1,32 +1,3 @@
-export const RandomNamesP1 = [
-  "Wildfire",
-  "Sun Spirit",
-  "Cozy Sweater",
-  "Neon Nights",
-  "Stardust Surfer",
-  "Velvet Breeze",
-  "Classic Shirt",
-  "Elegant Blouse",
-  "Modern Jeans",
-  "Urban Chic",
-  "Casual Cool",
-  "Easy Breezy",
-  "Modern Minimalism",
-  "Relaxed Vibes",
-  "Essential Style",
-  "Casual Vibes",
-  "Trendy Basics",
-  "Casual Chic",
-  "Modern Edge",
-  "Urban Flow",
-  "Stylish Shorts",
-  "Relaxed Hoodie",
-  "Black Jacket",
-  "White T-Shirt",
-  "Blue Jeans",
-  "Gray Sweater",
-  "Red Blouse",
-];
 const seasonList_en = [
   {
     value: "Spring",
@@ -64,28 +35,6 @@ const seasonList_es = [
   },
 ];
 export const seasonList = [seasonList_en, seasonList_es];
-export const fitList = [
-  {
-    value: "Regular Fit",
-    label: "Regular Fit",
-  },
-  {
-    value: "Slim Fit",
-    label: "Slim Fit",
-  },
-  {
-    value: "Oversized Fit",
-    label: "Oversized Fit",
-  },
-  {
-    value: "Relaxed Fit",
-    label: "Relaxed Fit",
-  },
-  {
-    value: "Loose Fit",
-    label: "Loose Fit",
-  },
-];
 export const sizeList = [
   { label: "US", value: "US" },
   { label: "UK", value: "UK" },
