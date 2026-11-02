@@ -12,77 +12,86 @@ import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
 import { ModeScreen } from "../screens/stackNav/ModeScreen";
 import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
 import { EditCategory } from "../screens/stackNav/EditCategory";
+import { Wardrobes } from "../screens/stackNav/Wardrobes";
+import { WardrobeProvider } from "../components/WardrobeSelector";
 export default function Navigator() {
   const Stack = createNativeStackNavigator();
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          animation: "none",
-          contentStyle: { backgroundColor: "#ffffff" },
-        }}
-      >
-        <Stack.Screen
-          name="StackNavHome"
-          component={MyTabs}
-          options={{ headerShown: false, orientation: "portrait" }}
-        />
-        <Stack.Screen
-          name="CollectionForm"
-          component={CollectionForm}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Settings"
-          component={Settings}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ClosetInfo"
-          component={ClosetInfo}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Category"
-          component={Category}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="EditCategory"
-          component={EditCategory}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ModeScreen"
-          component={ModeScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="BulkModeForm"
-          component={BulkModeForm}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ItemSelector"
-          component={ItemSelector}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="CategoryForm"
-          component={CategoryForm}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="ItemForm"
-          component={ItemForm}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="EventLogForm"
-          component={EventLogForm}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <WardrobeProvider>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            animation: "none",
+            contentStyle: { backgroundColor: "#ffffff" },
+          }}
+        >
+          <Stack.Screen
+            name="StackNavHome"
+            component={MyTabs}
+            options={{ headerShown: false, orientation: "portrait" }}
+          />
+          <Stack.Screen
+            name="Wardrobes"
+            component={Wardrobes}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CollectionForm"
+            component={CollectionForm}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Settings"
+            component={Settings}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ClosetInfo"
+            component={ClosetInfo}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Category"
+            component={Category}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EditCategory"
+            component={EditCategory}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ModeScreen"
+            component={ModeScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="BulkModeForm"
+            component={BulkModeForm}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ItemSelector"
+            component={ItemSelector}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CategoryForm"
+            component={CategoryForm}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ItemForm"
+            component={ItemForm}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EventLogForm"
+            component={EventLogForm}
+            options={{ headerShown: false }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </WardrobeProvider>
   );
 }

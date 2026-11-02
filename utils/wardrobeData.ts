@@ -6,7 +6,8 @@ import {
   normalizeCollectionTags,
 } from "./collectionOrder";
 
-export const DATA_FORMAT_VERSION = 1;
+import { normalizeWardrobes, validWardrobeId } from "./wardrobes";
+export const DATA_FORMAT_VERSION = 2;
 const record = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -29,8 +30,8 @@ export function normalizeWardrobe(value: unknown, version?: number): RootState {
   const categories = record(raw.CategoryList);
   const current =
     (version ??
-      Number(raw.formatVersion ?? record(raw._persist).version ?? 0)) >=
-    DATA_FORMAT_VERSION;
+      Number(raw.formatVersion ?? record(raw._persist).version ?? 0)) >= 1;
+  const wardrobes = normalizeWardrobes(items.wardrobes);
   const language = settings.language === (current ? 1 : 2) ? 1 : 0;
   return {
     settings: {
@@ -45,8 +46,15 @@ export function normalizeWardrobe(value: unknown, version?: number): RootState {
           : COLLECTION_SORT_VALUES.CUSTOM,
     },
     itemsList: {
-      items: list(items.items).map(value =>
-        pick<item>(value, [
+      wardrobes,
+      items: list(items.items).map(value => ({
+        wardrobeId: validWardrobeId(
+          wardrobes,
+          typeof record(value).wardrobeId === "string"
+            ? (record(value).wardrobeId as string)
+            : undefined,
+        ),
+        ...pick<item>(value, [
           "id",
           "name",
           "type",
@@ -65,7 +73,7 @@ export function normalizeWardrobe(value: unknown, version?: number): RootState {
           "tertiaryColor",
           "logIds",
         ]),
-      ),
+      })),
       logs: list(items.logs).map(value =>
         pick<logsType>(value, [
           "eventId",

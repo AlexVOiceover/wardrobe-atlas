@@ -1,4 +1,8 @@
-// import { useNavigation } from "@react-navigation/native";
+import {
+  WardrobeSelector,
+  useWardrobeView,
+} from "../../components/WardrobeSelector";
+import { validWardrobeId } from "../../utils/wardrobes";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button, Switch } from "react-native-paper";
 import { useState } from "react";
@@ -17,7 +21,6 @@ import { CustomInput } from "../../components/CustomInput";
 import { RootState } from "../../redux/store";
 import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
 import CustomModal from "../../components/CustomModal";
-// import { getAllSwatches } from "react-native-palette";
 import { getPalette } from "@somesoap/react-native-image-palette";
 import { ThemeView } from "../../components/ThemeView";
 import { ThemeText } from "../../components/ThemeText";
@@ -61,6 +64,11 @@ export const ItemForm = ({
     collectionState,
     getCollectionSortValue(storedSettings.collectionSortValue),
   );
+  const { selected } = useWardrobeView();
+  const wardrobes = useSelector((s: RootState) => s.itemsList.wardrobes);
+  const [wardrobeId, setWardrobeId] = useState<string | undefined>(
+    storedItems ? storedItems.wardrobeId : selected,
+  );
   const [name, setName] = useState(storedItems ? storedItems.name : "");
   const [collection, setCollection] = useState(storedItems?.collection ?? []);
   const [type, setType] = useState(storedItems ? storedItems.type : "");
@@ -101,13 +109,13 @@ export const ItemForm = ({
   const [visible, setVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const combiningTypesData =
-    (selectedCategory ?? storedItems.category) < defaultCategories.length
+    (selectedCategory ?? storedItems?.category) < defaultCategories.length
       ? [
           ...(clothesList[storedSettings.language]?.[
-            selectedCategory ?? storedItems.category
+            selectedCategory ?? storedItems?.category
           ] || []),
           ...(
-            storedCatTypes?.[selectedCategory ?? storedItems.category]
+            storedCatTypes?.[selectedCategory ?? storedItems?.category]
               ?.customTypes || []
           ).map(item => ({
             label: item.label,
@@ -115,7 +123,7 @@ export const ItemForm = ({
           })),
         ]
       : (
-          storedCatTypes?.[selectedCategory ?? storedItems.category]
+          storedCatTypes?.[selectedCategory ?? storedItems?.category]
             ?.customTypes || []
         ).map(item => ({
           label: item.label,
@@ -128,6 +136,12 @@ export const ItemForm = ({
   }
   function addItemHandler() {
     const errors = [];
+    if (wardrobeId && !validWardrobeId(wardrobes, wardrobeId)) {
+      setErrorsList([
+        localization.WardrobeUnavailable[storedSettings.language],
+      ]);
+      return;
+    }
     if (name.length <= 0) {
       errors.push("Please enter item name");
     }
@@ -145,7 +159,8 @@ export const ItemForm = ({
     if (editingIndex) {
       dispatch(
         updateItem({
-          itemIndex: currentIndex,
+          id: editingIndex,
+          wardrobeId: validWardrobeId(wardrobes, wardrobeId),
           name: name,
           collection: collection,
           category: selectedCategory,
@@ -166,6 +181,7 @@ export const ItemForm = ({
     } else {
       dispatch(
         addItem({
+          wardrobeId: validWardrobeId(wardrobes, wardrobeId),
           name: name,
           collection: collection,
           category: selectedCategory,
@@ -332,6 +348,7 @@ export const ItemForm = ({
               : localization.Adding_an_item[storedSettings.language]
           }
         />
+        <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
         <View style={[{ alignItems: "center", rowGap: 8 }]}>
           <View style={{ alignItems: "center", padding: 8 }}>
             <ImageViewer
@@ -377,7 +394,7 @@ export const ItemForm = ({
               />
             </View>
           )}
-          {(selectedCategory ?? storedItems.category) < 2 && (
+          {(selectedCategory ?? storedItems?.category) < 2 && (
             <View
               style={[
                 {
