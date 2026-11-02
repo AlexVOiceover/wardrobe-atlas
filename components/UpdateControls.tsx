@@ -1,4 +1,4 @@
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import { Button } from "react-native-paper";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
@@ -6,11 +6,14 @@ import { useUpdates } from "../hooks/useUpdates";
 import {
   allowUpdateInstallation,
   checkForUpdates,
+  getInstalledVersion,
   resumePendingUpdate,
   type UpdatePhase,
   type UpdateError,
 } from "../utils/updateService";
 import { localization } from "../utils/localization";
+import { captionText, theme } from "../utils/theme";
+import { ThemeText } from "./ThemeText";
 
 const phaseText: Record<UpdatePhase, readonly string[]> = {
   idle: localization.UpdateAutomatic,
@@ -33,6 +36,7 @@ const errorText: Record<UpdateError, readonly string[]> = {
 export function UpdateControls({ settings = false }: { settings?: boolean }) {
   const state = useUpdates();
   const language = useSelector((s: RootState) => s.settings.language);
+  const { versionName } = getInstalledVersion();
   const busy = state.phase === "checking" || state.phase === "downloading";
   if (!settings && (state.phase === "idle" || state.phase === "current"))
     return null;
@@ -41,7 +45,17 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
       ? errorText[state.error || "network"][language]
       : phaseText[state.phase][language];
   return (
-    <View style={{ padding: 8, gap: 6, borderBottomWidth: settings ? 0 : 1 }}>
+    <View
+      style={
+        settings
+          ? { gap: theme.spacing.sm }
+          : {
+              padding: theme.spacing.md,
+              gap: theme.spacing.sm,
+              backgroundColor: theme.colors.surface,
+            }
+      }
+    >
       {settings && (
         <Button
           mode="outlined"
@@ -53,7 +67,10 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
           {localization.CheckForUpdates[language]}
         </Button>
       )}
-      <Text accessibilityLiveRegion="polite" style={{ color: "#111111" }}>
+      <ThemeText
+        accessibilityLiveRegion="polite"
+        customStyle={settings ? captionText : undefined}
+      >
         {text}
         {state.availableVersion && state.phase !== "current"
           ? ` (v${state.availableVersion})`
@@ -61,7 +78,7 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
         {state.phase === "downloading" && state.progress !== undefined
           ? ` ${state.progress}%`
           : ""}
-      </Text>
+      </ThemeText>
       {state.phase === "permission" && (
         <Button
           mode="outlined"
@@ -91,6 +108,12 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
         >
           {localization.TryAgain[language]}
         </Button>
+      )}
+      {settings && (
+        <ThemeText testID="app-version" customStyle={captionText}>
+          {localization.Version[language]}{" "}
+          {versionName === "Development" ? versionName : `v${versionName}`}
+        </ThemeText>
       )}
     </View>
   );

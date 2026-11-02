@@ -7,7 +7,8 @@ import {
   CollectionSortValue,
 } from "../utils/collectionOrder";
 import { EditItemList } from "./EditItemList";
-import { ThemeText } from "./ThemeText";
+import { EmptyState } from "./EmptyState";
+import { theme } from "../utils/theme";
 type Props = {
   collections: CollectionTag[];
   sortValue: CollectionSortValue;
@@ -26,11 +27,7 @@ export const CollectionList = ({
 }: Props) => {
   const isCustomSort = sortValue === COLLECTION_SORT_VALUES.CUSTOM;
   if (collections.length === 0) {
-    return (
-      <View style={styles.emptyState}>
-        <ThemeText>{emptyText}</ThemeText>
-      </View>
-    );
+    return <EmptyState message={emptyText} />;
   }
   return (
     <FlatList
@@ -55,14 +52,22 @@ export const CollectionList = ({
                 onPress={() => onMoveCollection(item.value, "up")}
                 style={styles.reorderButton}
               >
-                <Icon name="arrow-up-bold" size={18} color="#111111" />
+                <Icon
+                  name="arrow-up-bold"
+                  size={18}
+                  color={theme.colors.text}
+                />
               </TouchableOpacity>
               <TouchableOpacity
                 disabled={index === collections.length - 1}
                 onPress={() => onMoveCollection(item.value, "down")}
                 style={styles.reorderButton}
               >
-                <Icon name="arrow-down-bold" size={18} color="#111111" />
+                <Icon
+                  name="arrow-down-bold"
+                  size={18}
+                  color={theme.colors.text}
+                />
               </TouchableOpacity>
             </View>
           )}
@@ -83,30 +88,23 @@ export const CollectionList = ({
 };
 const styles = StyleSheet.create({
   listContent: {
-    paddingBottom: 16,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
   },
   collectionRowCustom: {
-    width: "80%",
-    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    gap: 8,
+    gap: theme.spacing.sm,
   },
-  collectionRowStandard: {
-    width: "80%",
-    alignSelf: "center",
-    marginBottom: 20,
-  },
+  collectionRowStandard: {},
   reorderColumn: {
     width: 32,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
   },
   reorderButton: {
-    width: 24,
-    height: 24,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -119,12 +117,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: "stretch",
     marginBottom: 0,
-  },
-  emptyState: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
-    height: "50%",
   },
 });

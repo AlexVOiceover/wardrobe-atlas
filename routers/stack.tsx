@@ -9,11 +9,12 @@ import { EventLogForm } from "../screens/stackNav/EventLogForm";
 import { CollectionForm } from "../screens/stackNav/CollectionForm";
 import { Settings } from "../screens/stackNav/Settings";
 import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
-import { ModeScreen } from "../screens/stackNav/ModeScreen";
+import { ManageCategories } from "../screens/stackNav/ManageCategories";
 import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
 import { EditCategory } from "../screens/stackNav/EditCategory";
 import { Wardrobes } from "../screens/stackNav/Wardrobes";
 import { WardrobeProvider } from "../components/WardrobeSelector";
+import { theme } from "../utils/theme";
 export default function Navigator() {
   const Stack = createNativeStackNavigator();
   return (
@@ -22,7 +23,7 @@ export default function Navigator() {
         <Stack.Navigator
           screenOptions={{
             animation: "none",
-            contentStyle: { backgroundColor: "#ffffff" },
+            contentStyle: { backgroundColor: theme.colors.background },
           }}
         >
           <Stack.Screen
@@ -61,8 +62,8 @@ export default function Navigator() {
             options={{ headerShown: false }}
           />
           <Stack.Screen
-            name="ModeScreen"
-            component={ModeScreen}
+            name="ManageCategories"
+            component={ManageCategories}
             options={{ headerShown: false }}
           />
           <Stack.Screen

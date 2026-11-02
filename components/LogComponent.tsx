@@ -1,13 +1,16 @@
 import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { Text } from "react-native-paper";
+import { View, Pressable, StyleSheet } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { ItemBox } from "./ItemBox";
+import { ItemBox, garmentSummary } from "./ItemBox";
 import dayjs from "dayjs";
 import { deleteEventLog, deleteLog } from "../redux/itemsSlice";
-import { colors } from "../utils/colors";
 import { ConfirmationDialog } from "./ConfirmationDialog";
+import { GarmentGrid } from "./GarmentGrid";
+import { ThemeText } from "./ThemeText";
+import { localization } from "../utils/localization";
+import { captionText, theme } from "../utils/theme";
 interface LogComponentProps {
   eventName: string;
   eventDate: Date;
@@ -26,6 +29,7 @@ export const LogComponent = ({
 }: LogComponentProps) => {
   const dispatch = useDispatch();
   const itemsState = useSelector((state: RootState) => state.itemsList.items);
+  const language = useSelector((state: RootState) => state.settings.language);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const associatedItems = useMemo(() => {
     return itemsState.filter(item => item.logIds?.some(id => id === eventId));
@@ -40,137 +44,70 @@ export const LogComponent = ({
     setModalEventId(eventId);
   };
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={0.7}
-      style={[styles.container, { backgroundColor: "#ffffff" }]}
-    >
-      <View style={styles.header}>
-        <View style={styles.eventInfo}>
-          <Text variant="titleMedium" style={styles.eventTitle}>
-            {eventName}
-          </Text>
-          <View style={styles.dateTimeRow}>
-            <Text variant="bodySmall" style={styles.dateText}>
-              {dayjs(eventDate).format("DD/MM/YYYY")}
-            </Text>
-            <View style={styles.separator} />
-            <Text variant="bodySmall" style={styles.timeText}>
-              {dayjs(eventDate).format("h:mm A")}
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => setConfirmVisible(true)}
-          style={styles.deleteButton}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={styles.deleteIcon}>✕</Text>
-        </TouchableOpacity>
-      </View>
-
+    <View style={styles.container}>
       <ConfirmationDialog
         visible={confirmVisible}
         setVisible={setConfirmVisible}
         onConfirm={handleDelete}
       />
-
-      <View style={[styles.itemsGrid, { borderColor: "#777777" }]}>
-        {associatedItems.length > 0 ? (
-          associatedItems.map(item => (
-            <View key={`log-item-${item.id}`} style={styles.itemWrapper}>
-              <ItemBox
-                primary={item.primaryColor || colors.white}
-                secondary={item.secondaryColor || colors.white}
-                tertiary={item.tertiaryColor || colors.white}
-                image={item.image}
-                name={item.name}
-                type={item.type}
-                id={item.id}
-                logs={item.logIds || []}
-                addSpace={true}
-              />
-            </View>
-          ))
-        ) : (
-          <Text variant="bodySmall" style={styles.noItemsText}>
-            No items associated with this log.
-          </Text>
-        )}
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={eventName}
+          onPress={handlePress}
+          style={styles.eventInfo}
+        >
+          <ThemeText customStyle={styles.eventTitle}>{eventName}</ThemeText>
+          <ThemeText customStyle={captionText}>
+            {dayjs(eventDate).format("DD/MM/YYYY · h:mm A")}
+          </ThemeText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={localization.Delete[language]}
+          onPress={() => setConfirmVisible(true)}
+          style={styles.deleteButton}
+        >
+          <Icon name="close" size={20} color={theme.colors.muted} />
+        </Pressable>
       </View>
-    </TouchableOpacity>
+      {associatedItems.length > 0 ? (
+        <GarmentGrid
+          garments={associatedItems}
+          renderGarment={garment => <ItemBox {...garmentSummary(garment)} />}
+        />
+      ) : (
+        <ThemeText customStyle={captionText}>
+          {localization.NoLogItems[language]}
+        </ThemeText>
+      )}
+    </View>
   );
 };
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    marginVertical: 8,
-    overflow: "hidden",
+    paddingBottom: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    marginBottom: theme.spacing.sm,
   },
   eventInfo: {
     flex: 1,
+    minHeight: theme.touch,
+    justifyContent: "center",
   },
   eventTitle: {
-    color: "#111111",
-    fontWeight: "bold",
-    textTransform: "capitalize",
-    marginBottom: 2,
-  },
-  dateTimeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  dateText: {
-    color: "#111111",
-  },
-  timeText: {
-    color: "#111111",
-  },
-  separator: {
-    width: 1,
-    height: 10,
-    backgroundColor: "#ffffff",
-    marginHorizontal: 8,
+    fontWeight: "600",
   },
   deleteButton: {
-    backgroundColor: "#ffffff",
-    width: 28,
-    height: 28,
+    width: theme.touch,
+    height: theme.touch,
     justifyContent: "center",
-    alignItems: "center",
-  },
-  deleteIcon: {
-    color: "#111111",
-    fontSize: 14,
-    fontWeight: "900",
-    lineHeight: 18,
-  },
-  itemsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    backgroundColor: "#ffffff", // Subtle tint
-    padding: 10,
-    justifyContent: "flex-start",
-    borderTopWidth: 1,
-    minHeight: 80,
-  },
-  itemWrapper: {
-    width: "100%",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  noItemsText: {
-    width: "100%",
-    textAlign: "center",
-    marginTop: 20,
-    color: "#111111",
+    alignItems: "flex-end",
   },
 });

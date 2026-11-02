@@ -1,0 +1,167 @@
+import React from "react";
+import { act, create, ReactTestRenderer } from "react-test-renderer";
+import { HomeBottom } from "../screens/bottomNav/HomeBottom";
+import { OutfitLog } from "../screens/bottomNav/OutfitLog";
+import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
+import { CategoryForm } from "../screens/stackNav/CategoryForm";
+import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
+import { CollectionForm } from "../screens/stackNav/CollectionForm";
+import { EditCategory } from "../screens/stackNav/EditCategory";
+import { EventLogForm } from "../screens/stackNav/EventLogForm";
+import { ItemForm } from "../screens/stackNav/ItemForm";
+import { ItemSelector } from "../screens/stackNav/ItemSelector";
+import { Settings } from "../screens/stackNav/Settings";
+import { Wardrobes } from "../screens/stackNav/Wardrobes";
+import { WardrobeProvider } from "../components/WardrobeSelector";
+import { closetInfo, localization } from "../utils/localization";
+
+const garment = {
+  id: "shirt",
+  name: "Linen shirt",
+  type: "Shirt",
+  image: "",
+  category: 0,
+  collection: ["summer"],
+  logIds: ["dinner"],
+  primaryColor: "#123456",
+};
+const mockState: any = {
+  settings: { language: 1, name: "", enableHeatMap: true },
+  CategoryList: { Categories: [], CategoryCustomTypes: [] },
+  itemsList: {
+    wardrobes: [{ id: "home", name: "Casa" }],
+    items: [garment, { ...garment, id: "coat", name: "Coat", collection: [] }],
+    collectionTags: [{ label: "Verano", value: "summer", isOpen: true }],
+    logs: [
+      {
+        eventId: "dinner",
+        eventName: "Cena",
+        eventDate: JSON.stringify(new Date()),
+      },
+    ],
+  },
+};
+const mockNavigation = {
+  navigate: jest.fn(),
+  goBack: jest.fn(),
+  popToTop: jest.fn(),
+  dispatch: jest.fn(),
+};
+jest.mock("react-redux", () => ({
+  useSelector: (select: Function) => select(mockState),
+  useDispatch: () => jest.fn(),
+}));
+jest.mock("@react-navigation/native", () => ({
+  useNavigation: () => mockNavigation,
+  CommonActions: { goBack: jest.fn() },
+}));
+jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
+jest.mock("react-native-vector-icons/MaterialCommunityIcons", () => "Icon");
+jest.mock("react-native-paper", () => ({
+  Button: "Button",
+  Dialog: Object.assign(() => null, {
+    Title: "DialogTitle",
+    Content: "DialogContent",
+    Actions: "DialogActions",
+  }),
+  HelperText: "HelperText",
+  Portal: "Portal",
+  RadioButton: { Group: "RadioGroup", Item: "RadioItem" },
+  Searchbar: "Searchbar",
+  Snackbar: "Snackbar",
+  Switch: "Switch",
+  TextInput: Object.assign(() => null, { Icon: "InputIcon" }),
+}));
+jest.mock("nanoid", () => ({ nanoid: () => "new" }));
+jest.mock("react-native-dropdown-picker", () => "Dropdown");
+jest.mock("react-native-image-picker", () => ({}));
+jest.mock("@somesoap/react-native-image-palette", () => ({}));
+jest.mock("react-native-blob-util", () => ({}));
+jest.mock("@bam.tech/react-native-image-resizer", () => ({}));
+jest.mock("react-native-modal-datetime-picker", () => "DateModal");
+jest.mock("react-native-wheel-color-picker", () => "ColorPicker");
+jest.mock("../utils/exportStoreToJson", () => ({
+  exportStoreToJson: jest.fn(),
+}));
+jest.mock("../utils/importStoreFromJson", () => ({
+  importStoreFromJson: jest.fn(),
+}));
+jest.mock("../components/UpdateControls", () => ({
+  UpdateControls: "UpdateControls",
+}));
+(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+
+// Words that differ from their Spanish translation, so a match means a missing translation.
+const english = [
+  ...Object.values(localization)
+    .filter(([en, es]) => en !== es)
+    .map(([en]) => en),
+  ...closetInfo[0],
+];
+const visibleText = (tree: ReactTestRenderer) => {
+  const texts: string[] = [];
+  const visit = (node: any) => {
+    if (typeof node === "string") texts.push(node);
+    else if (Array.isArray(node)) node.forEach(visit);
+    else if (node?.children) node.children.forEach(visit);
+  };
+  visit(tree.toJSON());
+  return texts;
+};
+
+const navProps = { navigation: mockNavigation };
+test.each<[string, React.ReactElement]>([
+  ["Closet", <HomeBottom />],
+  ["Outfits", <OutfitLog />],
+  ["Closet info", <ClosetInfo />],
+  ["Select items", <ItemSelector />],
+  ["Settings", <Settings />],
+  ["Wardrobes", <Wardrobes />],
+  ["Collections", <CollectionForm />],
+  ["Category form", <CategoryForm {...navProps} />],
+  [
+    "Edit category",
+    <EditCategory {...navProps} route={{ params: { categoryIndex: 0 } }} />,
+  ],
+  [
+    "Event form",
+    <EventLogForm {...navProps} route={{ params: { selectedIDs: [] } }} />,
+  ],
+  [
+    "Bulk form",
+    <BulkModeForm {...navProps} route={{ params: { selectedCategory: 0 } }} />,
+  ],
+  [
+    "Item form",
+    <ItemForm {...navProps} route={{ params: { selectedCategory: 0 } }} />,
+  ],
+])("%s renders in Spanish without English labels", async (_name, screen) => {
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(<WardrobeProvider>{screen}</WardrobeProvider>);
+  });
+  const leaked = visibleText(tree!).filter(text => english.includes(text));
+  expect(leaked).toEqual([]);
+  await act(async () => tree!.unmount());
+});
+
+test("Closet shows collections as headings, garments once each and the add action", async () => {
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <HomeBottom />
+      </WardrobeProvider>,
+    );
+  });
+  const text = visibleText(tree!);
+  expect(text).toContain("Verano");
+  expect(text.filter(value => value === "Linen shirt")).toHaveLength(1);
+  expect(text.filter(value => value === "Coat")).toHaveLength(1);
+  const add = tree!.root.find(
+    x => x.props.accessibilityLabel === "Añadir prenda" && !!x.props.onPress,
+  );
+  await act(async () => add.props.onPress());
+  expect(mockNavigation.navigate).toHaveBeenCalledWith("Category");
+  await act(async () => tree!.unmount());
+});

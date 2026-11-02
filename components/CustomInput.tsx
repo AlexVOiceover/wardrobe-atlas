@@ -1,5 +1,6 @@
 import { StyleSheet, TextInput, View } from "react-native";
 import { TextInput as TextInput2, TextInputProps } from "react-native-paper";
+import { theme } from "../utils/theme";
 export interface CustomInputProps extends TextInputProps {
   left?: React.ReactElement;
   right?: React.ReactElement;
@@ -17,7 +18,7 @@ export const CustomInput = ({
     theme={{
       roundness: 0,
       colors: {
-        background: "#ffffff",
+        background: theme.colors.background,
       },
     }}
     {...props}
@@ -26,7 +27,7 @@ export const CustomInput = ({
         {left && <View style={styles.customLeft}>{left}</View>}
         <TextInput
           {...inputProps}
-          style={[inputProps.style, { flex: 1, color: "#111111" }]}
+          style={[inputProps.style, { flex: 1, color: theme.colors.text }]}
         />
         {right && <View style={styles.customRight}>{right}</View>}
       </View>

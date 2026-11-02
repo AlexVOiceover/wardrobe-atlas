@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
+import Icon from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
 import {
@@ -10,8 +11,11 @@ import {
 } from "../../redux/itemsSlice";
 import { wardrobeNameError } from "../../utils/wardrobes";
 import { localization as l } from "../../utils/localization";
-import { BackButton } from "../../components/BackButton";
+import { theme } from "../../utils/theme";
+import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
+import { FormErrors } from "../../components/FormErrors";
+import { ListRow } from "../../components/ListRow";
 export function Wardrobes() {
   const { wardrobes, items } = useSelector((s: RootState) => s.itemsList);
   const { language } = useSelector((s: RootState) => s.settings);
@@ -41,49 +45,67 @@ export function Wardrobes() {
   };
   return (
     <ThemeView>
-      <BackButton pageTitle={l.Wardrobes[language]} />
+      <PageHeader title={l.Wardrobes[language]} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        contentContainerStyle={styles.content}
       >
         {wardrobes.map(w => (
-          <View key={w.id} style={{ borderWidth: 1, padding: 8 }}>
-            <Text>{w.name}</Text>
-            <Text>
-              {items.filter(item => item.wardrobeId === w.id).length}{" "}
-              {l.GarmentRecords[language]}
-            </Text>
-            <Button
-              onPress={() => {
-                setEditing(w.id);
-                setName(w.name);
-                setError("");
-              }}
-            >
-              {l.Edit[language]}
-            </Button>
-            <Button
-              onPress={() =>
-                Alert.alert(
-                  l.Delete[language] + ": " + w.name,
-                  l.DeleteWardrobeMessage[language],
-                  [
-                    { text: l.Cancel[language], style: "cancel" },
-                    {
-                      text: l.Delete[language],
-                      style: "destructive",
-                      onPress: () => {
-                        dispatch(deleteWardrobe({ id: w.id }));
-                        if (editing === w.id) cancel();
-                      },
-                    },
-                  ],
-                )
-              }
-            >
-              {l.Delete[language]}
-            </Button>
-          </View>
+          <ListRow
+            key={w.id}
+            title={w.name}
+            subtitle={`${
+              items.filter(item => item.wardrobeId === w.id).length
+            } ${l.GarmentRecords[language]}`}
+            right={
+              <View style={styles.actions}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${l.Edit[language]}: ${w.name}`}
+                  style={styles.action}
+                  onPress={() => {
+                    setEditing(w.id);
+                    setName(w.name);
+                    setError("");
+                  }}
+                >
+                  <Icon
+                    name="create-outline"
+                    size={22}
+                    color={theme.colors.text}
+                  />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${l.Delete[language]}: ${w.name}`}
+                  style={styles.action}
+                  onPress={() =>
+                    Alert.alert(
+                      l.Delete[language] + ": " + w.name,
+                      l.DeleteWardrobeMessage[language],
+                      [
+                        { text: l.Cancel[language], style: "cancel" },
+                        {
+                          text: l.Delete[language],
+                          style: "destructive",
+                          onPress: () => {
+                            dispatch(deleteWardrobe({ id: w.id }));
+                            if (editing === w.id) cancel();
+                          },
+                        },
+                      ],
+                    )
+                  }
+                >
+                  <Icon
+                    name="trash-outline"
+                    size={22}
+                    color={theme.colors.danger}
+                  />
+                </Pressable>
+              </View>
+            }
+          />
         ))}
         {editing === null ? (
           <Button
@@ -96,15 +118,18 @@ export function Wardrobes() {
             {l.AddWardrobe[language]}
           </Button>
         ) : (
-          <View style={{ gap: 8 }}>
+          <View style={styles.form}>
             <TextInput
+              mode="outlined"
               label={l.Name[language]}
               value={name}
               onChangeText={setName}
               autoFocus
             />
-            {!!error && <Text accessibilityRole="alert">{error}</Text>}
-            <Button onPress={save}>{l.Save[language]}</Button>
+            <FormErrors errors={error ? [error] : []} />
+            <Button mode="contained" onPress={save}>
+              {l.Save[language]}
+            </Button>
             <Button onPress={cancel}>{l.Cancel[language]}</Button>
           </View>
         )}
@@ -112,3 +137,21 @@ export function Wardrobes() {
     </ThemeView>
   );
 }
+const styles = StyleSheet.create({
+  content: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  actions: {
+    flexDirection: "row",
+  },
+  action: {
+    width: theme.touch,
+    height: theme.touch,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  form: {
+    gap: theme.spacing.sm,
+  },
+});

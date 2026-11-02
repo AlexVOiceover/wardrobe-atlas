@@ -2,6 +2,7 @@ import { ReactElement } from "react";
 import { Button, Dialog, Portal } from "react-native-paper";
 import { localization } from "../utils/localization";
 import { useSelector } from "react-redux";
+import { theme } from "../utils/theme";
 import { RootState } from "../redux/store";
 const CustomModal = ({
   setVisible,
@@ -29,16 +30,16 @@ const CustomModal = ({
         style={{
           minHeight: minHeight,
           maxHeight: maxHeight,
-          backgroundColor: "#ffffff",
+          backgroundColor: theme.colors.background,
+          borderRadius: theme.radius.sm,
         }}
       >
         {label && (
           <Dialog.Title
             style={{
-              color: "#111111",
-              textAlign: "center",
-              fontSize: 20,
-              fontWeight: "bold",
+              color: theme.colors.text,
+              fontSize: theme.type.title,
+              fontWeight: "600",
               paddingHorizontal: 10,
               marginHorizontal: 0,
             }}

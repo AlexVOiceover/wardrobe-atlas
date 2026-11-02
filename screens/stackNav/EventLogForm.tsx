@@ -1,16 +1,17 @@
-import { StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
-import { BackButton } from "../../components/BackButton";
+import { PageHeader } from "../../components/PageHeader";
 import { CustomInput } from "../../components/CustomInput";
 import { useState } from "react";
 import { DatePicker } from "../../components/DatePicker";
 import { useDispatch, useSelector } from "react-redux";
 import { addEventLog, addLog } from "../../redux/itemsSlice";
 import { nanoid } from "nanoid";
-import { CommonActions } from "@react-navigation/native";
 import { Button } from "react-native-paper";
 import { localization } from "../../utils/localization";
 import { RootState } from "../../redux/store";
+import { FormErrors } from "../../components/FormErrors";
+import { theme } from "../../utils/theme";
 export const EventLogForm = ({
   navigation,
   route,
@@ -30,10 +31,10 @@ export const EventLogForm = ({
     const generatedId = nanoid(); // event Id
     const errors = [];
     if (eventName.length <= 0) {
-      errors.push("Please enter a name for this event");
+      errors.push(localization.EventNameRequired[storedSettings.language]);
     }
     if (eventName.length > 20) {
-      errors.push("Please enter a name within 20 characters");
+      errors.push(localization.NameTooLong[storedSettings.language]);
     }
     if (errors.length > 0) {
       setErrorsList(errors);
@@ -52,77 +53,49 @@ export const EventLogForm = ({
     selectedIDs.forEach((id: string) => {
       dispatch(addLog({ selectedId: id, logId: generatedId }));
     });
-    navigation.popToTop("Category");
-    navigation.dispatch(CommonActions.goBack());
+    navigation.popToTop();
   }
   return (
     <ThemeView>
-      <>
-        <BackButton
-          pageTitle={localization.EventInfo[storedSettings.language]}
+      <PageHeader title={localization.EventInfo[storedSettings.language]} />
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.form}
+      >
+        <CustomInput
+          mode="outlined"
+          textContentType="name"
+          label={localization.EventName[storedSettings.language]}
+          value={eventName}
+          onChange={text => setEventName(text.nativeEvent.text)}
         />
-        <View style={[{ alignItems: "center", rowGap: 12, marginTop: 16 }]}>
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            label={localization.EventName[storedSettings.language]}
-            value={eventName}
-            onChange={text => setEventName(text.nativeEvent.text)}
-            style={[
-              { marginBottom: 20 },
-              [
-                styles.customWidth,
-                {
-                  textAlign: "left",
-                },
-              ],
-            ]}
-          />
-          <DatePicker
-            title={localization.EventDate[storedSettings.language]}
-            type="both"
-            date={eventDate}
-            isDatePickerVisible={isDatePickerVisible}
-            setDate={setEventDate}
-            setDatePickerVisibility={setDatePickerVisibility}
-          />
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            style={[
-              styles.customWidth,
-              {
-                textAlign: "left",
-              },
-            ]}
-            textArea={true}
-            label={localization.Additional_notes[storedSettings.language]}
-            value={additionalNotes}
-            onChange={text => setAdditionalNotes(text.nativeEvent.text)}
-          />
-          {errorsList.length > 0 && (
-            <View>
-              {errorsList.map((error, index) => {
-                return (
-                  <Text key={index} style={[{}]}>
-                    {error}
-                  </Text>
-                );
-              })}
-            </View>
-          )}
-          <Button
-            // className="mb-5"
-            mode="outlined"
-            onPress={addEventHandler}
-          >
-            {localization.Save[storedSettings.language]}
-          </Button>
-        </View>
-      </>
+        <DatePicker
+          title={localization.EventDate[storedSettings.language]}
+          type="both"
+          date={eventDate}
+          isDatePickerVisible={isDatePickerVisible}
+          setDate={setEventDate}
+          setDatePickerVisibility={setDatePickerVisibility}
+        />
+        <CustomInput
+          mode="outlined"
+          textContentType="name"
+          textArea={true}
+          label={localization.Additional_notes[storedSettings.language]}
+          value={additionalNotes}
+          onChange={text => setAdditionalNotes(text.nativeEvent.text)}
+        />
+        <FormErrors errors={errorsList} />
+        <Button mode="contained" onPress={addEventHandler}>
+          {localization.Save[storedSettings.language]}
+        </Button>
+      </ScrollView>
     </ThemeView>
   );
 };
 const styles = StyleSheet.create({
-  customWidth: { width: "80%" },
+  form: {
+    padding: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
 });

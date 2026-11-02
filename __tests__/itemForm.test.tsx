@@ -18,21 +18,18 @@ jest.mock("react-redux", () => ({
   useDispatch: () => mockDispatch,
 }));
 jest.mock("nanoid", () => ({ nanoid: () => "new" }));
+jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 jest.mock("react-native-paper", () => ({ Button: "Button", Switch: "Switch" }));
 jest.mock("react-native-dropdown-picker", () => "Dropdown");
-jest.mock("react-native-vector-icons/FontAwesome5", () => "Icon");
 jest.mock("react-native-image-picker", () => ({}));
 jest.mock("@somesoap/react-native-image-palette", () => ({}));
 jest.mock("react-native-blob-util", () => ({}));
 jest.mock("@bam.tech/react-native-image-resizer", () => ({}));
-jest.mock("@react-navigation/native", () => ({
-  CommonActions: { goBack: () => ({ type: "GO_BACK" }) },
-}));
 jest.mock("../components/WardrobeSelector", () => ({
   WardrobeSelector: "WardrobeSelector",
   useWardrobeView: () => ({ selected: "home" }),
 }));
-jest.mock("../components/BackButton", () => ({ BackButton: "BackButton" }));
+jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/ColorModal", () => "ColorModal");
 jest.mock("../components/CustomModal", () => "CustomModal");
@@ -47,12 +44,14 @@ jest.mock("../screens/stackNav/Category", () => ({
 
 beforeEach(() => {
   mockDispatch.mockClear();
+  navigation.popToTop.mockClear();
+  navigation.dispatch.mockClear();
   mockState.itemsList.items = [];
 });
 
+const navigation = { popToTop: jest.fn(), dispatch: jest.fn() };
 function render(editingIndex?: string) {
   let tree: ReactTestRenderer;
-  const navigation = { popToTop: jest.fn(), dispatch: jest.fn() };
   act(() => {
     tree = create(
       <ItemForm
@@ -85,9 +84,6 @@ test("simplified form keeps colors and Save inside a bounded scroll area with us
     .findAllByType("Dropdown" as any)
     .forEach(d => expect(d.props.listMode).toBe("MODAL"));
   expect(
-    tree.root.findAllByType("Icon" as any).some(i => i.props.name === "dice"),
-  ).toBe(false);
-  expect(
     scroll.findAll(node => node.props.children === "Tertiary color").length,
   ).toBeGreaterThan(0);
 });
@@ -108,6 +104,8 @@ test("new item saves typed name, chosen type and wardrobe without generated name
       .find(b => b.props.children === "Save")!
       .props.onPress(),
   );
+  expect(navigation.popToTop).toHaveBeenCalledTimes(1);
+  expect(navigation.dispatch).not.toHaveBeenCalled();
   expect(mockDispatch).toHaveBeenCalledWith(
     expect.objectContaining({
       type: "itemsList/addItem",

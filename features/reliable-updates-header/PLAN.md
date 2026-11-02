@@ -3,7 +3,7 @@
 Status: Owner explicitly requested implementation and automatic update delivery on 2026-11-02. Include the previously unmerged core cleanup; publish after checks pass. Future requested app changes should be delivered through the in-app update route unless review-only work is requested.
 
 ## Contract
-- A shared header on every screen shows Wardrobe Atlas and the installed Android package version. Remove the welcome greeting and its unused strings.
+- A shared header on every screen shows Wardrobe Atlas and the installed Android package version. Superseded by the [UI first pass](../ui-first-pass/PLAN.md): the version now lives in Settings. Remove the welcome greeting and its unused strings.
 - Automatic checks on launch, resume and periodically while foregrounded; manual Settings check bypasses cooldown. Share one in-flight operation.
 - Show checking/downloading/ready/permission/error/current status in English and Spanish. No OS reminders or notification system.
 - Verify downloaded size/hash, retain a verified cached APK across the install-permission round trip, and resume from Android settings. Do not immediately reopen the installer after cancellation.

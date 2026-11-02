@@ -4,27 +4,20 @@ import {
 } from "../../components/WardrobeSelector";
 import { validWardrobeId } from "../../utils/wardrobes";
 import { Button } from "react-native-paper";
-import { BackButton } from "../../components/BackButton";
+import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
 import { CustomInput } from "../../components/CustomInput";
-import {
-  Text,
-  View,
-  StyleSheet,
-  ScrollView,
-  Keyboard,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Keyboard, Alert } from "react-native";
 import { RootState } from "../../redux/store";
 import { useDispatch, useSelector } from "react-redux";
 import React, { useState, useMemo } from "react";
 import { ThemeText } from "../../components/ThemeText";
-import Icon from "react-native-vector-icons/FontAwesome5";
+import { FormErrors } from "../../components/FormErrors";
 import { handleNumberChange } from "../../utils/validators";
 import { addItem } from "../../redux/itemsSlice";
 import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
-import { CommonActions } from "@react-navigation/native";
 import { clothesList, localization } from "../../utils/localization";
+import { captionText, pickerStyle, theme } from "../../utils/theme";
 import { defaultCategories } from "./Category";
 import { launchImageLibrary, launchCamera } from "react-native-image-picker";
 import ReactNativeBlobUtil from "react-native-blob-util";
@@ -121,12 +114,11 @@ export const BulkModeForm = ({
         );
       }
       navigation.popToTop();
-      navigation.dispatch(CommonActions.goBack());
     } catch (error) {
       console.error("Bulk item creation error:", error);
       Alert.alert(
-        "Error",
-        `Something went wrong while processing images: ${error}`,
+        localization.ErrorTitle[language],
+        `${localization.ImagesError[language]}: ${error}`,
       );
     }
   };
@@ -152,7 +144,10 @@ export const BulkModeForm = ({
           const result = await launchCamera({ mediaType: "photo" });
           if (result.didCancel) break;
           if (result.errorCode) {
-            Alert.alert("Camera Error", result.errorMessage);
+            Alert.alert(
+              localization.CameraError[language],
+              result.errorMessage,
+            );
             break;
           }
           if (result.assets?.[0]?.uri) {
@@ -176,9 +171,9 @@ export const BulkModeForm = ({
       return;
     }
     if (prefix.trim().length <= 0) {
-      errors.push("Please enter item prefix");
+      errors.push(localization.PrefixRequired[language]);
     } else if (prefix.length > 20) {
-      errors.push("Please enter a name within 20 characters");
+      errors.push(localization.NameTooLong[language]);
     }
     if (errors.length > 0) {
       setErrorsList(errors);
@@ -189,7 +184,7 @@ export const BulkModeForm = ({
   };
   return (
     <ThemeView>
-      <BackButton pageTitle={localization.addMultiItems[language]} />
+      <PageHeader title={localization.addMultiItems[language]} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -200,14 +195,13 @@ export const BulkModeForm = ({
           <CustomInput
             mode="outlined"
             textContentType="name"
-            style={[styles.input, { textAlign: "left" }]}
             label={localization.Prefix[language]}
             value={prefix}
             onChangeText={setPrefix}
           />
 
           {combiningTypesData?.length > 0 && (
-            <View style={[styles.dropdownContainer, { zIndex: 2 }]}>
+            <View style={{ zIndex: 2 }}>
               <DropDownPicker
                 open={openType}
                 value={type}
@@ -217,14 +211,14 @@ export const BulkModeForm = ({
                 mode="SIMPLE"
                 listMode="MODAL"
                 placeholder={localization.Type[language]}
-                style={styles.picker}
-                dropDownContainerStyle={styles.pickerDropdown}
+                style={pickerStyle}
+                dropDownContainerStyle={pickerStyle}
                 theme={colorScheme}
               />
             </View>
           )}
 
-          <View style={[styles.dropdownContainer, { zIndex: 1 }]}>
+          <View style={{ zIndex: 1 }}>
             <DropDownPicker
               open={openCollection}
               value={collection}
@@ -234,12 +228,12 @@ export const BulkModeForm = ({
               multiple={true}
               theme={colorScheme}
               showBadgeDot={false}
-              badgeTextStyle={{ color: "#111111" }}
+              badgeTextStyle={{ color: theme.colors.text }}
               mode="BADGE"
               listMode="SCROLLVIEW"
               placeholder={localization.Collection[language]}
-              style={styles.picker}
-              dropDownContainerStyle={styles.pickerDropdown}
+              style={pickerStyle}
+              dropDownContainerStyle={pickerStyle}
             />
           </View>
 
@@ -251,40 +245,21 @@ export const BulkModeForm = ({
               handleNumberChange(() => setImageNum(Number(text)), text, 0, 30)
             }
             keyboardType="numeric"
-            style={[styles.input, { zIndex: 0 }]}
+            style={{ zIndex: 0 }}
           />
 
-          <View style={[styles.infoRow, { flexDirection: "row" }]}>
-            <Icon name="info-circle" size={15} color="#111111" />
-            <ThemeText customStyle={styles.infoText}>
-              {localization.bulkInfo[language]}
-            </ThemeText>
-          </View>
+          <ThemeText customStyle={captionText}>
+            {localization.bulkInfo[language]}
+          </ThemeText>
 
-          {errorsList.length > 0 && (
-            <View style={styles.errorContainer}>
-              {errorsList.map((error, index) => (
-                <Text key={index} style={styles.errorText}>
-                  {error}
-                </Text>
-              ))}
-            </View>
-          )}
+          <FormErrors errors={errorsList} />
 
           <View style={styles.buttonGroup}>
-            <Button
-              style={styles.actionButton}
-              mode="outlined"
-              onPress={() => addItemHandler(0)}
-            >
+            <Button mode="contained" onPress={() => addItemHandler(0)}>
               {localization.startLocalImages[language]}
             </Button>
 
-            <Button
-              style={styles.actionButton}
-              mode="outlined"
-              onPress={() => addItemHandler(1)}
-            >
+            <Button mode="outlined" onPress={() => addItemHandler(1)}>
               {localization.startWCamera[language]}
             </Button>
           </View>
@@ -295,48 +270,13 @@ export const BulkModeForm = ({
 };
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingBottom: 40,
+    padding: theme.spacing.md,
+    gap: theme.spacing.md,
   },
   formContainer: {
-    alignItems: "center",
-    gap: 20,
-    marginTop: 10,
-  },
-  input: {
-    width: "80%",
-  },
-  dropdownContainer: {
-    width: "80%",
-  },
-  picker: {
-    borderColor: "#777777",
-  },
-  pickerDropdown: {
-    borderColor: "#777777",
-  },
-  infoRow: {
-    width: "80%",
-    alignItems: "center",
-  },
-  infoText: {
-    fontSize: 12,
-    marginHorizontal: 8,
-  },
-  errorContainer: {
-    width: "80%",
-    alignItems: "center",
-  },
-  errorText: {
-    color: "#111111",
-    fontSize: 14,
-    marginBottom: 4,
+    gap: theme.spacing.md,
   },
   buttonGroup: {
-    width: "80%",
-    gap: 12,
-    marginTop: 10,
-  },
-  actionButton: {
-    paddingVertical: 4,
+    gap: theme.spacing.sm,
   },
 });

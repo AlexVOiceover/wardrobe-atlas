@@ -12,3 +12,4 @@
 Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility and acceptance checks. Requested app changes are delivered through verified main Releases unless review-only work is requested.
 
 - [Reliable updates and version header](reliable-updates-header/PLAN.md)
+- [UI first pass](ui-first-pass/PLAN.md)

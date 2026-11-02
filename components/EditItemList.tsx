@@ -15,11 +15,12 @@ import {
   itemRefresher,
   updateCollection,
 } from "../redux/itemsSlice";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import Icon from "react-native-vector-icons/Ionicons";
 import {
   changeCategoryTypeByIndex,
   delCategoryTypeByIndex,
 } from "../redux/categoriesSlice";
+import { theme } from "../utils/theme";
 export const EditItemList = ({
   item,
   setRefresh,
@@ -49,9 +50,7 @@ export const EditItemList = ({
   const dispatch = useDispatch();
   const [newNameInput, setNewNameInput] = useState(item.label || "");
   return (
-    <View
-      style={[styles.container, containerStyle, { backgroundColor: "#ffffff" }]}
-    >
+    <View style={[styles.container, containerStyle]}>
       {enableEditing ? (
         <View style={styles.inputWrapper}>
           <CustomInput
@@ -63,9 +62,7 @@ export const EditItemList = ({
           />
         </View>
       ) : (
-        <ThemeText customStyle={[styles.itemLabel, { color: "#111111" }]}>
-          {item.label}
-        </ThemeText>
+        <ThemeText customStyle={styles.itemLabel}>{item.label}</ThemeText>
       )}
 
       {(currentIndex ?? 0) >= (ignoreNum ?? 0) && (
@@ -103,9 +100,9 @@ export const EditItemList = ({
             }}
           >
             <Icon
-              name={enableEditing ? "check-bold" : "note-edit"}
-              size={25}
-              color="#111111"
+              name={enableEditing ? "checkmark" : "create-outline"}
+              size={22}
+              color={theme.colors.text}
             />
           </TouchableOpacity>
           {!enableEditing && (
@@ -126,7 +123,11 @@ export const EditItemList = ({
                 setRefresh(prev => !prev);
               }}
             >
-              <Icon name="delete" size={30} color="#111111" />
+              <Icon
+                name="trash-outline"
+                size={22}
+                color={theme.colors.danger}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -136,53 +137,30 @@ export const EditItemList = ({
 };
 const styles = StyleSheet.create({
   container: {
-    width: "80%",
-    minHeight: 59,
-    alignSelf: "center",
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#777777",
+    width: "100%",
+    minHeight: 56,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   inputWrapper: {
     flex: 1,
-    marginLeft: 20,
-    marginRight: 8,
+    marginRight: theme.spacing.sm,
   },
   editInput: {
     height: 40,
   },
   itemLabel: {
-    fontWeight: "700",
-    marginLeft: 20,
     flex: 1,
-  },
-  paletteWrapper: {
-    marginRight: 8,
-  },
-  paletteButton: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconButton: {
-    borderColor: "#777777",
-    borderWidth: 2,
-    borderStyle: "solid",
-  },
-  iconImage: {
-    width: 28,
-    height: 28,
   },
   actionsRow: {
     flexDirection: "row",
   },
   actionButton: {
-    width: 64,
-    minHeight: 59,
+    width: theme.touch,
+    minHeight: theme.touch,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",

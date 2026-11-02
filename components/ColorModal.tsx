@@ -96,7 +96,7 @@ const ColorModal = ({
           style={[{ margin: 8 }]}
         />
         <HelperText type="error" visible={inputValue.length > 0 && !isValidHex}>
-          Enter a valid HEX color like #D30047 or #F00.
+          {localization.InvalidHex[storedSettings.language]}
         </HelperText>
         <Button
           mode="outlined"

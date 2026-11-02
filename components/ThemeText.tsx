@@ -1,13 +1,21 @@
 import { ReactNode } from "react";
-import { Text, StyleProp, TextStyle } from "react-native";
+import { Text, StyleProp, TextProps, TextStyle } from "react-native";
+import { theme } from "../utils/theme";
 export const ThemeText = ({
   children,
   customStyle,
-}: {
+  ...props
+}: TextProps & {
   children?: ReactNode;
   customStyle?: StyleProp<TextStyle>;
 }) => (
-  <Text style={[{ color: "#111111", fontSize: 16 }, customStyle]}>
+  <Text
+    {...props}
+    style={[
+      { color: theme.colors.text, fontSize: theme.type.body },
+      customStyle,
+    ]}
+  >
     {children}
   </Text>
 );

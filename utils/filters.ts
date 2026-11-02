@@ -194,6 +194,19 @@ export function HomeFilter(
   }
 }
 
+export function activeFilterCount(filters: {
+  seasonFilter: string;
+  categoriesFilter: unknown[];
+  TypeFilter: unknown[];
+  colorFilter: unknown[];
+}) {
+  return (
+    (filters.seasonFilter ? 1 : 0) +
+    filters.categoriesFilter.length +
+    filters.TypeFilter.length +
+    filters.colorFilter.length
+  );
+}
 export function filterCollectionsBySearch(array: item[][], search: string) {
   if (!search) return array;
   const searchLower = search.toLowerCase();

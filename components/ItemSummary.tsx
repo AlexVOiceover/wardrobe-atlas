@@ -2,8 +2,11 @@ import { localization } from "../utils/localization";
 import useHeatmap from "../hooks/useHeatmap";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
-import { Image, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import type { ItemSummaryProps } from "./ItemBox";
+import { captionText, theme } from "../utils/theme";
+import { ThemeText } from "./ThemeText";
 export function ItemSummary({
   image,
   name,
@@ -16,28 +19,70 @@ export function ItemSummary({
   const recency = useHeatmap(logs || []);
   const language = useSelector((s: RootState) => s.settings.language);
   const showRecency = useSelector((s: RootState) => s.settings.enableHeatMap);
+  const swatches = [primary, secondary, tertiary].filter(Boolean);
   return (
-    <View style={{ gap: 4 }}>
-      {image !== "" && (
+    <View style={styles.card}>
+      {image ? (
         <Image
           accessibilityLabel={name}
           source={{ uri: `data:image/*;base64,${image}` }}
-          style={{ width: 112, height: 112, resizeMode: "contain" }}
+          style={styles.photo}
         />
+      ) : (
+        <View style={[styles.photo, styles.placeholder]}>
+          <Icon name="shirt-outline" size={32} color={theme.colors.muted} />
+        </View>
       )}
-      <Text style={{ color: "#111111" }}>{name}</Text>
-      <Text style={{ color: "#111111" }}>{type}</Text>
-      <Text style={{ color: "#111111" }}>
-        {[primary, secondary, tertiary].filter(Boolean).join(" / ")}
-      </Text>
-      {logs && (
-        <Text style={{ color: "#111111" }}>
-          {localization.Uses[language]}: {logs.length}
-        </Text>
-      )}
+      <ThemeText customStyle={styles.name}>{name}</ThemeText>
+      {!!type && <ThemeText customStyle={captionText}>{type}</ThemeText>}
+      <View style={styles.meta}>
+        {swatches.map((color, index) => (
+          <View
+            key={index}
+            style={[styles.swatch, { backgroundColor: color }]}
+          />
+        ))}
+        {logs && (
+          <ThemeText customStyle={captionText}>
+            {localization.Uses[language]}: {logs.length}
+          </ThemeText>
+        )}
+      </View>
       {showRecency && logs && (
-        <Text style={{ color: "#333333" }}>{recency}</Text>
+        <ThemeText customStyle={captionText}>{recency}</ThemeText>
       )}
     </View>
   );
 }
+const styles = StyleSheet.create({
+  card: {
+    gap: theme.spacing.xs,
+  },
+  photo: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surface,
+    resizeMode: "cover",
+  },
+  placeholder: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  name: {
+    fontWeight: "500",
+  },
+  meta: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+  },
+  swatch: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.muted,
+  },
+});

@@ -1,5 +1,6 @@
 import { Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { item } from "../redux/itemsSlice";
 import { ItemSummary } from "./ItemSummary";
 export type ItemSummaryProps = {
   image: string;
@@ -10,8 +11,17 @@ export type ItemSummaryProps = {
   type: string;
   id: string;
   logs?: string[];
-  addSpace?: boolean;
 };
+export const garmentSummary = (garment: item): ItemSummaryProps => ({
+  id: garment.id,
+  image: garment.image,
+  name: garment.name,
+  type: garment.type,
+  primary: garment.primaryColor || "",
+  secondary: garment.secondaryColor || "",
+  tertiary: garment.tertiaryColor || "",
+  logs: garment.logIds || [],
+});
 export const ItemBox = (props: ItemSummaryProps) => {
   const navigation = useNavigation<any>();
   return (
@@ -21,7 +31,6 @@ export const ItemBox = (props: ItemSummaryProps) => {
       onPress={() =>
         navigation.navigate("ItemForm", { editingIndex: props.id })
       }
-      style={{ margin: 4, padding: 8, borderWidth: 1, width: "100%" }}
     >
       <ItemSummary {...props} />
     </Pressable>
