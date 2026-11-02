@@ -1,4 +1,5 @@
-import { View, StyleSheet } from "react-native";
+import { UpdateControls } from "../../components/UpdateControls";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import { BackButton } from "../../components/BackButton";
 import { ThemeText } from "../../components/ThemeText";
@@ -26,7 +27,6 @@ import {
 import Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { colors } from "../../utils/colors";
-import {} from "../../redux/itemsSlice";
 import { localization } from "../../utils/localization";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 export const Settings = () => {
@@ -99,7 +99,11 @@ export const Settings = () => {
           ? "Imported successfully"
           : localization.LLMCopied[language]}
       </Snackbar>
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <UpdateControls settings />
         <View style={[rowStyle, { columnGap: 8 }]}>
           <ThemeText customStyle={styles.textLabel10}>
             {localization.Your_Name[language]}
@@ -125,6 +129,7 @@ export const Settings = () => {
               setOpen={setOpenLang}
               setValue={setLang}
               mode="SIMPLE"
+              listMode="SCROLLVIEW"
               placeholder="Language"
               style={styles.dropdown}
               dropDownContainerStyle={{ borderColor: "#777777" }}
@@ -202,7 +207,7 @@ export const Settings = () => {
             {localization.LLM_info[language]}
           </ThemeText>
         </View>
-      </View>
+      </ScrollView>
 
       <ConfirmationDialog
         visible={llmConfirmVisible}
