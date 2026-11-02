@@ -19,7 +19,7 @@ const initialState: SettingsType = {
   name: "User",
   laundryNumber: 5,
   enableLaundry: true,
-  enableReminder: true,
+  enableReminder: false,
   enableHeatMap: false,
   appVer: "1.0.1",
   collectionSortValue: COLLECTION_SORT_VALUES.CUSTOM,
@@ -40,9 +40,6 @@ const settingsSlice = createSlice({
     setEnableLaundry: (state, action) => {
       state.enableLaundry = action.payload.enableLaundry;
     },
-    setReminder: (state, action) => {
-      state.enableReminder = action.payload.enableReminder;
-    },
     setHeatMap: (state, action) => {
       state.enableHeatMap = action.payload.enableHeatMap;
     },
@@ -55,7 +52,7 @@ const settingsSlice = createSlice({
       state.laundryNumber = action.payload.laundryNumber;
       state.name = action.payload.name;
       state.enableLaundry = action.payload.enableLaundry;
-      state.enableReminder = action.payload.enableReminder;
+      state.enableReminder = false;
       state.collectionSortValue =
         action.payload.collectionSortValue ?? COLLECTION_SORT_VALUES.CUSTOM;
     },
@@ -69,7 +66,6 @@ export const {
   userNameSetter,
   laundryNumberSetter,
   setEnableLaundry,
-  setReminder,
   setHeatMap,
   setCollectionSortValue,
   importSettings,

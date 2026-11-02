@@ -14,7 +14,6 @@ import {
   laundryNumberSetter,
   setEnableLaundry,
   setHeatMap,
-  setReminder,
   userNameSetter,
 } from "../../redux/settingsSlice";
 import { Button, Checkbox, Snackbar } from "react-native-paper";
@@ -36,14 +35,8 @@ import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 export const Settings = () => {
   const [openLang, setOpenLang] = useState(false);
   const storedSettings = useSelector((state: RootState) => state.settings);
-  const {
-    language,
-    name,
-    laundryNumber,
-    enableLaundry,
-    enableReminder,
-    enableHeatMap,
-  } = storedSettings;
+  const { language, name, laundryNumber, enableLaundry, enableHeatMap } =
+    storedSettings;
   const isRtl = language === 1;
   const [lang, setLang] = useState(language);
   const dispatch = useDispatch();
@@ -58,7 +51,6 @@ export const Settings = () => {
   const onDismissSnackBar = () => setVisible(false);
   const [exportOrImport, setExportOrImport] = useState(0);
   const [checkedLau, setCheckedLau] = useState(enableLaundry);
-  const [checkedRem, setCheckedRem] = useState(enableReminder);
   const [checkedHeatMap, setCheckedHeatMap] = useState(enableHeatMap);
   const [llmConfirmVisible, setLlmConfirmVisible] = useState(false);
   const [isLLMGenerating, setIsLLMGenerating] = useState(false);
@@ -67,11 +59,9 @@ export const Settings = () => {
   );
   const setCheckboxes = (
     newEnableLaundry: boolean,
-    newEnableReminder: boolean,
     newEnableHeatMap: boolean,
   ) => {
     setCheckedLau(newEnableLaundry);
-    setCheckedRem(newEnableReminder);
     setCheckedHeatMap(newEnableHeatMap);
   };
   const rowStyle = isRtl ? styles.rowReverse : styles.row;
@@ -233,18 +223,6 @@ export const Settings = () => {
           <ThemeText customStyle={styles.infoText}>
             {localization.ThisWillRemind[language]}
           </ThemeText>
-        </View>
-        <View style={rowStyle}>
-          <ThemeText customStyle={styles.textLabel5}>
-            {localization.Daily_reminder[language]}
-          </ThemeText>
-          <Checkbox
-            status={checkedRem ? "checked" : "unchecked"}
-            onPress={() => {
-              setCheckedRem(prev => !prev);
-              dispatch(setReminder({ enableReminder: !checkedRem }));
-            }}
-          />
         </View>
 
         <View style={rowStyle}>

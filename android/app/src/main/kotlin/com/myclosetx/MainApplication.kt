@@ -25,6 +25,7 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    LegacyReminderCleanup.cancel(this)
     ReactNativeApplicationEntryPoint.loadReactNative(this)
   }
 }

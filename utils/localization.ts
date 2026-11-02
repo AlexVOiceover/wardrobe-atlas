@@ -319,12 +319,6 @@ export const localization = {
   ],
   Times: ["Times", "مرات", "Veces", "Volte"],
   N: ["n", "ن", "n", "n"],
-  Daily_reminder: [
-    "Daily logging reminder",
-    "منبه التسجيل اليومي",
-    "Recordatorio diario de registro",
-    "Promemoria di registrazione giornaliera",
-  ],
   Enable_heatMap: [
     "Enable heatMap",
     "تفعيل الخريطة البيانية",
@@ -448,122 +442,6 @@ export const localization = {
   ],
   Yes: ["Yes", "نعم", "Sí", "Sì"],
   No: ["No", "لا", "No", "No"],
-};
-
-export const clothingReminderMessages = [
-  [
-    "Don't forget to log what you wore today!",
-    "لا تنسى تسجيل ملابسك اليوم!",
-    "No olvides registrar lo que llevaste hoy.",
-    "Non dimenticare di registrare cosa hai indossato oggi!",
-  ],
-  [
-    "It's time to update your outfit history.",
-    "حان وقت تحديث تاريخ إطلالتك.",
-    "Es hora de actualizar tu historial de atuendos.",
-    "È ora di aggiornare la cronologia dei tuoi outfit.",
-  ],
-  [
-    "Have you recorded your outfit for the day?",
-    "هل قمت بتسجيل إطلالتك لليوم؟",
-    "¿Has registrado tu atuendo del día?",
-    "Hai registrato il tuo outfit del giorno?",
-  ],
-  [
-    "Time to add your stylish outfit to your wardrobe.",
-    "حان وقت إضافة إطلالتك الأنيقة إلى ملابسك.",
-    "Es hora de agregar tu atuendo elegante a tu guardarropa.",
-    "È ora di aggiungere il tuo outfit stiloso nel tuo guardaroba.",
-  ],
-  [
-    "Remember to keep track of your fashion choices.",
-    "تذكر أن تتابع اختيارات أزيائك.",
-    "Recuerda llevar un registro de tus elecciones de moda.",
-    "Ricorda di tenere traccia delle tue scelte fashion.",
-  ],
-  [
-    "What did you wear today? Log it now!",
-    "ماذا ارتديت اليوم؟ سجله الآن!",
-    "¿Qué te pusiste hoy? ¡Regístralo ahora!",
-    "Cosa hai indossato oggi? Registralo adesso!",
-  ],
-  [
-    "Your clothing history is waiting for an update.",
-    "تاريخ ملابسك في انتظار التحديث.",
-    "Tu historial de ropa está esperando una actualización.",
-    "La cronologia del vestiario attende di essere aggiornata.",
-  ],
-  [
-    "It's outfit-logging time!",
-    "حان وقت تسجيل الإطلالات!",
-    "¡Es hora de registrar tu atuendo!",
-    "È tempo di registrare l'outfit!",
-  ],
-];
-
-export const clothingReminderTitles = (userName: string) => {
-  return [
-    [
-      "Clothing Event Reminder",
-      "تذكير بأحداث الملابس",
-      "Recordatorio de eventos de ropa",
-      "Memo degli utilizzi dei vestiti",
-    ],
-    [
-      "Fashion Log Alert",
-      "تنبيه تسجيل الأزياء",
-      "Alerta de registro de moda",
-      "Allerta registro Fashion",
-    ],
-    [
-      "Wardrobe Update Reminder",
-      "تذكير بتحديث الخزانة",
-      "Recordatorio de actualización de armario",
-      "Memo aggiornamento guardaroba",
-    ],
-    [
-      "Outfit Logging Time",
-      "وقت تسجيل الإطلالات",
-      "Hora de registrar atuendos",
-      "Tempo di registrare l'outfit",
-    ],
-    [
-      "Clothing Record Notification",
-      "إشعار بتسجيل الملابس",
-      "Notificación de registro de ropa",
-      "Notifica registrazione vestiti",
-    ],
-    [
-      "Stay Fashionably Organized",
-      "ابق منظمًا بأناقة",
-      "Mantente organizado con estilo",
-      "Tieni organizzato lo stile",
-    ],
-    [
-      "Keep Your Wardrobe Updated",
-      "حافظ على تحديث خزانتك",
-      "Mantén tu guardarropa actualizado",
-      "Tieni aggiornato il guardaroba",
-    ],
-    [
-      "Remember to Log Your Outfit",
-      "تذكر تسجيل إطلالتك",
-      "Recuerda registrar tu atuendo",
-      "Ricorda di registrare il tuo outfit",
-    ],
-    [
-      `Hi ${userName}, Time to Log Your Stylish Outfit!`,
-      `مرحبًا ${userName}، حان وقت تسجيل إطلالتك الأنيقة!`,
-      `Hola ${userName}, ¡Es hora de registrar tu atuendo con estilo!`,
-      `Ciao ${userName}, è ora di registrare il tuo stiloso outfit!`,
-    ],
-    [
-      `Hello ${userName}, Remember to Record Your Style!`,
-      `مرحبًا ${userName}، تذكّر تسجيل مظهرك!`,
-      `Hola ${userName}, ¡Recuerda registrar tu estilo!`,
-      `Ciao ${userName}, Ricorda di registrare il tuo stile!`,
-    ],
-  ];
 };
 
 const tops_en = [
