@@ -1,9 +1,11 @@
+import { localization } from "../utils/localization";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { useMemo } from "react";
 
 export default function useHeatmap(itemLogs: string[]) {
   const storedEvents = useSelector((state: RootState) => state.itemsList.logs);
+  const language = useSelector((s: RootState) => s.settings.language);
   const currentDate = new Date();
 
   const oneMonthAgo = new Date();
@@ -12,8 +14,8 @@ export default function useHeatmap(itemLogs: string[]) {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  const heatmapColor = useMemo(() => {
-    const filteredEventsLastMonth = storedEvents.filter((x) => {
+  const recency = useMemo(() => {
+    const filteredEventsLastMonth = storedEvents.filter(x => {
       const eventDate = new Date(JSON.parse(x.eventDate));
       return (
         eventDate >= oneMonthAgo &&
@@ -22,7 +24,7 @@ export default function useHeatmap(itemLogs: string[]) {
         itemLogs?.includes(x.eventId)
       );
     });
-    const filteredEventsLastWeek = storedEvents.filter((x) => {
+    const filteredEventsLastWeek = storedEvents.filter(x => {
       const eventDate = new Date(JSON.parse(x.eventDate));
       return (
         eventDate >= oneWeekAgo &&
@@ -31,18 +33,13 @@ export default function useHeatmap(itemLogs: string[]) {
       );
     });
 
-    // const filteredEventsMoreThanAMonthAgo = storedEvents.filter((x) => {
-    //     const eventDate = new Date(JSON.parse(x.eventDate));
-    //     return eventDate < oneMonthAgo;
-    //   });
-
     if (filteredEventsLastWeek.length > 0) {
-      return "rgba(119, 174, 187, 0.5)";
+      return localization.UsedThisWeek[language];
     } else if (filteredEventsLastMonth.length > 0) {
-      return "rgba(247, 198, 0, 0.5)";
+      return localization.UsedThisMonth[language];
     } else {
-      return "rgba(211, 0, 71, 0.5)";
+      return localization.NotUsedThisMonth[language];
     }
-  }, [itemLogs, storedEvents]);
-  return heatmapColor;
+  }, [itemLogs, storedEvents, language]);
+  return recency;
 }

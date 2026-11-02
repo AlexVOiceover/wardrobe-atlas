@@ -49,8 +49,8 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Test APK update selection
-        run: npm test -- --config jest.config.js --runInBand __tests__/updateService.test.ts
+      - name: Test app behavior
+        run: npm test -- --config jest.config.js --runInBand
 
       - name: Embed CI build number in the app
         run: |

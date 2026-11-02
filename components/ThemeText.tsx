@@ -1,27 +1,13 @@
 import { ReactNode } from "react";
-import { useColorScheme, Text, StyleProp, TextStyle } from "react-native";
-import { colors } from "../utils/colors";
-
+import { Text, StyleProp, TextStyle } from "react-native";
 export const ThemeText = ({
-  classNameStyle,
-  customStyle,
-  darkColor = colors.white,
-  lightColor = colors.gray,
   children,
+  customStyle,
 }: {
   children?: ReactNode;
-  classNameStyle?: string;
   customStyle?: StyleProp<TextStyle>;
-  darkColor?: string;
-  lightColor?: string;
-}) => {
-  const isDarkMode = useColorScheme() === "dark";
-  return (
-    <Text
-      className={classNameStyle || ""}
-      style={[{ color: isDarkMode ? darkColor : lightColor }, customStyle]}
-    >
-      {children}
-    </Text>
-  );
-};
+}) => (
+  <Text style={[{ color: "#111111", fontSize: 16 }, customStyle]}>
+    {children}
+  </Text>
+);

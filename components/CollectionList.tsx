@@ -2,14 +2,12 @@ import { Dispatch, SetStateAction } from "react";
 import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { CollectionTag } from "../redux/itemsSlice";
-import { colors as appColors } from "../utils/colors";
 import {
   COLLECTION_SORT_VALUES,
   CollectionSortValue,
 } from "../utils/collectionOrder";
 import { EditItemList } from "./EditItemList";
 import { ThemeText } from "./ThemeText";
-
 type Props = {
   collections: CollectionTag[];
   sortValue: CollectionSortValue;
@@ -18,7 +16,6 @@ type Props = {
   emptyText: string;
   onMoveCollection: (value: string, direction: "up" | "down") => void;
 };
-
 export const CollectionList = ({
   collections,
   sortValue,
@@ -28,7 +25,6 @@ export const CollectionList = ({
   onMoveCollection,
 }: Props) => {
   const isCustomSort = sortValue === COLLECTION_SORT_VALUES.CUSTOM;
-
   if (collections.length === 0) {
     return (
       <View style={styles.emptyState}>
@@ -36,7 +32,6 @@ export const CollectionList = ({
       </View>
     );
   }
-
   return (
     <FlatList
       key={`collection-list-${sortValue}`}
@@ -60,26 +55,14 @@ export const CollectionList = ({
                 onPress={() => onMoveCollection(item.value, "up")}
                 style={styles.reorderButton}
               >
-                <Icon
-                  name="arrow-up-bold"
-                  size={18}
-                  color={index === 0 ? appColors.gray : appColors.mainCyan}
-                />
+                <Icon name="arrow-up-bold" size={18} color="#111111" />
               </TouchableOpacity>
               <TouchableOpacity
                 disabled={index === collections.length - 1}
                 onPress={() => onMoveCollection(item.value, "down")}
                 style={styles.reorderButton}
               >
-                <Icon
-                  name="arrow-down-bold"
-                  size={18}
-                  color={
-                    index === collections.length - 1
-                      ? appColors.gray
-                      : appColors.mainCyan
-                  }
-                />
+                <Icon name="arrow-down-bold" size={18} color="#111111" />
               </TouchableOpacity>
             </View>
           )}
@@ -98,7 +81,6 @@ export const CollectionList = ({
     />
   );
 };
-
 const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 16,
