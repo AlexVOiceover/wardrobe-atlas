@@ -116,7 +116,7 @@ test("current Spanish persists across saved state and repeated backup round trip
   const saved = { ...mockWardrobe, _persist: { version: 1, rehydrated: true } };
   expect(normalizeWardrobe(saved).settings.language).toBe(1);
   const backup = createWardrobeBackup(mockWardrobe);
-  expect(backup.formatVersion).toBe(1);
+  expect(backup.formatVersion).toBe(2);
   const restored = readWardrobeBackup(JSON.parse(JSON.stringify(backup)));
   expect(restored).toEqual(mockWardrobe);
   expect(readWardrobeBackup(createWardrobeBackup(restored))).toEqual(
@@ -186,4 +186,14 @@ test("text export still includes garment details and outfit events", () => {
   expect(text).toContain("#112233");
   expect(text).toContain("Dinner");
   expect(text).toContain("Keep this");
+});
+
+
+test("LLM item export includes wardrobe names and leaves the inventory unchanged", () => {
+  mockWardrobe.itemsList.wardrobes = [{ id: "home", name: "Home" }];
+  mockWardrobe.itemsList.items[0].wardrobeId = "home";
+  expect(generateLLMText()).toContain("- wardrobe: Home");
+  expect(mockWardrobe.itemsList.items[0].image).toBe("photo-data");
+  mockWardrobe.itemsList.wardrobes = [];
+  delete mockWardrobe.itemsList.items[0].wardrobeId;
 });
