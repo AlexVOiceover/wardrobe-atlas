@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: write
 
@@ -66,6 +70,8 @@ jobs:
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk Wardrobe-Atlas.apk
           sha256sum Wardrobe-Atlas.apk
+          BADGING="$("$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging Wardrobe-Atlas.apk)"
+          printf '%s\n' "$BADGING" | grep -F "package: name='com.wardrobeatlas.app' versionCode='$GITHUB_RUN_NUMBER' versionName='0.1.$GITHUB_RUN_NUMBER'"
 
       - name: Save test APK as workflow artifact
         uses: actions/upload-artifact@v4
