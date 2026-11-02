@@ -1,6 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Home } from "../screens/stackNav/Home";
+import MyTabs from "./BottomTabNav";
 import { Category } from "../screens/stackNav/Category";
 import { ItemForm } from "../screens/stackNav/ItemForm";
 import { CategoryForm } from "../screens/stackNav/CategoryForm";
@@ -24,7 +24,7 @@ export default function Navigator() {
       >
         <Stack.Screen
           name="StackNavHome"
-          component={Home} //it has the bottomNav & notifications
+          component={MyTabs}
           options={{ headerShown: false, orientation: "portrait" }}
         />
         <Stack.Screen

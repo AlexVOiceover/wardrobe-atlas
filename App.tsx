@@ -1,4 +1,4 @@
-import { I18nManager, StatusBar } from "react-native";
+import { StatusBar } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Navigator from "./routers/stack";
 import { MD3LightTheme, PaperProvider } from "react-native-paper";
@@ -12,10 +12,6 @@ function App(): ReactElement {
   const backgroundStyle = {
     backgroundColor: "#ffffff",
   };
-  useEffect(() => {
-    I18nManager.allowRTL(false);
-    I18nManager.forceRTL(false);
-  }, []);
   useEffect(() => startAutomaticUpdates(), []);
   return (
     <SafeAreaProvider>

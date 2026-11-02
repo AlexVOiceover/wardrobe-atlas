@@ -180,7 +180,7 @@ export const OutfitLog = () => {
         }}
         value={search}
         inputStyle={{
-          textAlign: storedSettings.language == 1 ? "right" : "left",
+          textAlign: "left",
         }}
         // label="Search"
         onChange={text => setSearch(text.nativeEvent.text)}
@@ -188,7 +188,7 @@ export const OutfitLog = () => {
         style={[
           { width: "100%" },
           {
-            flexDirection: storedSettings.language == 1 ? "row-reverse" : "row",
+            flexDirection: "row",
           },
         ]}
       />

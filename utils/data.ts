@@ -27,7 +27,6 @@ export const RandomNamesP1 = [
   "Gray Sweater",
   "Red Blouse",
 ];
-
 const seasonList_en = [
   {
     value: "Spring",
@@ -44,24 +43,6 @@ const seasonList_en = [
   {
     value: "Winter",
     label: "Winter",
-  },
-];
-const seasonList_ar = [
-  {
-    value: "Spring",
-    label: "ربيع",
-  },
-  {
-    value: "Summer",
-    label: "صيف",
-  },
-  {
-    value: "Fall",
-    label: "خريف",
-  },
-  {
-    value: "Winter",
-    label: "شتاء",
   },
 ];
 const seasonList_es = [
@@ -82,31 +63,7 @@ const seasonList_es = [
     label: "Invierno",
   },
 ];
-const seasonList_it = [
-  {
-    value: "Spring",
-    label: "Primavera",
-  },
-  {
-    value: "Summer",
-    label: "Estate",
-  },
-  {
-    value: "Fall",
-    label: "Autunno",
-  },
-  {
-    value: "Winter",
-    label: "Inverno",
-  },
-];
-
-export const seasonList = [
-  seasonList_en,
-  seasonList_ar,
-  seasonList_es,
-  seasonList_it,
-];
+export const seasonList = [seasonList_en, seasonList_es];
 export const fitList = [
   {
     value: "Regular Fit",
@@ -129,7 +86,6 @@ export const fitList = [
     label: "Loose Fit",
   },
 ];
-
 export const sizeList = [
   { label: "US", value: "US" },
   { label: "UK", value: "UK" },
@@ -137,22 +93,13 @@ export const sizeList = [
   { label: "Asia", value: "Asia" },
   { label: "Int'l", value: "Int'l" },
 ];
-
 export const languagesList = [
   {
     value: 0,
-    label: "En",
+    label: "English",
   },
   {
     value: 1,
-    label: "Ar",
-  },
-  {
-    value: 2,
-    label: "Es",
-  },
-  {
-    value: 3,
-    label: "It",
+    label: "Español",
   },
 ];
