@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "sh scripts/android.sh",
     "ios": "react-native run-ios",
     "lint": "eslint . --ext .js,.ts,.tsx --max-warnings 0",
     "start": "react-native start",
