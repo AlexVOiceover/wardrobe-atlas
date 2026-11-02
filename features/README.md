@@ -1,5 +1,7 @@
 # Feature plans
 
+- [Remove AI text-copy export](remove-ai-export/PLAN.md)
+
 - [Item form cleanup and scrolling](item-form-cleanup/PLAN.md)
 
 - [Locations / wardrobes (draft)](wardrobes/PLAN.md)

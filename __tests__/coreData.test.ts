@@ -15,12 +15,8 @@ import settingsReducer, {
   userNameSetter,
 } from "../redux/settingsSlice";
 import itemsReducer, { addItem, addLog, deleteLog } from "../redux/itemsSlice";
-import { generateLLMText } from "../utils/exportForLLM";
 
 jest.mock("nanoid", () => ({ nanoid: () => "new-item" }));
-jest.mock("../redux/store", () => ({
-  store: { getState: () => mockWardrobe },
-}));
 
 const previous = {
   settings: {
@@ -178,22 +174,4 @@ test("core garment creation and outfit logging remain intact", () => {
   expect(state.items[0].logIds).toEqual(["new-event"]);
   state = itemsReducer(state, deleteLog({ selectedLogId: "new-event" }));
   expect(state.items[0].logIds).toEqual([]);
-});
-
-test("text export still includes garment details and outfit events", () => {
-  const text = generateLLMText();
-  expect(text).toContain("My shirt");
-  expect(text).toContain("#112233");
-  expect(text).toContain("Dinner");
-  expect(text).toContain("Keep this");
-});
-
-
-test("LLM item export includes wardrobe names and leaves the inventory unchanged", () => {
-  mockWardrobe.itemsList.wardrobes = [{ id: "home", name: "Home" }];
-  mockWardrobe.itemsList.items[0].wardrobeId = "home";
-  expect(generateLLMText()).toContain("- wardrobe: Home");
-  expect(mockWardrobe.itemsList.items[0].image).toBe("photo-data");
-  mockWardrobe.itemsList.wardrobes = [];
-  delete mockWardrobe.itemsList.items[0].wardrobeId;
 });
