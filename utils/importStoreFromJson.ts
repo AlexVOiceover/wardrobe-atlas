@@ -7,11 +7,7 @@ import { normalizeCollectionTags } from "./collectionOrder";
 
 // Function to import the Redux store from a JSON file in the Documents folder
 export const importStoreFromJson = async (
-  setCheckboxes: (
-    enableReminder: boolean,
-    enableLaundry: boolean,
-    enableHeatMap: boolean,
-  ) => void,
+  setCheckboxes: (enableLaundry: boolean, enableHeatMap: boolean) => void,
 ) => {
   try {
     // Open the Document Picker to allow the user to select a file
@@ -22,55 +18,53 @@ export const importStoreFromJson = async (
       if (file.mime === "application/json" || file.name.endsWith(".json")) {
         // Read the serialized state from the selected JSON file
         const serializedState = file.data;
-          const state: RootState = JSON.parse(serializedState);
-          const normalizedCollectionTags = normalizeCollectionTags(
-            state.itemsList.collectionTags || [],
-          );
-          store.dispatch(
-            importCategory({
-              Categories: state.CategoryList.Categories,
-              CategoryCustomTypes: state.CategoryList?.CategoryCustomTypes,
-            }),
-          );
-          store.dispatch(
-            importItems({
-              collectionTags: normalizedCollectionTags,
-              logs: state.itemsList.logs,
-              items: state.itemsList.items,
-              refreshItems: state.itemsList.refreshItems,
-              refreshLaundry: state.itemsList.refreshLaundry,
-            }),
-          );
-          store.dispatch(
-            importSettings({
-              language:
-                typeof state.settings.language === "string"
-                  ? 0
-                  : state.settings.language,
-              laundryNumber: state.settings.laundryNumber,
-              name: state.settings.name,
-              enableLaundry: state.settings.enableLaundry,
-              enableReminder: state.settings.enableReminder,
-              collectionSortValue: state.settings.collectionSortValue,
-            }),
-          );
-          await persistor.persist();
-          setCheckboxes(
-            state.settings.enableLaundry,
-            state.settings.enableReminder,
-            state.settings.enableHeatMap,
-          );
-          console.log("Store imported successfully.");
-          return true;
-        } else {
-          console.log("Selected file is not a JSON file.");
-          return false;
-        }
+        const state: RootState = JSON.parse(serializedState);
+        const normalizedCollectionTags = normalizeCollectionTags(
+          state.itemsList.collectionTags || [],
+        );
+        store.dispatch(
+          importCategory({
+            Categories: state.CategoryList.Categories,
+            CategoryCustomTypes: state.CategoryList?.CategoryCustomTypes,
+          }),
+        );
+        store.dispatch(
+          importItems({
+            collectionTags: normalizedCollectionTags,
+            logs: state.itemsList.logs,
+            items: state.itemsList.items,
+            refreshItems: state.itemsList.refreshItems,
+            refreshLaundry: state.itemsList.refreshLaundry,
+          }),
+        );
+        store.dispatch(
+          importSettings({
+            language:
+              typeof state.settings.language === "string"
+                ? 0
+                : state.settings.language,
+            laundryNumber: state.settings.laundryNumber,
+            name: state.settings.name,
+            enableLaundry: state.settings.enableLaundry,
+            enableReminder: false,
+            collectionSortValue: state.settings.collectionSortValue,
+          }),
+        );
+        await persistor.persist();
+        setCheckboxes(
+          state.settings.enableLaundry,
+          state.settings.enableHeatMap,
+        );
+        console.log("Store imported successfully.");
+        return true;
       } else {
-        console.log("No file selected.");
+        console.log("Selected file is not a JSON file.");
         return false;
       }
-    
+    } else {
+      console.log("No file selected.");
+      return false;
+    }
   } catch (error) {
     console.error("Error importing store:", error);
     return false;
