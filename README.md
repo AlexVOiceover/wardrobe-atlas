@@ -16,18 +16,22 @@ Wardrobes group clothes by physical location. Each garment record (including its
 
 ## Develop
 
-Requirements: Node.js 22, Java 17 and an Android SDK with platform 36, build tools 35.0.0 and NDK 27.1.12297006. See [Android configuration](android/build.gradle) and [CI](.github/workflows/android-release.yml).
+Requirements: Node.js 22, Java 17 and an Android SDK with platform 36, build tools 35.0.0 and NDK 27.1.12297006, with `JAVA_HOME` and `ANDROID_HOME` set. See [Android configuration](android/build.gradle) and [CI](.github/workflows/android-release.yml).
 
 ```sh
 npm ci
 npm start
 ```
 
-In a second terminal:
+Turn on USB debugging on an ARM64 Android device and connect it. In a second terminal:
 
 ```sh
 npm run android
 ```
+
+This installs Wardrobe Atlas Dev (`com.wardrobeatlas.app.debug`) alongside the released app, with its own separate data. Code changes reload from Metro; rerun the command after native changes.
+
+Under WSL, the build runs in Linux and the script reaches the device through the Windows `adb.exe`, found automatically or set with `ADB`. WSL2 has no KVM by default, so use a phone rather than an emulator.
 
 Checks:
 
