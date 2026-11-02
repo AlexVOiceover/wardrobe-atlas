@@ -15,7 +15,7 @@ Confirmed by the owner: a wardrobe is a physical location, with one location per
 - No location entity or garment location field currently exists.
 - `utils/wardrobeData.ts` allowlists loaded/exported fields. Adding a field only to the form or reducer would lose it on reload or backup.
 - Import replaces the current inventory; this feature must preserve that existing behavior.
-- Follow `AGENTS.md`: discuss, record the agreed scope here, then wait for an explicit instruction to implement. Authorized implementation starts from current main on `feature/wardrobes`; validation, PR, merge and verified Release follow the standing delivery agreement.
+- Follow `AGENTS.md`: discuss, record the agreed scope here, then wait for an explicit instruction to implement. Authorized implementation starts from current main on `feature/wardrobes-v1`; validation, PR, merge and verified Release follow the standing delivery agreement.
 
 ## Proposed first version
 
@@ -89,7 +89,9 @@ Confirmed by the owner: a wardrobe is a physical location, with one location per
 
 ## Validation
 
-- 46 tests pass across 8 suites, including wardrobe creation/renaming, Unicode names, stable-ID moves, safe deletion, filtering, legacy/v1 Spanish migration, backup round trips, malformed references, selector behavior and management cancellation/validation.
+- 47 tests pass across 8 suites, including wardrobe creation/renaming, Unicode names, stable-ID moves, safe deletion, filtering, legacy/v1 Spanish migration, backup round trips, malformed references, selector behavior and management cancellation/validation.
 - TypeScript and production Android JavaScript bundling pass.
 - Targeted ESLint passes with no errors; existing shadowing/equality warnings remain in the legacy garment form and data normalizer. New wardrobe files pass without warnings.
 - Android PR build and published Release verification pending. No connected phone installation or visual check performed.
+
+The pre-existing `feature/wardrobes` branch is preserved. This work uses `feature/wardrobes-v1` based on current main.
