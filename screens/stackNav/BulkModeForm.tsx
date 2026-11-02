@@ -1,3 +1,8 @@
+import {
+  WardrobeSelector,
+  useWardrobeView,
+} from "../../components/WardrobeSelector";
+import { validWardrobeId } from "../../utils/wardrobes";
 import { Button } from "react-native-paper";
 import { BackButton } from "../../components/BackButton";
 import { ThemeView } from "../../components/ThemeView";
@@ -36,6 +41,9 @@ export const BulkModeForm = ({
   route: any;
 }) => {
   const { selectedCategory } = route.params;
+  const { selected } = useWardrobeView();
+  const wardrobes = useSelector((s: RootState) => s.itemsList.wardrobes);
+  const [wardrobeId, setWardrobeId] = useState<string | undefined>(selected);
   const [prefix, setPrefix] = useState("");
   const [imageNum, setImageNum] = useState(2);
   const [openType, setOpenType] = useState(false);
@@ -93,6 +101,7 @@ export const BulkModeForm = ({
         );
         dispatch(
           addItem({
+            wardrobeId: validWardrobeId(wardrobes, wardrobeId),
             name: prefix + ` ${i + 1}`,
             collection: collection,
             category: selectedCategory,
@@ -162,6 +171,10 @@ export const BulkModeForm = ({
   const addItemHandler = (mode: number) => {
     Keyboard.dismiss();
     const errors = [];
+    if (wardrobeId && !validWardrobeId(wardrobes, wardrobeId)) {
+      setErrorsList([localization.WardrobeUnavailable[language]]);
+      return;
+    }
     if (prefix.trim().length <= 0) {
       errors.push("Please enter item prefix");
     } else if (prefix.length > 20) {
@@ -182,6 +195,7 @@ export const BulkModeForm = ({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
         <View style={styles.formContainer}>
           <CustomInput
             mode="outlined"

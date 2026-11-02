@@ -16,7 +16,7 @@ import settingsSlice from "./settingsSlice";
 import { normalizeWardrobe } from "../utils/wardrobeData";
 const persistConfig = {
   key: "root",
-  version: 1,
+  version: 2,
   storage: FilesystemStorage,
   migrate: async (state: any) =>
     state ? { ...normalizeWardrobe(state), _persist: state._persist } : state,

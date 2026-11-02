@@ -63,6 +63,7 @@ export const generateLLMText = (
     items.forEach((item, index) => {
       md += `### ${index + 1}. ${item.name || "(unnamed)"}\n`;
       md += `- id: ${item.id}\n`;
+      md += `- wardrobe: ${state.itemsList.wardrobes?.find(w => w.id === item.wardrobeId)?.name || "Unassigned"}\n`;
       md += `- category: ${item.category}\n`;
       md += `- type: ${item.type}\n`;
       md += `- fit: ${item.fit}\n`;
