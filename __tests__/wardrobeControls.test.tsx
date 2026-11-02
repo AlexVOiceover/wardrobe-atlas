@@ -20,9 +20,10 @@ jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select(mockState),
   useDispatch: () => mockDispatch,
 }));
-jest.mock("../components/BackButton", () => ({ BackButton: "BackButton" }));
+jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
 jest.mock("../components/ThemeView", () => ({ ThemeView: "ThemeView" }));
 jest.mock("nanoid", () => ({ nanoid: () => "new" }));
+jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 jest.mock("react-native-paper", () => ({
   Button: "Button",
   TextInput: "TextInput",

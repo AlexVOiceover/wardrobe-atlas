@@ -3,10 +3,10 @@ import {
   useWardrobeView,
 } from "../../components/WardrobeSelector";
 import { validWardrobeId } from "../../utils/wardrobes";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { Button, Switch } from "react-native-paper";
 import { useState } from "react";
-import { BackButton } from "../../components/BackButton";
+import { PageHeader } from "../../components/PageHeader";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -17,7 +17,6 @@ import {
 } from "../../redux/itemsSlice";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import ColorModal from "../../components/ColorModal";
-import Icon from "react-native-vector-icons/FontAwesome5";
 import { CustomInput } from "../../components/CustomInput";
 import { RootState } from "../../redux/store";
 import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
@@ -25,7 +24,6 @@ import CustomModal from "../../components/CustomModal";
 import { getPalette } from "@somesoap/react-native-image-palette";
 import { ThemeView } from "../../components/ThemeView";
 import { ThemeText } from "../../components/ThemeText";
-import { CommonActions } from "@react-navigation/native";
 import { DatePicker } from "../../components/DatePicker";
 import { sizeList } from "../../utils/data";
 import ReactNativeBlobUtil from "react-native-blob-util";
@@ -37,6 +35,9 @@ import {
 import { clothesList, localization } from "../../utils/localization";
 import { defaultCategories } from "./Category";
 import { ImageViewer } from "../../components/ImageViewer";
+import { FormErrors } from "../../components/FormErrors";
+import { ListRow } from "../../components/ListRow";
+import { captionText, pickerStyle, theme } from "../../utils/theme";
 export const ItemForm = ({
   navigation,
   route,
@@ -127,7 +128,7 @@ export const ItemForm = ({
   function deleteItemHandler() {
     dispatch(deleteItem({ selectedId: storedItems.id }));
     dispatch(itemRefresher());
-    navigation.popToTop("Category");
+    navigation.popToTop();
   }
   function addItemHandler() {
     const errors = [];
@@ -138,13 +139,13 @@ export const ItemForm = ({
       return;
     }
     if (name.length <= 0) {
-      errors.push("Please enter item name");
+      errors.push(localization.NameRequired[storedSettings.language]);
     }
     if (name.length > 20) {
-      errors.push("Please enter a name within 20 characters");
+      errors.push(localization.NameTooLong[storedSettings.language]);
     }
     if (!type && combiningTypesData.length > 0) {
-      errors.push("Please choose a type");
+      errors.push(localization.TypeRequired[storedSettings.language]);
     }
     if (errors.length > 0) {
       setErrorsList(errors);
@@ -195,10 +196,8 @@ export const ItemForm = ({
         }),
       );
     }
-    navigation.popToTop("Category");
-    if (!editingIndex) {
-      navigation.dispatch(CommonActions.goBack());
-    } else {
+    navigation.popToTop();
+    if (editingIndex) {
       dispatch(itemRefresher());
     }
   }
@@ -313,6 +312,7 @@ export const ItemForm = ({
       <ConfirmationDialog
         visible={deleteVisible}
         setVisible={setDeleteVisible}
+        message={localization.ConfirmDeleteGarment[storedSettings.language]}
         onConfirm={deleteItemHandler}
       />
       <ColorModal
@@ -328,7 +328,7 @@ export const ItemForm = ({
         visible={imageModalVisible}
         label={localization.import_image[storedSettings.language]}
       >
-        <View style={[{ paddingHorizontal: 24, rowGap: 20, marginTop: 20 }]}>
+        <View style={{ rowGap: theme.spacing.md }}>
           <Button mode="outlined" onPress={() => handleImagePicker(1)}>
             {localization.Use_Camera[storedSettings.language]}
           </Button>
@@ -341,8 +341,8 @@ export const ItemForm = ({
         </View>
       </CustomModal>
       <ThemeView>
-        <BackButton
-          pageTitle={
+        <PageHeader
+          title={
             editingIndex
               ? localization.EditingItem[storedSettings.language]
               : localization.Adding_an_item[storedSettings.language]
@@ -350,273 +350,176 @@ export const ItemForm = ({
         />
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
+          <View style={styles.photo}>
+            <ImageViewer
+              imageUrl={imageUrl}
+              setImageModalVisible={setImageModalVisible}
+            />
+          </View>
           <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
-          <View style={[{ alignItems: "center", rowGap: 8 }]}>
-            <View style={{ alignItems: "center", padding: 8 }}>
-              <ImageViewer
-                imageUrl={imageUrl}
-                setImageModalVisible={setImageModalVisible}
+          <CustomInput
+            mode="outlined"
+            textContentType="name"
+            label={localization.Name[storedSettings.language]}
+            value={name}
+            onChange={text => setName(text.nativeEvent.text)}
+          />
+          {combiningTypesData?.length > 0 && (
+            <View style={{ zIndex: 2 }}>
+              <DropDownPicker
+                open={openType}
+                value={type}
+                items={combiningTypesData}
+                setOpen={setOpenType}
+                setValue={setType}
+                mode="SIMPLE"
+                listMode="MODAL"
+                placeholder={localization.Type[storedSettings.language]}
+                style={pickerStyle}
+                dropDownContainerStyle={pickerStyle}
+                theme={colorScheme}
+              />
+            </View>
+          )}
+          <View style={styles.sizeRow}>
+            <CustomInput
+              mode="outlined"
+              style={styles.sizeField}
+              label={localization.Quantity[storedSettings.language]}
+              value={String(quantity)}
+              onChange={text => setQuantity(Number(text.nativeEvent.text))}
+              keyboardType="numeric"
+              maxLength={2}
+            />
+            <View style={styles.sizeField}>
+              <DropDownPicker
+                open={openSizeUnit}
+                value={sizeUnit}
+                items={sizeList}
+                setOpen={setOpenSizeUnit}
+                setValue={setSizeUnit}
+                mode="SIMPLE"
+                listMode="MODAL"
+                placeholder={localization.Unit[storedSettings.language]}
+                style={[pickerStyle, { marginTop: 5 }]}
+                dropDownContainerStyle={pickerStyle}
+                theme={colorScheme}
               />
             </View>
             <CustomInput
               mode="outlined"
-              textContentType="name"
-              style={[
-                styles.customWidth,
-                {
-                  textAlign: "left",
-                },
-              ]}
-              label={localization.Name[storedSettings.language]}
-              value={name}
-              onChange={text => setName(text.nativeEvent.text)}
+              style={styles.sizeField}
+              label={localization.Size[storedSettings.language]}
+              value={String(size)}
+              onChange={text => setSize(text.nativeEvent.text)}
+              maxLength={6}
             />
-            {combiningTypesData?.length > 0 && (
-              <View style={[{ zIndex: 2 }, styles.customWidth]}>
-                <DropDownPicker
-                  open={openType}
-                  value={type}
-                  items={combiningTypesData}
-                  setOpen={setOpenType}
-                  setValue={setType}
-                  mode="SIMPLE"
-                  listMode="MODAL"
-                  placeholder={localization.Type[storedSettings.language]}
-                  style={{ borderColor: "#777777" }}
-                  dropDownContainerStyle={{ borderColor: "#777777" }}
-                  theme={colorScheme}
-                />
-              </View>
-            )}
-            <View
-              style={[
-                {
-                  width: "80%",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  zIndex: 2,
-                },
-              ]}
-            >
-              <CustomInput
-                mode="outlined"
-                style={{ width: "40%" }}
-                label={localization.Quantity[storedSettings.language]}
-                value={String(quantity)}
-                onChange={text => setQuantity(Number(text.nativeEvent.text))}
-                keyboardType="numeric"
-                maxLength={2}
-              />
-              <View style={{ width: "28%" }}>
-                <DropDownPicker
-                  open={openSizeUnit}
-                  value={sizeUnit}
-                  items={sizeList}
-                  setOpen={setOpenSizeUnit}
-                  setValue={setSizeUnit}
-                  mode="SIMPLE"
-                  listMode="MODAL"
-                  placeholder={localization.Unit[storedSettings.language]}
-                  style={{ borderColor: "#777777", marginTop: 5 }}
-                  dropDownContainerStyle={{ borderColor: "#777777" }}
-                  theme={colorScheme}
-                />
-              </View>
-              <CustomInput
-                mode="outlined"
-                style={{ width: "28%" }}
-                label={localization.Size[storedSettings.language]}
-                value={String(size)}
-                onChange={text => setSize(text.nativeEvent.text)}
-                maxLength={6}
-              />
-            </View>
-            <DatePicker
-              title={localization.Purchase_Date[storedSettings.language]}
-              date={purchaseDate}
-              isDatePickerVisible={isDatePickerVisible}
-              setDate={setPurchaseDate}
-              setDatePickerVisibility={setDatePickerVisibility}
-            />
-            <View style={[{ zIndex: 1 }, styles.customWidth]}>
-              <DropDownPicker
-                open={openCollection}
-                value={collection}
-                items={collectionOptions}
-                setOpen={setOpenCollection}
-                setValue={setCollection}
-                multiple={true}
-                theme={colorScheme}
-                // badgeDotColors={CollectionColors}
-                showBadgeDot={false}
-                badgeTextStyle={{ color: "#111111" }}
-                mode="BADGE"
-                listMode="MODAL"
-                placeholder={localization.Collection[storedSettings.language]}
-                style={{ borderColor: "#777777" }}
-                dropDownContainerStyle={{ borderColor: "#777777" }}
-              />
-            </View>
-
-            <View style={[[{}, { flexDirection: "row" }, {}]]}>
-              <Icon name="info-circle" size={15} color="#111111" />
-              <ThemeText customStyle={[{ marginHorizontal: 8 }]}>
-                {localization.You_can_add[storedSettings.language]}
-              </ThemeText>
-            </View>
-
-            <View style={[{ flexDirection: "row", alignItems: "center" }]}>
-              <ThemeText>
-                {
-                  localization.Automatic_color_selection[
-                    storedSettings.language
-                  ]
-                }
-              </ThemeText>
-              <Switch
-                color="#111111"
-                value={isAutoOn}
-                onValueChange={onToggleSwitch}
-              />
-            </View>
-
-            {!isAutoOn && (
-              <View
-                style={[
-                  {
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderWidth: 1,
-                    width: "80%",
-                    height: 32,
-                    paddingHorizontal: 20,
-                  },
-                ]}
-              >
-                <ThemeText>
-                  {localization.Primary_color[storedSettings.language]}
-                </ThemeText>
-                <Pressable
-                  onPress={() => {
-                    setVisible(true);
-                    setColorSelection(0);
-                  }}
-                >
-                  <View
-                    style={[
-                      { height: 20, width: 20, borderWidth: 0.2 },
-                      { backgroundColor: colors[0] || "#808080" },
-                    ]}
-                  />
-                </Pressable>
-              </View>
-            )}
-            {!isAutoOn && (
-              <View
-                style={[
-                  {
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderWidth: 1,
-                    width: "80%",
-                    height: 32,
-                    paddingHorizontal: 20,
-                  },
-                ]}
-              >
-                <ThemeText>
-                  {localization.Secondary_color[storedSettings.language]}
-                </ThemeText>
-                <Pressable
-                  onPress={() => {
-                    setVisible(true);
-                    setColorSelection(1);
-                  }}
-                >
-                  <View
-                    style={[
-                      { height: 20, width: 20, borderWidth: 0.2 },
-                      { backgroundColor: colors[1] || "#808080" },
-                    ]}
-                  />
-                </Pressable>
-              </View>
-            )}
-            {!isAutoOn && (
-              <View
-                style={[
-                  {
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderWidth: 1,
-                    width: "80%",
-                    height: 32,
-                    paddingHorizontal: 20,
-                  },
-                ]}
-              >
-                <ThemeText>
-                  {localization.Tertiary_color[storedSettings.language]}
-                </ThemeText>
-                <Pressable
-                  onPress={() => {
-                    setVisible(true);
-                    setColorSelection(2);
-                  }}
-                >
-                  <View
-                    style={[
-                      { height: 20, width: 20, borderWidth: 0.2 },
-                      { backgroundColor: colors[2] || "#808080" },
-                    ]}
-                  />
-                </Pressable>
-              </View>
-            )}
-
-            {errorsList.length > 0 && (
-              <View>
-                {errorsList.map((error, index) => {
-                  return (
-                    <Text key={index} style={[{}]}>
-                      {error}
-                    </Text>
-                  );
-                })}
-              </View>
-            )}
-            <View
-              style={[
-                {
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  columnGap: 20,
-                },
-              ]}
-            >
-              <Button mode="outlined" onPress={addItemHandler}>
-                {localization.Save[storedSettings.language]}
-              </Button>
-              {editingIndex && (
-                <Button mode="outlined" onPress={() => setDeleteVisible(true)}>
-                  {localization.Delete[storedSettings.language]}
-                </Button>
-              )}
-            </View>
           </View>
+          <DatePicker
+            title={localization.Purchase_Date[storedSettings.language]}
+            date={purchaseDate}
+            isDatePickerVisible={isDatePickerVisible}
+            setDate={setPurchaseDate}
+            setDatePickerVisibility={setDatePickerVisibility}
+          />
+          <View style={{ zIndex: 1, gap: theme.spacing.xs }}>
+            <DropDownPicker
+              open={openCollection}
+              value={collection}
+              items={collectionOptions}
+              setOpen={setOpenCollection}
+              setValue={setCollection}
+              multiple={true}
+              theme={colorScheme}
+              showBadgeDot={false}
+              badgeTextStyle={{ color: theme.colors.text }}
+              mode="BADGE"
+              listMode="MODAL"
+              placeholder={localization.Collection[storedSettings.language]}
+              style={pickerStyle}
+              dropDownContainerStyle={pickerStyle}
+            />
+            <ThemeText customStyle={captionText}>
+              {localization.You_can_add[storedSettings.language]}
+            </ThemeText>
+          </View>
+
+          <ListRow
+            title={
+              localization.Automatic_color_selection[storedSettings.language]
+            }
+            right={<Switch value={isAutoOn} onValueChange={onToggleSwitch} />}
+          />
+
+          {!isAutoOn &&
+            [
+              localization.Primary_color,
+              localization.Secondary_color,
+              localization.Tertiary_color,
+            ].map((label, index) => (
+              <ListRow
+                key={index}
+                title={label[storedSettings.language]}
+                onPress={() => {
+                  setVisible(true);
+                  setColorSelection(index);
+                }}
+                right={
+                  <View
+                    style={[
+                      styles.colorSwatch,
+                      {
+                        backgroundColor: colors[index] || theme.colors.surface,
+                      },
+                    ]}
+                  />
+                }
+              />
+            ))}
+
+          <FormErrors errors={errorsList} />
+          <Button mode="contained" onPress={addItemHandler}>
+            {localization.Save[storedSettings.language]}
+          </Button>
+          {editingIndex && (
+            <Button
+              textColor={theme.colors.danger}
+              onPress={() => setDeleteVisible(true)}
+            >
+              {localization.Delete[storedSettings.language]}
+            </Button>
+          )}
         </ScrollView>
       </ThemeView>
     </>
   );
 };
 const styles = StyleSheet.create({
-  customWidth: { width: "80%" },
+  content: {
+    padding: theme.spacing.md,
+    paddingBottom: 40,
+    gap: theme.spacing.md,
+  },
+  photo: {
+    alignItems: "center",
+  },
+  sizeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    zIndex: 2,
+  },
+  sizeField: {
+    flex: 1,
+  },
+  colorSwatch: {
+    width: 24,
+    height: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.muted,
+  },
 });

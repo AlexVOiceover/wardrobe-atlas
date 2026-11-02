@@ -11,19 +11,21 @@ import {
   getCollectionSortValue,
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
-import { Button, Searchbar, Snackbar } from "react-native-paper";
+import { Button, Snackbar } from "react-native-paper";
 import { RootState } from "../../redux/store";
 import { item } from "../../redux/itemsSlice";
 import { SelectionItemBox } from "../../components/SelectionItemBox";
 import { useNavigation } from "@react-navigation/native";
-import { BackButton } from "../../components/BackButton";
-import { colors } from "../../utils/colors";
+import { PageHeader } from "../../components/PageHeader";
+import { garmentSummary } from "../../components/ItemBox";
+import { GarmentGrid } from "../../components/GarmentGrid";
+import { SearchField } from "../../components/SearchField";
 import { localization } from "../../utils/localization";
+import { theme } from "../../utils/theme";
 export const ItemSelector = () => {
   const itemsState = useSelector((state: RootState) => state.itemsList);
   const storedSettings = useSelector((state: RootState) => state.settings);
   const [search, setSearch] = useState("");
-  const isDarkMode = false;
   const [selectedIdCollector, setSelectedIdCollector] = useState<string[]>([]);
   const navigation = useNavigation<any>();
   const [visible, setVisible] = useState(false);
@@ -56,98 +58,51 @@ export const ItemSelector = () => {
     search,
     storedSettings.collectionSortValue,
   ]);
+  const language = storedSettings.language;
+  const renderGarment = (garment: item) => (
+    <SelectionItemBox
+      {...garmentSummary(garment)}
+      setSelectedIdCollector={setSelectedIdCollector}
+      selectedIdCollector={selectedIdCollector}
+    />
+  );
   return (
     <ThemeView>
-      <BackButton
-        pageTitle={localization.SelectItems[storedSettings.language]}
+      <PageHeader title={localization.SelectItems[language]} />
+      <SearchField
+        value={search}
+        placeholder={localization.SearchPlaceholder[language]}
+        onChangeText={setSearch}
       />
-
-      <View style={styles.searchContainer}>
-        <Searchbar
-          theme={{
-            roundness: 0,
-            colors: {
-              onSurfaceVariant: isDarkMode ? colors.black : colors.white,
-            },
-          }}
-          style={[styles.searchBar, { flexDirection: "row" }]}
-          inputStyle={{
-            textAlign: "left",
-          }}
-          value={search}
-          placeholder={
-            localization.SearchPlaceholder?.[storedSettings.language] ||
-            "Search"
-          }
-          onChangeText={text => setSearch(text)}
-          onClearIconPress={() => setSearch("")}
-        />
-      </View>
-
-      <View style={styles.listContainer}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {groupedData.tags.map((collection, index) => {
-            const collectionItems = groupedData.collections[index];
-            if (!collectionItems || collectionItems.length === 0) return null;
-            return (
-              <CollectionContainer
-                key={`col-${collection.value}`}
-                color="#111111"
-                label={collection.label}
-              >
-                <View style={styles.gridRow}>
-                  {collectionItems.map(collectionItem => (
-                    <View key={collectionItem.id} style={styles.gridItem}>
-                      <SelectionItemBox
-                        primary={collectionItem.primaryColor || colors.white}
-                        secondary={
-                          collectionItem.secondaryColor || colors.white
-                        }
-                        tertiary={collectionItem.tertiaryColor || colors.white}
-                        image={collectionItem.image}
-                        name={collectionItem.name}
-                        type={collectionItem.type}
-                        id={collectionItem.id}
-                        setSelectedIdCollector={setSelectedIdCollector}
-                        selectedIdCollector={selectedIdCollector}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </CollectionContainer>
-            );
-          })}
-
-          {groupedData.nonCollected.length > 0 && (
-            <View style={styles.gridRow}>
-              {groupedData.nonCollected.map(nonCollectedItem => (
-                <View key={nonCollectedItem.id} style={styles.gridItem}>
-                  <SelectionItemBox
-                    primary={nonCollectedItem.primaryColor || colors.white}
-                    secondary={nonCollectedItem.secondaryColor || colors.white}
-                    tertiary={nonCollectedItem.tertiaryColor || colors.white}
-                    image={nonCollectedItem.image}
-                    name={nonCollectedItem.name}
-                    type={nonCollectedItem.type}
-                    id={nonCollectedItem.id}
-                    setSelectedIdCollector={setSelectedIdCollector}
-                    selectedIdCollector={selectedIdCollector}
-                  />
-                </View>
-              ))}
-            </View>
-          )}
-          <View style={styles.bottomSpacer} />
-        </ScrollView>
-      </View>
-
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {groupedData.tags.map((collection, index) => {
+          const collectionItems = groupedData.collections[index];
+          if (!collectionItems || collectionItems.length === 0) return null;
+          return (
+            <CollectionContainer
+              key={`col-${collection.value}`}
+              label={collection.label}
+            >
+              <GarmentGrid
+                garments={collectionItems}
+                renderGarment={renderGarment}
+              />
+            </CollectionContainer>
+          );
+        })}
+        {groupedData.nonCollected.length > 0 && (
+          <GarmentGrid
+            garments={groupedData.nonCollected}
+            renderGarment={renderGarment}
+          />
+        )}
+      </ScrollView>
       <View style={styles.footer}>
         <Button
-          style={styles.nextButton}
-          mode="outlined"
+          mode="contained"
           onPress={() => {
             if (selectedIdCollector.length > 0) {
               navigation.navigate("EventLogForm", {
@@ -158,52 +113,22 @@ export const ItemSelector = () => {
             }
           }}
         >
-          {localization.Next[storedSettings.language]}
+          {localization.Next[language]}
         </Button>
-        <Snackbar visible={visible} onDismiss={onDismissSnackBar}>
-          {localization.SelectAtLeastOneItem[storedSettings.language]}
-        </Snackbar>
       </View>
+      <Snackbar visible={visible} onDismiss={onDismissSnackBar}>
+        {localization.SelectAtLeastOneItem[language]}
+      </Snackbar>
     </ThemeView>
   );
 };
 const styles = StyleSheet.create({
-  nextButton: {
-    width: 120,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  searchBar: {
-    width: "100%",
-    height: 50,
-  },
-  listContainer: {
-    backgroundColor: "#ffffff",
-    marginTop: "1%",
-    flex: 1,
-    paddingBottom: 10,
-  },
   scrollContent: {
     flexGrow: 1,
-  },
-  gridRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 8,
-  },
-  gridItem: {
-    width: "100%",
-    alignItems: "center",
-    paddingVertical: 5,
-  },
-  bottomSpacer: {
-    height: 80,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
   },
   footer: {
-    padding: 8,
-    width: "100%",
-    alignItems: "center",
+    padding: theme.spacing.md,
   },
 });

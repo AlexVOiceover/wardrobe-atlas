@@ -1,4 +1,3 @@
-import { AppHeader } from "./components/AppHeader";
 import { UpdateControls } from "./components/UpdateControls";
 import { StatusBar } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -10,10 +9,8 @@ import { Provider as ReduxProvider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { startAutomaticUpdates } from "./utils/updateService";
+import { theme } from "./utils/theme";
 function App(): ReactElement {
-  const backgroundStyle = {
-    backgroundColor: "#ffffff",
-  };
   useEffect(() => startAutomaticUpdates(), []);
   return (
     <SafeAreaProvider>
@@ -26,48 +23,49 @@ function App(): ReactElement {
               animation: { scale: 0 },
               colors: {
                 ...MD3LightTheme.colors,
-                primary: "#111111",
-                onPrimary: "#ffffff",
-                secondary: "#333333",
-                secondaryContainer: "#eeeeee",
-                onSecondaryContainer: "#111111",
-                background: "#ffffff",
-                surface: "#ffffff",
-                surfaceVariant: "#eeeeee",
-                onSurface: "#111111",
-                onSurfaceVariant: "#333333",
-                outline: "#666666",
-                error: "#111111",
-                primaryContainer: "#eeeeee",
-                onPrimaryContainer: "#111111",
-                tertiary: "#111111",
-                tertiaryContainer: "#eeeeee",
-                onTertiary: "#ffffff",
-                onTertiaryContainer: "#111111",
-                errorContainer: "#eeeeee",
-                onErrorContainer: "#111111",
-                onError: "#ffffff",
-                inverseSurface: "#333333",
-                inverseOnSurface: "#ffffff",
-                inversePrimary: "#ffffff",
+                primary: theme.colors.text,
+                onPrimary: theme.colors.background,
+                secondary: theme.colors.muted,
+                secondaryContainer: theme.colors.surface,
+                onSecondaryContainer: theme.colors.text,
+                background: theme.colors.background,
+                surface: theme.colors.background,
+                surfaceVariant: theme.colors.surface,
+                onSurface: theme.colors.text,
+                onSurfaceVariant: theme.colors.muted,
+                outline: theme.colors.muted,
+                error: theme.colors.danger,
+                primaryContainer: theme.colors.surface,
+                onPrimaryContainer: theme.colors.text,
+                tertiary: theme.colors.text,
+                tertiaryContainer: theme.colors.surface,
+                onTertiary: theme.colors.background,
+                onTertiaryContainer: theme.colors.text,
+                errorContainer: theme.colors.surface,
+                onErrorContainer: theme.colors.danger,
+                onError: theme.colors.background,
+                inverseSurface: theme.colors.text,
+                inverseOnSurface: theme.colors.background,
+                inversePrimary: theme.colors.background,
                 elevation: {
                   level0: "transparent",
-                  level1: "#ffffff",
-                  level2: "#ffffff",
-                  level3: "#ffffff",
-                  level4: "#ffffff",
-                  level5: "#ffffff",
+                  level1: theme.colors.background,
+                  level2: theme.colors.background,
+                  level3: theme.colors.background,
+                  level4: theme.colors.background,
+                  level5: theme.colors.background,
                 },
               },
             }}
           >
-            <SafeAreaView style={[{ flex: 1 }]}>
+            <SafeAreaView
+              style={[{ flex: 1, backgroundColor: theme.colors.background }]}
+            >
               <StatusBar
                 barStyle="dark-content"
-                backgroundColor={backgroundStyle.backgroundColor}
+                backgroundColor={theme.colors.background}
               />
               <GestureHandlerRootView style={{ flex: 1 }}>
-                <AppHeader />
                 <UpdateControls />
                 <Navigator />
               </GestureHandlerRootView>

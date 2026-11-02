@@ -2,9 +2,11 @@ import { localization } from "../utils/localization";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
 import { Dispatch, SetStateAction, useState } from "react";
-import { Image, Pressable, Text } from "react-native";
+import { Image, Pressable } from "react-native";
 import CustomModal from "./CustomModal";
 import useWidthScreen from "../hooks/useWidthScreen";
+import { theme } from "../utils/theme";
+import { ThemeText } from "./ThemeText";
 export const ImageViewer = ({
   imageUrl,
   setImageModalVisible,
@@ -23,20 +25,22 @@ export const ImageViewer = ({
         maxHeight={width}
       >
         <Image
-          accessibilityLabel="Photo"
+          accessibilityLabel={localization.Photo[language]}
           source={{ uri: `data:image/*;base64,${imageUrl}` }}
           style={{ width: "100%", height: width * 0.7, resizeMode: "contain" }}
         />
       </CustomModal>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Choose photo; hold to preview"
+        accessibilityLabel={localization.ChoosePhoto[language]}
         onLongPress={() => imageUrl !== "" && setShowImageFull(true)}
         onPress={() => setImageModalVisible(true)}
         style={{
-          minHeight: 80,
-          minWidth: 80,
-          borderWidth: 1,
+          width: 160,
+          height: 160,
+          borderRadius: theme.radius.sm,
+          overflow: "hidden",
+          backgroundColor: theme.colors.surface,
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -44,12 +48,10 @@ export const ImageViewer = ({
         {imageUrl !== "" ? (
           <Image
             source={{ uri: `data:image/*;base64,${imageUrl}` }}
-            style={{ width: 80, height: 80, resizeMode: "contain" }}
+            style={{ width: 160, height: 160, resizeMode: "cover" }}
           />
         ) : (
-          <Text style={{ color: "#111111" }}>
-            {localization.AddPhoto[language]}
-          </Text>
+          <ThemeText>{localization.AddPhoto[language]}</ThemeText>
         )}
       </Pressable>
     </>

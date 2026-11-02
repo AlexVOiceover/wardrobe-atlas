@@ -2,6 +2,10 @@ import { Pressable } from "react-native";
 import { ThemeText } from "./ThemeText";
 import dayjs from "dayjs";
 import { Dispatch, SetStateAction } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "../redux/store";
+import { localization } from "../utils/localization";
+import { theme } from "../utils/theme";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 export const DatePicker = ({
   title = "Date",
@@ -18,6 +22,7 @@ export const DatePicker = ({
   setDatePickerVisibility: Dispatch<SetStateAction<boolean>>;
   type?: "date" | "time" | "both";
 }) => {
+  const language = useSelector((s: RootState) => s.settings.language);
   const safeDate =
     date && (date as any).getTime
       ? (date as unknown as Date)
@@ -30,17 +35,17 @@ export const DatePicker = ({
         }}
         style={[
           {
-            width: "80%",
+            width: "100%",
             height: 48,
             borderWidth: 1,
-            borderColor: "#777777",
+            borderColor: theme.colors.muted,
             flexDirection: "row",
             justifyContent: "space-between",
-            paddingHorizontal: 8,
+            paddingHorizontal: 12,
             alignItems: "center",
           },
           {
-            backgroundColor: "#ffffff",
+            backgroundColor: theme.colors.background,
           },
         ]}
       >
@@ -48,7 +53,9 @@ export const DatePicker = ({
         <ThemeText>{date ? dayjs(date).format("DD/MM/YYYY") : ""}</ThemeText>
         {(type === "time" || type === "both") && (
           <ThemeText>
-            {date ? dayjs(date).format("h:mm a") : "Select Date"}
+            {date
+              ? dayjs(date).format("h:mm a")
+              : localization.SelectDate[language]}
           </ThemeText>
         )}
       </Pressable>

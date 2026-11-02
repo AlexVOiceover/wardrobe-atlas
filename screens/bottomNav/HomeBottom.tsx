@@ -1,28 +1,24 @@
-import { Text } from "react-native";
-import { Button } from "react-native-paper";
-import {
-  WardrobeSelector,
-  useWardrobeView,
-} from "../../components/WardrobeSelector";
+import { useWardrobeView } from "../../components/WardrobeSelector";
 import { filterByWardrobe } from "../../utils/wardrobes";
 import { localization as l } from "../../utils/localization";
-import { View, ScrollView, Keyboard, StyleSheet } from "react-native";
+import { ScrollView, Keyboard, StyleSheet } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { ItemBox } from "../../components/ItemBox";
+import { ItemBox, garmentSummary } from "../../components/ItemBox";
 import { item } from "../../redux/itemsSlice";
 import { useNavigation } from "@react-navigation/native";
-import { colors } from "../../utils/colors";
-import { SideModal } from "../../components/SideModal";
+import { BottomSheet } from "../../components/BottomSheet";
 import HomeFilterPanel, {
   HomeFilterActions,
   HomeFilterState,
+  resetHomeFilters,
 } from "./HomeFilterPanel";
 import HomeHeader from "./HomeHeader";
 import {
   HomeFilter,
+  activeFilterCount,
   filterCollectionsBySearch,
   filterItemsBySearch,
 } from "../../utils/filters";
@@ -31,8 +27,14 @@ import {
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
 import { defaultCategories } from "../stackNav/Category";
-import { ThemeNameType } from "react-native-dropdown-picker";
 import { CollectionContainer } from "../../components/CollectionContainer";
+import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
+import { EmptyState } from "../../components/EmptyState";
+import { GarmentGrid } from "../../components/GarmentGrid";
+import { theme } from "../../utils/theme";
+const renderGarment = (garment: item) => (
+  <ItemBox {...garmentSummary(garment)} />
+);
 export function HomeBottom() {
   //this is the main page
   const navigation = useNavigation<any>();
@@ -46,28 +48,18 @@ export function HomeBottom() {
     if (activeWardrobe !== selected) select(undefined);
   }, [activeWardrobe, selected, select]);
   const [search, setSearch] = useState("");
-  const searchFocus = useRef<any>(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const isDarkMode = false;
   const [sortValue, setSortValue] = useState("LA");
   const [categoriesFilter, setCategoriesFilter] = useState<any[]>([]);
   const [TypeFilter, setTypeFilter] = useState<string[]>([]);
   const [seasonFilter, setSeasonFilter] = useState("");
   const [colorFilter, setColorFilter] = useState<string[]>([]);
-  const [OpenCategoriesFilter, setOpenCategoriesFilter] = useState(false);
-  const [OpenTypeFilter, setOpenTypeFilter] = useState(false);
-  const [OpenSeasonFilter, setOpenSeasonFilter] = useState(false);
-  const [OpenColorFilter, setOpenColorFilter] = useState(false);
   const filterState: HomeFilterState = {
     sortValue,
     seasonFilter,
     categoriesFilter,
     TypeFilter,
     colorFilter,
-    OpenSeasonFilter,
-    OpenCategoriesFilter,
-    OpenTypeFilter,
-    OpenColorFilter,
   };
   const filterActions: HomeFilterActions = {
     setSortValue,
@@ -75,9 +67,6 @@ export function HomeBottom() {
     setCategoriesFilter,
     setTypeFilter,
     setColorFilter,
-    setOpenSeasonFilter,
-    setOpenCategoriesFilter,
-    setOpenTypeFilter,
   };
   const storedSettings = useSelector((state: RootState) => state.settings);
   const storedCategories = useSelector(
@@ -92,7 +81,6 @@ export function HomeBottom() {
       label: cat.name[storedSettings.language ?? 0] || cat.name[0],
       value: cat.index,
     }));
-  const colorScheme = "LIGHT" as ThemeNameType;
   const [isOpen, setIsOpen] = useState(false);
   const handleOpenDrawer = () => {
     Keyboard.dismiss();
@@ -157,157 +145,92 @@ export function HomeBottom() {
   useEffect(() => {
     if (categoriesFilter.length !== 1) setTypeFilter([]);
   }, [categoriesFilter]);
+  const language = storedSettings.language;
+  const filterCount = activeFilterCount(filterState);
+  const isEmpty =
+    !filteredData.collections.some(group => group.length) &&
+    !filteredData.nonCollectnized.length;
+  const addGarment = () => navigation.navigate("Category");
   return (
-    <ThemeView customStyle={styles.screenContainer}>
-      <SideModal isOpen={isOpen} setIsOpen={setIsOpen}>
+    <ThemeView>
+      <BottomSheet
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        title={l.Filters[language]}
+      >
         <HomeFilterPanel
           filterState={filterState}
           filterActions={filterActions}
           CategoriesList={CategoriesList}
-          colorScheme={colorScheme}
-          storedSettings={storedSettings}
+          language={language}
           storedCatTypes={storedCatTypes}
         />
-      </SideModal>
+      </BottomSheet>
 
-      <WardrobeSelector all value={activeWardrobe} onChange={select} />
       <HomeHeader
-        navigation={navigation}
-        storedSettings={storedSettings}
-        isDarkMode={isDarkMode}
+        language={language}
+        wardrobe={activeWardrobe}
+        onWardrobeChange={select}
+        filterCount={filterCount}
         handleOpenDrawer={handleOpenDrawer}
-        setOpenColorFilter={setOpenColorFilter}
         setIsSearchVisible={setIsSearchVisible}
         isSearchVisible={isSearchVisible}
-        searchFocus={searchFocus}
         setSearch={setSearch}
         search={search}
       />
 
-      <View style={styles.contentContainer}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollViewContent}
-        >
-          {!filteredData.collections.some(group => group.length) &&
-            !filteredData.nonCollectnized.length && (
-              <View>
-                <Text>{l.NoWardrobeItems[storedSettings.language]}</Text>
-                <Button onPress={() => navigation.navigate("Category")}>
-                  {l.AddGarment[storedSettings.language]}
-                </Button>
-                <Button
-                  onPress={() => {
-                    setSearch("");
-                    setCategoriesFilter([]);
-                    setTypeFilter([]);
-                    setSeasonFilter("");
-                    setColorFilter([]);
-                  }}
-                >
-                  {l.ClearWardrobeFilters[storedSettings.language]}
-                </Button>
-              </View>
-            )}
-          {groupedCollectionsRaw.tags.map((collection, index) => {
-            const collectionItems = filteredData.collections[index];
-            if (!collectionItems || collectionItems.length === 0) return null;
-            return (
-              <CollectionContainer
-                key={`collection-${collection.value}`}
-                color="#111111"
-                label={collection.label}
-              >
-                <View style={styles.gridContainer}>
-                  {collectionItems.map(collectionItem => (
-                    <View
-                      key={`colItem-${collectionItem.id}`}
-                      style={styles.gridItem}
-                    >
-                      <ItemBox
-                        primary={collectionItem.primaryColor || colors.white}
-                        secondary={
-                          collectionItem.secondaryColor || colors.white
-                        }
-                        tertiary={collectionItem.tertiaryColor || colors.white}
-                        image={collectionItem.image}
-                        name={collectionItem.name}
-                        type={collectionItem.type}
-                        id={collectionItem.id}
-                        logs={collectionItem.logIds || []}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </CollectionContainer>
-            );
-          })}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        {isEmpty &&
+          (filterCount > 0 || search ? (
+            <EmptyState
+              message={l.NoWardrobeItems[language]}
+              action={l.ClearWardrobeFilters[language]}
+              onAction={() => {
+                setSearch("");
+                resetHomeFilters(filterActions);
+              }}
+            />
+          ) : (
+            <EmptyState
+              message={l.NoGarmentsYet[language]}
+              action={l.AddGarment[language]}
+              onAction={addGarment}
+            />
+          ))}
+        {groupedCollectionsRaw.tags.map((collection, index) => {
+          const collectionItems = filteredData.collections[index];
+          if (!collectionItems || collectionItems.length === 0) return null;
+          return (
+            <CollectionContainer
+              key={`collection-${collection.value}`}
+              label={collection.label}
+            >
+              <GarmentGrid
+                garments={collectionItems}
+                renderGarment={renderGarment}
+              />
+            </CollectionContainer>
+          );
+        })}
 
-          {filteredData.nonCollectnized.length > 0 && (
-            <View style={styles.gridContainer}>
-              {filteredData.nonCollectnized.map((nonItem, idx) => (
-                <View
-                  key={`nonItem-${nonItem.id || idx}`}
-                  style={styles.gridItem}
-                >
-                  <ItemBox
-                    primary={nonItem.primaryColor || colors.white}
-                    secondary={nonItem.secondaryColor || colors.white}
-                    tertiary={nonItem.tertiaryColor || colors.white}
-                    image={nonItem.image}
-                    name={nonItem.name}
-                    type={nonItem.type}
-                    id={nonItem.id}
-                    logs={nonItem.logIds || []}
-                  />
-                </View>
-              ))}
-            </View>
-          )}
-
-          <View
-            style={
-              isSearchVisible
-                ? styles.bottomSpacerLarge
-                : styles.bottomSpacerSmall
-            }
+        {filteredData.nonCollectnized.length > 0 && (
+          <GarmentGrid
+            garments={filteredData.nonCollectnized}
+            renderGarment={renderGarment}
           />
-        </ScrollView>
-      </View>
+        )}
+      </ScrollView>
+      <AddButton label={l.AddGarment[language]} onPress={addGarment} />
     </ThemeView>
   );
 }
 const styles = StyleSheet.create({
-  // Main Layout
-  screenContainer: {
-    paddingHorizontal: 20,
-  },
-  contentContainer: {
-    backgroundColor: "#ffffff",
-    marginTop: "1%",
-    flex: 1,
-    paddingBottom: 10,
-  },
   scrollViewContent: {
     flexGrow: 1,
-  },
-  // Item Grids
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 8,
-    justifyContent: "flex-start",
-  },
-  gridItem: {
-    width: "100%",
-    alignItems: "center",
-    paddingVertical: 5,
-  },
-  // Spacing & Utilities
-  bottomSpacerSmall: {
-    height: 24,
-  },
-  bottomSpacerLarge: {
-    height: 144,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: ADD_BUTTON_CLEARANCE,
   },
 });

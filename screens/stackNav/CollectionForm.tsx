@@ -1,29 +1,28 @@
-import { Keyboard, StyleSheet, Text, View } from "react-native";
+import { Keyboard, StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
 import { useMemo, useState } from "react";
-import { BackButton } from "../../components/BackButton";
+import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
 import { CustomInput } from "../../components/CustomInput";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { ThemeText } from "../../components/ThemeText";
 import { addCollection, moveCollection } from "../../redux/itemsSlice";
 import { colors as appColors } from "./../../utils/colors";
 import { localization } from "../../utils/localization";
 import { CollectionList } from "../../components/CollectionList";
-import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
+import { FilterChip } from "../../components/FilterChip";
+import { FormErrors } from "../../components/FormErrors";
+import { SectionHeading } from "../../components/SectionHeading";
 import {
   COLLECTION_SORT_VALUES,
   getCollectionSortValue,
-  type CollectionSortValue,
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
 import { setCollectionSortValue } from "../../redux/settingsSlice";
+import { theme } from "../../utils/theme";
 export const CollectionForm = () => {
-  // const navigation = useNavigation<any>();
   const [name, setName] = useState("");
   const [refresh, setRefresh] = useState(false);
-  const [isSortOpen, setIsSortOpen] = useState(false);
   const CollectionsState = useSelector(
     (state: RootState) => state.itemsList.collectionTags,
   );
@@ -31,7 +30,6 @@ export const CollectionForm = () => {
   const sortValue = getCollectionSortValue(storedSettings.collectionSortValue);
   const [errorsList, setErrorsList] = useState<string[]>([]);
   const dispatch = useDispatch();
-  const colorScheme = String("LIGHT") as ThemeNameType;
   const language = storedSettings.language;
   const orderedCollections = useMemo(
     () => getOrderedCollectionTags(CollectionsState, sortValue),
@@ -54,29 +52,18 @@ export const CollectionForm = () => {
     ],
     [language],
   );
-  const handleSortValueChange = (
-    valueOrUpdater:
-      | CollectionSortValue
-      | ((prevState: CollectionSortValue) => CollectionSortValue),
-  ) => {
-    const nextSortValue =
-      typeof valueOrUpdater === "function"
-        ? valueOrUpdater(sortValue)
-        : valueOrUpdater;
-    dispatch(setCollectionSortValue({ collectionSortValue: nextSortValue }));
-  };
   const addCollectionHandler = async () => {
     const errors = [];
     if (name.length <= 0) {
-      errors.push("Please enter a name for this Collection");
+      errors.push(localization.CollectionNameRequired[language]);
     }
     if (name.length > 20) {
-      errors.push("Please enter a name within 20 characters max");
+      errors.push(localization.NameTooLong[language]);
     }
     if (
       CollectionsState.find(x => x.label.toLowerCase() === name.toLowerCase())
     ) {
-      errors.push("Please enter a different name");
+      errors.push(localization.NameTaken[language]);
     }
     if (errors.length > 0) {
       setErrorsList(errors);
@@ -95,131 +82,62 @@ export const CollectionForm = () => {
     setRefresh(prev => !prev);
   };
   return (
-    <>
-      <ThemeView>
-        <BackButton pageTitle={localization.Add_a_collection[language]} />
-
-        <View style={styles.formGroup}>
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            style={styles.inputWidth}
-            label={localization.Collection_name[language]}
-            value={name}
-            onChange={text => setName(text.nativeEvent.text)}
-          />
-          {errorsList.length > 0 && (
-            <View>
-              {errorsList.map((error, index) => {
-                return (
-                  <Text key={index} style={styles.errorText}>
-                    {error}
-                  </Text>
-                );
-              })}
-            </View>
-          )}
-        </View>
-
-        <Button
+    <ThemeView>
+      <PageHeader title={localization.Collections[language]} />
+      <View style={styles.form}>
+        <CustomInput
           mode="outlined"
+          textContentType="name"
+          label={localization.Collection_name[language]}
+          value={name}
+          onChange={text => setName(text.nativeEvent.text)}
+        />
+        <FormErrors errors={errorsList} />
+        <Button
+          mode="contained"
           onPress={() => {
             addCollectionHandler();
             Keyboard.dismiss();
           }}
-          style={styles.saveButton}
         >
           {localization.Save[language]}
         </Button>
-        <View style={styles.divider} />
-        <ThemeText customStyle={styles.sectionTitle}>
-          {localization.Collections[language]}
-        </ThemeText>
-        <View style={styles.sortRow}>
-          <ThemeText customStyle={styles.sortLabel}>
-            {localization.Sort[language]}
-          </ThemeText>
-          <View style={styles.sortControlWrapper}>
-            <DropDownPicker
-              open={isSortOpen}
-              value={sortValue}
-              items={sortOptions}
-              setOpen={setIsSortOpen}
-              setValue={handleSortValueChange}
-              theme={colorScheme}
-              listMode="SCROLLVIEW"
-              style={styles.sortDropdown}
-              dropDownContainerStyle={styles.sortDropdownContainer}
+        <SectionHeading title={localization.Sort[language]} />
+        <View style={styles.chips}>
+          {sortOptions.map(option => (
+            <FilterChip
+              key={option.value}
+              label={option.label}
+              selected={sortValue === option.value}
+              onPress={() =>
+                dispatch(
+                  setCollectionSortValue({ collectionSortValue: option.value }),
+                )
+              }
             />
-          </View>
+          ))}
         </View>
-        <CollectionList
-          collections={orderedCollections}
-          sortValue={sortValue}
-          refresh={refresh}
-          setRefresh={setRefresh}
-          emptyText={localization.There_is_no_collection[language]}
-          onMoveCollection={moveCollectionHandler}
-        />
-      </ThemeView>
-    </>
+      </View>
+      <CollectionList
+        collections={orderedCollections}
+        sortValue={sortValue}
+        refresh={refresh}
+        setRefresh={setRefresh}
+        emptyText={localization.There_is_no_collection[language]}
+        onMoveCollection={moveCollectionHandler}
+      />
+    </ThemeView>
   );
 };
 const styles = StyleSheet.create({
-  formGroup: {
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 12,
+  form: {
+    paddingHorizontal: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
-  colorButton: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 64,
-    height: 64,
-    borderWidth: 2,
-    borderColor: "#777777",
-    marginTop: 8,
-  },
-  inputWidth: {
-    width: "80%",
-  },
-  errorText: {
-    color: appColors.defaultCollectionColor,
-  },
-  saveButton: {
-    marginHorizontal: 40,
-    marginVertical: 20,
-  },
-  divider: {
-    width: "100%",
-    height: 4,
-    backgroundColor: "#ffffff",
-  },
-  sectionTitle: {
-    width: "100%",
-    textAlign: "center",
-    fontSize: 20,
-    marginVertical: 20,
-  },
-  sortRow: {
-    width: "80%",
-    alignSelf: "center",
+  chips: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  sortLabel: {
-    width: "20%",
-    textAlign: "center",
-  },
-  sortControlWrapper: {
-    width: "80%",
-    zIndex: 2,
-  },
-  sortDropdown: {
-    borderColor: "#777777",
-  },
-  sortDropdownContainer: {
-    borderColor: "#777777",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
 });

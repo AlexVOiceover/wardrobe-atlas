@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState } from "react";
-import { View, Text, Modal, ScrollView } from "react-native";
+import { View } from "react-native";
 import { RadioButton, Button } from "react-native-paper";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
 import { localization as l } from "../utils/localization";
+import { captionText, theme } from "../utils/theme";
+import { BottomSheet } from "./BottomSheet";
+import { ThemeText } from "./ThemeText";
 const WardrobeContext = createContext<{
   selected?: string;
   select: (id?: string) => void;
@@ -21,10 +24,12 @@ export function WardrobeSelector({
   value,
   onChange,
   all = false,
+  compact = false,
 }: {
   value?: string;
   onChange: (id?: string) => void;
   all?: boolean;
+  compact?: boolean;
 }) {
   const { wardrobes = [] } = useSelector((s: RootState) => s.itemsList);
   const { language } = useSelector((s: RootState) => s.settings);
@@ -37,46 +42,50 @@ export function WardrobeSelector({
   const selection =
     value === undefined ? (all ? "all" : "") : value ? "wardrobe:" + value : "";
   return (
-    <View style={{ padding: 8 }}>
-      <Text>{l.Wardrobe[language]}</Text>
-      <Button mode="outlined" onPress={() => setExpanded(!expanded)}>
+    <View
+      style={
+        compact
+          ? { flex: 1, alignItems: "flex-start" }
+          : { gap: theme.spacing.xs }
+      }
+    >
+      {!compact && (
+        <ThemeText customStyle={captionText}>{l.Wardrobe[language]}</ThemeText>
+      )}
+      <Button
+        mode={compact ? "text" : "outlined"}
+        icon="chevron-down"
+        contentStyle={{ flexDirection: "row-reverse" }}
+        onPress={() => setExpanded(!expanded)}
+      >
         {options.find(o => o.value === selection)?.label ??
           l.WardrobeUnavailable[language]}
       </Button>
-      <Modal
-        visible={expanded}
-        onRequestClose={() => setExpanded(false)}
-        animationType="none"
+      <BottomSheet
+        isOpen={expanded}
+        setIsOpen={setExpanded}
+        title={l.Wardrobe[language]}
       >
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
-          <Button onPress={() => setExpanded(false)}>
-            {l.Cancel[language]}
-          </Button>
-          {expanded && (
-            <RadioButton.Group
-              value={selection}
-              onValueChange={id => {
-                onChange(
-                  id === "all"
-                    ? undefined
-                    : id.startsWith("wardrobe:")
-                    ? id.slice(9)
-                    : "",
-                );
-                setExpanded(false);
-              }}
-            >
-              {options.map(o => (
-                <RadioButton.Item
-                  key={o.value}
-                  label={o.label}
-                  value={o.value}
-                />
-              ))}
-            </RadioButton.Group>
-          )}
-        </ScrollView>
-      </Modal>
+        {expanded && (
+          <RadioButton.Group
+            value={selection}
+            onValueChange={id => {
+              onChange(
+                id === "all"
+                  ? undefined
+                  : id.startsWith("wardrobe:")
+                  ? id.slice(9)
+                  : "",
+              );
+              setExpanded(false);
+            }}
+          >
+            {options.map(o => (
+              <RadioButton.Item key={o.value} label={o.label} value={o.value} />
+            ))}
+          </RadioButton.Group>
+        )}
+      </BottomSheet>
     </View>
   );
 }

@@ -64,8 +64,5 @@
   },
   "engines": {
     "node": ">=22"
-  },
-  "jest": {
-    "preset": "react-native"
   }
 }

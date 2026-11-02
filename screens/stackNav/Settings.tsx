@@ -1,10 +1,8 @@
 import { UpdateControls } from "../../components/UpdateControls";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
-import { BackButton } from "../../components/BackButton";
-import { ThemeText } from "../../components/ThemeText";
-import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
-import { useEffect, useState } from "react";
+import { PageHeader } from "../../components/PageHeader";
+import { useState } from "react";
 import { languagesList } from "../../utils/data";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
@@ -14,23 +12,18 @@ import {
   setHeatMap,
   userNameSetter,
 } from "../../redux/settingsSlice";
-import { Button, Checkbox, Snackbar } from "react-native-paper";
+import { Button, Snackbar, Switch } from "react-native-paper";
 import { exportStoreToJson } from "../../utils/exportStoreToJson";
 import { importStoreFromJson } from "../../utils/importStoreFromJson";
-import Icon from "react-native-vector-icons/FontAwesome";
 import { localization } from "../../utils/localization";
+import { theme } from "../../utils/theme";
+import { FilterChip } from "../../components/FilterChip";
+import { ListRow } from "../../components/ListRow";
+import { SectionHeading } from "../../components/SectionHeading";
 export const Settings = () => {
-  const [openLang, setOpenLang] = useState(false);
   const storedSettings = useSelector((state: RootState) => state.settings);
   const { language, name, enableHeatMap } = storedSettings;
-  const [lang, setLang] = useState(language);
   const dispatch = useDispatch();
-  useEffect(() => {
-    setLang(language);
-  }, [language]);
-  useEffect(() => {
-    dispatch(changeLanguage({ lang: lang }));
-  }, [lang, dispatch]);
   const [visible, setVisible] = useState(false);
   const onToggleSnackBar = () => setVisible(!visible);
   const onDismissSnackBar = () => setVisible(false);
@@ -39,105 +32,89 @@ export const Settings = () => {
   const setCheckboxes = (newEnableHeatMap: boolean) => {
     setCheckedHeatMap(newEnableHeatMap);
   };
-  const rowStyle = styles.row;
   return (
     <ThemeView>
-      <BackButton pageTitle={localization.Settings[language]} />
+      <PageHeader title={localization.Settings[language]} />
       <Snackbar visible={visible} onDismiss={onDismissSnackBar}>
         {exportOrImport === 0
-          ? "Exported to destination"
-          : "Imported successfully"}
+          ? localization.ExportDone[language]
+          : localization.ImportDone[language]}
       </Snackbar>
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        <UpdateControls settings />
-        <View style={[rowStyle, { columnGap: 8 }]}>
-          <ThemeText customStyle={styles.textLabel10}>
-            {localization.Your_Name[language]}
-          </ThemeText>
+        <View>
+          <SectionHeading title={localization.Profile[language]} />
           <CustomInput
             mode="outlined"
             textContentType="name"
-            style={[{ width: "50%" }, { textAlign: "left" }]}
-            label={localization.User_Name[language]}
+            label={localization.Your_Name[language]}
             value={name}
             onChangeText={value => dispatch(userNameSetter({ name: value }))}
           />
         </View>
-        <View style={[rowStyle, { columnGap: 8 }, { zIndex: 20 }]}>
-          <ThemeText customStyle={styles.textLabel10}>
-            {localization.Language[language]}
-          </ThemeText>
-          <View style={styles.dropdownWrapper}>
-            <DropDownPicker
-              open={openLang}
-              value={lang}
-              items={languagesList}
-              setOpen={setOpenLang}
-              setValue={setLang}
-              mode="SIMPLE"
-              listMode="SCROLLVIEW"
-              placeholder="Language"
-              style={styles.dropdown}
-              dropDownContainerStyle={{ borderColor: "#777777" }}
-              theme={String("LIGHT") as ThemeNameType}
-            />
+        <View>
+          <SectionHeading title={localization.Language[language]} />
+          <View style={styles.row}>
+            {languagesList.map(option => (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                selected={language === option.value}
+                onPress={() => dispatch(changeLanguage({ lang: option.value }))}
+              />
+            ))}
           </View>
         </View>
-        <View style={rowStyle}>
-          <ThemeText customStyle={styles.textLabel10}>
-            {localization.Export[language]}
-          </ThemeText>
-          <Button
-            onPress={async () => {
-              if (await exportStoreToJson()) {
-                setExportOrImport(0);
-                onToggleSnackBar();
-              }
-            }}
-            mode="outlined"
-            style={{ width: "50%" }}
-          >
-            {localization.Export[language]}
-          </Button>
+        <View>
+          <SectionHeading title={localization.Backup[language]} />
+          <View style={styles.row}>
+            <Button
+              onPress={async () => {
+                if (await exportStoreToJson()) {
+                  setExportOrImport(0);
+                  onToggleSnackBar();
+                }
+              }}
+              mode="outlined"
+              style={styles.backupButton}
+            >
+              {localization.Export[language]}
+            </Button>
+            <Button
+              onPress={async () => {
+                if (await importStoreFromJson(setCheckboxes)) {
+                  setExportOrImport(1);
+                  onToggleSnackBar();
+                }
+              }}
+              mode="outlined"
+              style={styles.backupButton}
+            >
+              {localization.Import[language]}
+            </Button>
+          </View>
         </View>
-        <View style={[rowStyle, { zIndex: 0 }]}>
-          <ThemeText customStyle={styles.textLabel10}>
-            {localization.Import[language]}
-          </ThemeText>
-          <Button
-            onPress={async () => {
-              if (await importStoreFromJson(setCheckboxes)) {
-                setExportOrImport(1);
-                onToggleSnackBar();
-              }
-            }}
-            mode="outlined"
-            style={{ width: "50%" }}
-          >
-            {localization.Import[language]}
-          </Button>
-        </View>
-
-        <View style={rowStyle}>
-          <ThemeText customStyle={styles.textLabel5}>
-            {localization.RecentUsage[language]}
-          </ThemeText>
-          <Checkbox
-            status={checkedHeatMap ? "checked" : "unchecked"}
-            onPress={() => {
-              setCheckedHeatMap(prev => !prev);
-              dispatch(setHeatMap({ enableHeatMap: !checkedHeatMap }));
-            }}
+        <View>
+          <SectionHeading title={localization.Display[language]} />
+          <ListRow
+            title={localization.RecentUsage[language]}
+            subtitle={localization.RecentUsageHelp[language]}
+            right={
+              <Switch
+                value={checkedHeatMap}
+                onValueChange={value => {
+                  setCheckedHeatMap(value);
+                  dispatch(setHeatMap({ enableHeatMap: value }));
+                }}
+              />
+            }
           />
         </View>
-        <View style={{ flexDirection: "row" }}>
-          <Icon name="info-circle" size={15} color="#111111" />
-          <ThemeText customStyle={styles.infoText}>
-            {localization.RecentUsageHelp[language]}
-          </ThemeText>
+        <View>
+          <SectionHeading title={localization.Updates[language]} />
+          <UpdateControls settings />
         </View>
       </ScrollView>
     </ThemeView>
@@ -145,34 +122,15 @@ export const Settings = () => {
 };
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    rowGap: 12,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
+    rowGap: theme.spacing.md,
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    gap: theme.spacing.sm,
   },
-  textLabel10: {
-    paddingBottom: 10,
-    fontSize: 15,
-  },
-  textLabel5: {
-    paddingBottom: 5,
-    fontSize: 15,
-  },
-  dropdownWrapper: {
-    marginBottom: 10,
-    width: "50%",
-  },
-  dropdown: {
-    borderColor: "#777777",
-    zIndex: 10,
-  },
-  infoText: {
-    fontSize: 12,
-    marginHorizontal: 20,
+  backupButton: {
+    flex: 1,
   },
 });

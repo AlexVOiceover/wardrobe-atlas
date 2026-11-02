@@ -77,7 +77,6 @@ export const ConfirmationDialog = ({
 };
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
     alignItems: "center",
   },
   scroll: {
@@ -85,13 +84,11 @@ const styles = StyleSheet.create({
     maxHeight: 360,
   },
   scrollContent: {
-    alignItems: "center",
     paddingBottom: 4,
   },
   message: {
     fontSize: 16,
-    textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   extraContent: {
     width: "100%",

@@ -1,6 +1,5 @@
 import React from "react";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
-import { AppHeader } from "../components/AppHeader";
 import { UpdateControls } from "../components/UpdateControls";
 
 const mockCheck = jest.fn().mockResolvedValue({ phase: "current" });
@@ -16,13 +15,22 @@ jest.mock("react-redux", () => ({ useSelector: () => 0 }));
 jest.mock("react-native-paper", () => ({ Button: "Button" }));
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
-test("header identifies the app and the installed package version", async () => {
+test("Settings shows the installed package version and the app-wide banner does not", async () => {
+  mockPhase = "idle";
   let view: ReactTestRenderer;
   await act(async () => {
-    view = create(<AppHeader />);
+    view = create(<UpdateControls settings />);
   });
-  expect(JSON.stringify(view!.toJSON())).toContain("Wardrobe Atlas");
   expect(JSON.stringify(view!.toJSON())).toContain("v0.1.99");
+  await act(async () => {
+    view!.update(<UpdateControls />);
+  });
+  expect(view!.toJSON()).toBeNull();
+  mockPhase = "ready";
+  await act(async () => {
+    view!.update(<UpdateControls />);
+  });
+  expect(JSON.stringify(view!.toJSON())).not.toContain("v0.1.99");
   await act(async () => {
     view!.unmount();
   });

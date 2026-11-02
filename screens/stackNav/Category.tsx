@@ -1,12 +1,14 @@
-import { ScrollView, View } from "react-native";
-import { Button } from "react-native-paper";
+import { useState } from "react";
+import { ScrollView } from "react-native";
+import { Switch } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { ThemeView } from "../../components/ThemeView";
-import { BackButton } from "../../components/BackButton";
-import { delCategory } from "../../redux/categoriesSlice";
+import { PageHeader } from "../../components/PageHeader";
+import { ListRow } from "../../components/ListRow";
 import { localization } from "../../utils/localization";
+import { theme } from "../../utils/theme";
 export const defaultCategories = [
   localization.Tops,
   localization.Bottoms,
@@ -20,50 +22,30 @@ export const defaultCategories = [
 }));
 export function Category() {
   const navigation = useNavigation<any>();
-  const dispatch = useDispatch();
   const categories = useSelector((s: RootState) => s.CategoryList.Categories);
   const { language } = useSelector((s: RootState) => s.settings);
+  const [bulk, setBulk] = useState(false);
   return (
     <ThemeView>
-      <BackButton />
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
+      <PageHeader title={localization.ChooseCategory[language]} />
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: theme.spacing.md }}
+      >
+        <ListRow
+          title={localization.addMultiItems[language]}
+          right={<Switch value={bulk} onValueChange={setBulk} />}
+        />
         {[...defaultCategories, ...categories].map(item => (
-          <View key={item.index} style={{ borderWidth: 1, padding: 8, gap: 8 }}>
-            <Button
-              onPress={() =>
-                navigation.navigate("ModeScreen", {
-                  screenName: item.screen,
-                  selectedCategory: item.index,
-                })
-              }
-            >
-              {item.name[language] || item.name[0]}
-            </Button>
-            <Button
-              onPress={() =>
-                navigation.navigate("EditCategory", {
-                  categoryIndex: item.index,
-                })
-              }
-            >
-              {localization.Edit_Category[language]}
-            </Button>
-            {item.index >= 4 && (
-              <Button
-                onPress={() => dispatch(delCategory({ index: item.index }))}
-              >
-                {localization.Delete[language]}
-              </Button>
-            )}
-          </View>
+          <ListRow
+            key={item.index}
+            title={item.name[language] || item.name[0]}
+            onPress={() =>
+              navigation.navigate(bulk ? "BulkModeForm" : item.screen, {
+                selectedCategory: item.index,
+              })
+            }
+          />
         ))}
-        <Button
-          onPress={() =>
-            navigation.navigate("CategoryForm", { selectedCategory: -1 })
-          }
-        >
-          {localization.Add_New_Category[language]}
-        </Button>
       </ScrollView>
     </ThemeView>
   );

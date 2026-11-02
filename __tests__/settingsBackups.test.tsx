@@ -10,14 +10,13 @@ jest.mock("react-redux", () => ({
     select({ settings: { language: 0, name: "Alex", enableHeatMap: false } }),
   useDispatch: () => mockDispatch,
 }));
+jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 jest.mock("react-native-paper", () => ({
   Button: "Button",
-  Checkbox: "Checkbox",
   Snackbar: "Snackbar",
+  Switch: "Switch",
 }));
-jest.mock("react-native-dropdown-picker", () => "Dropdown");
-jest.mock("react-native-vector-icons/FontAwesome", () => "Icon");
-jest.mock("../components/BackButton", () => ({ BackButton: "BackButton" }));
+jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/UpdateControls", () => ({
   UpdateControls: "UpdateControls",
@@ -58,5 +57,5 @@ test("Settings retains working JSON backup actions and update controls after tex
   expect(tree!.root.findByType("Snackbar" as any).props.children).toBe(
     "Imported successfully",
   );
-  expect(tree!.root.findByType("Checkbox" as any).props.status).toBe("checked");
+  expect(tree!.root.findByType("Switch" as any).props.value).toBe(true);
 });

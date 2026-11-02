@@ -1,7 +1,9 @@
-import { Pressable, Text } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import { Dispatch, SetStateAction } from "react";
 import { ItemSummary } from "./ItemSummary";
 import type { ItemSummaryProps } from "./ItemBox";
+import { theme } from "../utils/theme";
 export const SelectionItemBox = ({
   selectedIdCollector,
   setSelectedIdCollector,
@@ -23,15 +25,21 @@ export const SelectionItemBox = ({
             : [...current, item.id],
         )
       }
-      style={{
-        margin: 4,
-        padding: 8,
-        borderWidth: selected ? 3 : 1,
-        width: "100%",
-      }}
     >
-      <Text style={{ color: "#111111" }}>{selected ? "[x]" : "[ ]"}</Text>
       <ItemSummary {...item} />
+      <Icon
+        name={selected ? "checkmark-circle" : "ellipse-outline"}
+        size={26}
+        color={selected ? theme.colors.text : theme.colors.muted}
+        style={styles.check}
+      />
     </Pressable>
   );
 };
+const styles = StyleSheet.create({
+  check: {
+    position: "absolute",
+    top: theme.spacing.sm,
+    right: theme.spacing.sm,
+  },
+});

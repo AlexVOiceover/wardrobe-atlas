@@ -1,30 +1,29 @@
-import {
-  Text,
-  View,
-  Pressable,
-  StyleSheet,
-  Keyboard,
-  FlatList,
-} from "react-native";
+import { View, StyleSheet, Keyboard, FlatList } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import React, { useEffect, useState, useMemo } from "react";
 // replaced FlashList with FlatList from react-native
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { LogComponent } from "../../components/LogComponent";
-import { RadioButton, Searchbar } from "react-native-paper";
-import Icon from "react-native-vector-icons/FontAwesome";
 import CustomModal from "../../components/CustomModal";
 import { logsType } from "../../redux/itemsSlice";
 import { ThemeText } from "../../components/ThemeText";
 import dayjs from "dayjs";
-import { colors } from "../../utils/colors";
-import { SideModal } from "../../components/SideModal";
+import "dayjs/locale/es";
+import { BottomSheet } from "../../components/BottomSheet";
 import { LogFilter } from "../../utils/filters";
 import { localization } from "../../utils/localization";
+import { useNavigation } from "@react-navigation/native";
+import { HeaderIcon, PageHeader } from "../../components/PageHeader";
+import { SearchField } from "../../components/SearchField";
+import { FilterChip } from "../../components/FilterChip";
+import { EmptyState } from "../../components/EmptyState";
+import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
+import { captionText, theme } from "../../utils/theme";
 export const OutfitLog = () => {
+  const navigation = useNavigation<any>();
   const [search, setSearch] = useState("");
-  const isDarkMode = false;
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const logsState = useSelector((state: RootState) => state.itemsList.logs);
   const [refresh, setRefresh] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -45,210 +44,132 @@ export const OutfitLog = () => {
     return LogFilter(sortValue, logsState, search);
   }, [logsState, search, sortValue]);
   const storedSettings = useSelector((state: RootState) => state.settings);
+  const language = storedSettings.language;
+  const sortOptions = [
+    { label: localization.Last_Added[language], value: "LA" },
+    { label: localization.Name_Asc[language], value: "NA" },
+    { label: localization.Name_Desc[language], value: "ND" },
+    { label: localization.Date_Asc[language], value: "DA" },
+    { label: localization.Date_Desc[language], value: "DD" },
+  ];
+  const eventDate = dayjs(
+    modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
+  ).locale(language === 1 ? "es" : "en");
+  const logOutfit = () => navigation.navigate("ItemSelector");
   return (
-    <ThemeView customStyle={[{ paddingHorizontal: 4 }]}>
+    <ThemeView>
       <CustomModal
         setVisible={setModalVisible}
         visible={modalVisible}
-        label={modalInfo?.eventName || "Event Name"}
+        label={modalInfo?.eventName || localization.EventName[language]}
       >
-        <View
-          style={[{ width: "90%", marginRight: "auto", marginLeft: "auto" }]}
-        >
-          <View style={[{ marginTop: 20, padding: 20 }]}>
-            <ThemeText customStyle={styles.dayStyle}>
-              {dayjs(
-                modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
-              ).format("dddd")}
-            </ThemeText>
-            <ThemeText customStyle={styles.date}>
-              {dayjs(
-                modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
-              ).format("MMM DD, YYYY")}
-            </ThemeText>
-            <View
-              style={[[{ width: "60%", height: 1 }, isDarkMode ? {} : {}, {}]]}
-            />
-            <View style={[{ flexDirection: "row", marginTop: 8 }]}>
-              {/* <ThemeText classNameStyle="text-[16px]">Time:</ThemeText> */}
-              <ThemeText customStyle={styles.timeStyle}>
-                {dayjs(
-                  modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
-                ).format("h:mm ")}
-              </ThemeText>
-              <ThemeText customStyle={styles.timeA}>
-                {dayjs(
-                  modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
-                ).format("A")}
-              </ThemeText>
-            </View>
-          </View>
-
+        <View style={styles.details}>
+          <ThemeText>{eventDate.format("dddd, MMM DD, YYYY")}</ThemeText>
+          <ThemeText customStyle={captionText}>
+            {eventDate.format("h:mm A")}
+          </ThemeText>
           {modalInfo?.additionalNotes && (
-            <View style={[{ padding: 8 }]}>
-              <ThemeText customStyle={styles.notes}>
-                {localization.Additional_notes[storedSettings.language]}
+            <>
+              <ThemeText customStyle={[captionText, styles.notes]}>
+                {localization.Additional_notes[language]}
               </ThemeText>
-              <ThemeText customStyle={[{}]}>
-                {modalInfo?.additionalNotes}
-              </ThemeText>
-            </View>
+              <ThemeText>{modalInfo?.additionalNotes}</ThemeText>
+            </>
           )}
         </View>
       </CustomModal>
-      <SideModal isOpen={isOpen} setIsOpen={setIsOpen}>
-        <>
-          <RadioButton.Group
-            onValueChange={value => setSortValue(value)}
-            value={sortValue}
-          >
-            <RadioButton.Item
-              label={localization.Last_Added[storedSettings.language]}
-              value="LA"
-              color="#111111"
-              labelStyle={{ fontSize: 14 }}
-            />
-            <RadioButton.Item
-              label={localization.Name_Asc[storedSettings.language]}
-              value="NA"
-              color="#111111"
-              labelStyle={{ fontSize: 14 }}
-            />
-            <RadioButton.Item
-              label={localization.Name_Desc[storedSettings.language]}
-              value="ND"
-              color="#111111"
-              labelStyle={{ fontSize: 14 }}
-            />
-            <RadioButton.Item
-              label={localization.Date_Asc[storedSettings.language]}
-              value="DA"
-              color="#111111"
-              labelStyle={{ fontSize: 14 }}
-            />
-            <RadioButton.Item
-              label={localization.Date_Desc[storedSettings.language]}
-              value="DD"
-              color="#111111"
-              labelStyle={{ fontSize: 14 }}
-            />
-          </RadioButton.Group>
-        </>
-      </SideModal>
-      <View
-        style={[
-          {
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            height: 56,
-            marginBottom: "1%",
-          },
-        ]}
+      <BottomSheet
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        title={localization.Sort[language]}
       >
-        <Text style={[{}]}>{localization.Logs[storedSettings.language]}</Text>
-        <View
-          style={[
-            { width: "1%", height: "100%", position: "absolute", right: "15%" },
-          ]}
-        />
-        <Pressable
-          onPress={() => {
-            handleOpenDrawer();
-          }}
-          style={[
-            {
-              width: "15%",
-              height: "100%",
-              position: "absolute",
-              right: 0,
-              justifyContent: "center",
-              alignItems: "center",
-            },
-          ]}
-        >
-          <Icon name="filter" size={25} color="#111111" />
-        </Pressable>
-      </View>
-      <Searchbar
-        theme={{
-          roundness: 0,
-          colors: {
-            onSurfaceVariant: isDarkMode ? colors.white : colors.black,
-          },
-        }}
-        value={search}
-        inputStyle={{
-          textAlign: "left",
-        }}
-        // label="Search"
-        onChange={text => setSearch(text.nativeEvent.text)}
-        onClearIconPress={() => setSearch("")}
-        style={[
-          { width: "100%" },
-          {
-            flexDirection: "row",
-          },
-        ]}
+        <View style={styles.chips}>
+          {sortOptions.map(option => (
+            <FilterChip
+              key={option.value}
+              label={option.label}
+              selected={sortValue === option.value}
+              onPress={() => setSortValue(option.value)}
+            />
+          ))}
+        </View>
+      </BottomSheet>
+      <PageHeader
+        back={false}
+        title={localization.Outfits[language]}
+        actions={
+          <>
+            <HeaderIcon
+              name="search-outline"
+              label={localization.SearchPlaceholder[language]}
+              onPress={() => {
+                setIsSearchVisible(!isSearchVisible);
+                setSearch("");
+              }}
+            />
+            <HeaderIcon
+              name="swap-vertical-outline"
+              label={localization.Sort[language]}
+              onPress={handleOpenDrawer}
+            />
+          </>
+        }
       />
-      <View
-        style={[
-          { marginHorizontal: "auto", marginTop: "1%", paddingHorizontal: 20 },
-          {
-            width: "100%",
-            flex: 1,
-          },
-        ]}
-      >
-        {logsState.length <= 0 && (
-          <View
-            style={[
-              {
-                flexDirection: "column",
-                width: "100%",
-                justifyContent: "center",
-              },
-            ]}
-          >
-            <ThemeText customStyle={[{ alignSelf: "center" }]}>
-              {localization.ClosetHistoryEmpty[storedSettings.language]}
-            </ThemeText>
-          </View>
-        )}
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          data={filteredLogs}
-          extraData={refresh}
-          renderItem={({ item }) => (
-            <LogComponent
-              eventName={item.eventName}
-              eventDate={JSON.parse(item.eventDate)}
-              eventId={item.eventId}
-              setRefresh={setRefresh}
-              setModalVisible={setModalVisible}
-              setModalEventId={setModalEventId}
-            />
-          )}
+      {isSearchVisible && (
+        <SearchField
+          placeholder={localization.SearchPlaceholder[language]}
+          value={search}
+          onChangeText={setSearch}
+          autoFocus
         />
-      </View>
+      )}
+      <FlatList
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.list}
+        data={filteredLogs}
+        extraData={refresh}
+        keyExtractor={item => item.eventId}
+        ListEmptyComponent={
+          logsState.length > 0 ? (
+            <EmptyState message={localization.NoLogsMatch[language]} />
+          ) : (
+            <EmptyState
+              message={localization.ClosetHistoryEmpty[language]}
+              action={localization.LogOutfit[language]}
+              onAction={logOutfit}
+            />
+          )
+        }
+        renderItem={({ item }) => (
+          <LogComponent
+            eventName={item.eventName}
+            eventDate={JSON.parse(item.eventDate)}
+            eventId={item.eventId}
+            setRefresh={setRefresh}
+            setModalVisible={setModalVisible}
+            setModalEventId={setModalEventId}
+          />
+        )}
+      />
+      <AddButton label={localization.LogOutfit[language]} onPress={logOutfit} />
     </ThemeView>
   );
 };
 const styles = StyleSheet.create({
-  timeStyle: {
-    fontSize: 18,
-  },
-  timeA: {
-    fontSize: 15,
-  },
-  date: {
-    fontSize: 18,
-  },
-  dayStyle: {
-    fontSize: 16,
+  details: {
+    gap: theme.spacing.xs,
   },
   notes: {
-    fontSize: 20,
+    marginTop: theme.spacing.md,
+  },
+  chips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
+  },
+  list: {
+    flexGrow: 1,
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: ADD_BUTTON_CLEARANCE,
   },
 });

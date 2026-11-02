@@ -1,13 +1,14 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { Button, RadioButton } from "react-native-paper";
-import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
+import { Button } from "react-native-paper";
 import ColorFilter from "../../components/ColorFilter";
+import { FilterChip } from "../../components/FilterChip";
+import { SectionHeading } from "../../components/SectionHeading";
 import { localization } from "../../utils/localization";
 import { clothesList } from "../../utils/localization";
 import { seasonList } from "../../utils/data";
+import { theme } from "../../utils/theme";
 type SetString = React.Dispatch<React.SetStateAction<string>>;
-type SetBool = React.Dispatch<React.SetStateAction<boolean>>;
 type SetArray<T> = React.Dispatch<React.SetStateAction<T[]>>;
 export type HomeFilterState = {
   sortValue: string;
@@ -15,10 +16,6 @@ export type HomeFilterState = {
   categoriesFilter: any[];
   TypeFilter: string[];
   colorFilter: string[];
-  OpenSeasonFilter: boolean;
-  OpenCategoriesFilter: boolean;
-  OpenTypeFilter: boolean;
-  OpenColorFilter: boolean;
 };
 export type HomeFilterActions = {
   setSortValue: SetString;
@@ -26,202 +23,129 @@ export type HomeFilterActions = {
   setCategoriesFilter: SetArray<any>;
   setTypeFilter: SetArray<string>;
   setColorFilter: SetArray<string>;
-  setOpenSeasonFilter: SetBool;
-  setOpenCategoriesFilter: SetBool;
-  setOpenTypeFilter: SetBool;
 };
 type Props = {
   filterState: HomeFilterState;
   filterActions: HomeFilterActions;
-  CategoriesList: any[];
-  colorScheme: ThemeNameType;
-  storedSettings: any;
+  CategoriesList: { label: string; value: number }[];
+  language: number;
   storedCatTypes: any[];
 };
+export const resetHomeFilters = (actions: HomeFilterActions) => {
+  actions.setSortValue("LA");
+  actions.setSeasonFilter("");
+  actions.setCategoriesFilter([]);
+  actions.setTypeFilter([]);
+  actions.setColorFilter([]);
+};
+const toggled = <T,>(values: T[], value: T) =>
+  values.includes(value)
+    ? values.filter(current => current !== value)
+    : [...values, value];
 const HomeFilterPanel = ({
   filterState,
   filterActions,
   CategoriesList,
-  colorScheme,
-  storedSettings,
+  language,
   storedCatTypes,
 }: Props) => {
-  if (!storedSettings) return null;
-  const language = storedSettings.language ?? 0;
-  const {
-    sortValue,
-    seasonFilter,
-    categoriesFilter,
-    TypeFilter,
-    colorFilter,
-    OpenSeasonFilter,
-    OpenCategoriesFilter,
-    OpenTypeFilter,
-    OpenColorFilter,
-  } = filterState;
+  const { sortValue, seasonFilter, categoriesFilter, TypeFilter, colorFilter } =
+    filterState;
   const {
     setSortValue,
     setSeasonFilter,
     setCategoriesFilter,
     setTypeFilter,
     setColorFilter,
-    setOpenSeasonFilter,
-    setOpenCategoriesFilter,
-    setOpenTypeFilter,
   } = filterActions;
+  const sortOptions = [
+    { label: localization.Last_Added[language], value: "LA" },
+    { label: localization.Name_Asc[language], value: "NA" },
+    { label: localization.Name_Desc[language], value: "ND" },
+    { label: localization.PurchaseDateAsc[language], value: "PDA" },
+    { label: localization.PurchaseDateDesc[language], value: "PDD" },
+  ];
+  const typeOptions: { label: string; value: string }[] =
+    categoriesFilter.length === 1
+      ? ((clothesList as any)[language][categoriesFilter[0]] ?? []).concat(
+          storedCatTypes[categoriesFilter[0]]?.customTypes || [],
+        )
+      : [];
   return (
-    <>
-      {OpenColorFilter ? (
-        <ColorFilter colors={colorFilter} setColors={setColorFilter} />
-      ) : (
+    <View>
+      <SectionHeading title={localization.Sort[language]} />
+      <View style={styles.chips}>
+        {sortOptions.map(option => (
+          <FilterChip
+            key={option.value}
+            label={option.label}
+            selected={sortValue === option.value}
+            onPress={() => setSortValue(option.value)}
+          />
+        ))}
+      </View>
+      <SectionHeading title={localization.Category[language]} />
+      <View style={styles.chips}>
+        {CategoriesList.map(option => (
+          <FilterChip
+            key={option.value}
+            label={option.label}
+            selected={categoriesFilter.includes(option.value)}
+            onPress={() =>
+              setCategoriesFilter(toggled(categoriesFilter, option.value))
+            }
+          />
+        ))}
+      </View>
+      {typeOptions.length > 0 && (
         <>
-          <RadioButton.Group
-            onValueChange={value => setSortValue(value)}
-            value={sortValue}
-          >
-            <RadioButton.Item
-              label={localization.Last_Added[language]}
-              value="LA"
-              color="#111111"
-              labelStyle={styles.radioItem}
-            />
-            <RadioButton.Item
-              label={localization.Name_Asc[language]}
-              value="NA"
-              color="#111111"
-              labelStyle={styles.radioItem}
-            />
-            <RadioButton.Item
-              label={localization.Name_Desc[language]}
-              value="ND"
-              color="#111111"
-              labelStyle={styles.radioItem}
-            />
-            <RadioButton.Item
-              label={localization.PurchaseDateAsc[language]}
-              value="PDA"
-              color="#111111"
-              labelStyle={styles.radioItem}
-            />
-            <RadioButton.Item
-              label={localization.PurchaseDateDesc[language]}
-              value="PDD"
-              color="#111111"
-              labelStyle={styles.radioItem}
-            />
-          </RadioButton.Group>
-
-          <View
-            style={[styles.dropdownWrapper, styles.zIndex4, { marginTop: 5 }]}
-          >
-            <DropDownPicker
-              open={OpenSeasonFilter}
-              value={seasonFilter}
-              items={[
-                { label: localization.SeasonNotSpecified[language], value: "" },
-                ...(seasonList[language] || []),
-              ]}
-              setOpen={setOpenSeasonFilter}
-              setValue={setSeasonFilter}
-              theme={colorScheme}
-              showBadgeDot={false}
-              badgeTextStyle={{ color: "#111111" }}
-              placeholder="Season filter"
-              listMode="SCROLLVIEW"
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownContainer}
-            />
-          </View>
-
-          <View style={[styles.dropdownWrapper, styles.zIndex3]}>
-            <DropDownPicker
-              open={OpenCategoriesFilter}
-              value={categoriesFilter}
-              items={CategoriesList}
-              setOpen={setOpenCategoriesFilter}
-              setValue={setCategoriesFilter}
-              multiple={true}
-              theme={colorScheme}
-              showBadgeDot={false}
-              badgeTextStyle={{ color: "#111111" }}
-              mode="BADGE"
-              listMode="SCROLLVIEW"
-              placeholder={localization.CategoryFilter[language]}
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownContainer}
-            />
-          </View>
-
-          {categoriesFilter.length === 1 && (
-            <View style={[styles.dropdownWrapper, styles.zIndex2]}>
-              <DropDownPicker
-                open={OpenTypeFilter}
-                value={TypeFilter}
-                items={(
-                  (clothesList as any)[language][categoriesFilter[0]] ?? []
-                )
-                  .concat(
-                    storedCatTypes[categoriesFilter[0]]?.customTypes || [],
-                  )
-                  .map((item: any) => ({
-                    label: item.label,
-                    value: item.value,
-                  }))}
-                setOpen={setOpenTypeFilter}
-                setValue={setTypeFilter}
-                multiple={true}
-                theme={colorScheme}
-                showBadgeDot={false}
-                badgeTextStyle={{ color: "#111111" }}
-                mode="BADGE"
-                listMode="MODAL"
-                placeholder={localization.TypeFilter[language]}
-                style={styles.dropdown}
-                dropDownContainerStyle={styles.dropdownContainer}
+          <SectionHeading title={localization.Type[language]} />
+          <View style={styles.chips}>
+            {typeOptions.map(option => (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                selected={TypeFilter.includes(option.value)}
+                onPress={() => setTypeFilter(toggled(TypeFilter, option.value))}
               />
-            </View>
-          )}
-          <Button
-            mode="outlined"
-            style={styles.resetButton}
-            onPress={() => {
-              setSeasonFilter("");
-              setCategoriesFilter([]);
-              setTypeFilter([]);
-              setSortValue("LA");
-            }}
-          >
-            {localization.Reset[language]}
-          </Button>
+            ))}
+          </View>
         </>
       )}
-    </>
+      <SectionHeading title={localization.Season[language]} />
+      <View style={styles.chips}>
+        {(seasonList[language] || []).map(option => (
+          <FilterChip
+            key={option.value}
+            label={option.label}
+            selected={seasonFilter === option.value}
+            onPress={() =>
+              setSeasonFilter(seasonFilter === option.value ? "" : option.value)
+            }
+          />
+        ))}
+      </View>
+      <SectionHeading title={localization.Color[language]} />
+      <ColorFilter colors={colorFilter} setColors={setColorFilter} />
+      <Button
+        mode="outlined"
+        style={styles.resetButton}
+        onPress={() => resetHomeFilters(filterActions)}
+      >
+        {localization.Reset[language]}
+      </Button>
+    </View>
   );
 };
 export default HomeFilterPanel;
 const styles = StyleSheet.create({
-  // Radio Group
-  radioItem: {
-    fontSize: 14,
+  chips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
-  // Dropdown Pickers
-  dropdownWrapper: {
-    width: "90%",
-    marginBottom: 20,
-  },
-  zIndex4: { zIndex: 4 },
-  zIndex3: { zIndex: 3 },
-  zIndex2: { zIndex: 2 },
-  dropdown: {
-    borderColor: "#777777",
-  },
-  dropdownContainer: {
-    borderColor: "#777777",
-  },
-  // Actions
   resetButton: {
-    alignSelf: "center",
-    marginTop: 20,
-    width: "80%",
+    marginTop: theme.spacing.lg,
   },
 });

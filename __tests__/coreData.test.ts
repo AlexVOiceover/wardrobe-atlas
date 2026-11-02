@@ -6,7 +6,7 @@ import {
 import {
   localization,
   clothesList,
-  categoryInfo,
+  colorNames,
   closetInfo,
 } from "../utils/localization";
 import { languagesList, seasonList } from "../utils/data";
@@ -134,7 +134,7 @@ test("all shipped language choices, strings and clothing lists have exactly two 
     expect(strings).toHaveLength(2);
     strings.forEach(text => expect(text.length).toBeGreaterThan(0));
   });
-  [clothesList, categoryInfo, closetInfo, seasonList].forEach(packs =>
+  [clothesList, colorNames, closetInfo, seasonList].forEach(packs =>
     expect(packs).toHaveLength(2),
   );
   expect(clothesList[0].map(types => types.map(type => type.value))).toEqual(

@@ -1,14 +1,16 @@
-import { Keyboard, StyleSheet, Text, View, FlatList } from "react-native";
+import { Keyboard, StyleSheet, View, FlatList } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import { clothesList, localization } from "../../utils/localization";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { BackButton } from "../../components/BackButton";
+import { PageHeader } from "../../components/PageHeader";
 import { useEffect, useState } from "react";
 import { CustomInput } from "../../components/CustomInput";
 import { Button } from "react-native-paper";
 import { addTypeToCategory } from "../../redux/categoriesSlice";
 import { EditItemList } from "../../components/EditItemList";
+import { FormErrors } from "../../components/FormErrors";
+import { theme } from "../../utils/theme";
 export const EditCategory = ({ route }: { navigation: any; route: any }) => {
   const { categoryIndex } = route.params;
   const storedSettings = useSelector((state: RootState) => state.settings);
@@ -33,13 +35,13 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
   function addTypeHandler(index: number, allList: any[]) {
     const errors = [];
     if (newType.length <= 0) {
-      errors.push("Please enter a name for this Type");
+      errors.push(localization.TypeNameRequired[storedSettings.language]);
     }
     if (newType.length > 20) {
-      errors.push("Please enter a name within 20 characters max");
+      errors.push(localization.NameTooLong[storedSettings.language]);
     }
     if (allList?.find(x => x.label.toLowerCase() === newType.toLowerCase())) {
-      errors.push("Please enter a different name");
+      errors.push(localization.NameTaken[storedSettings.language]);
     }
     if (errors.length > 0) {
       setErrorsList(errors);
@@ -56,81 +58,54 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
   }
   return (
     <ThemeView>
-      <BackButton
-        pageTitle={localization.Edit_Category[storedSettings.language]}
-      />
-      <View
-        style={[
-          {
-            flexDirection: "column",
-            alignItems: "center",
-            rowGap: 12,
-            marginTop: 16,
-          },
-        ]}
-      >
+      <PageHeader title={localization.Edit_Category[storedSettings.language]} />
+      <View style={styles.form}>
         <CustomInput
           mode="outlined"
           textContentType="name"
-          style={styles.customWidth}
           label={localization.Add_Type[storedSettings.language]}
           value={newType}
           onChange={(text: any) => setNewType(text.nativeEvent.text)}
         />
-        {errorsList.length > 0 && (
-          <View>
-            {errorsList.map((error, index) => {
-              return (
-                <Text key={index} style={[{}]}>
-                  {error}
-                </Text>
-              );
-            })}
-          </View>
-        )}
+        <FormErrors errors={errorsList} />
         <Button
-          mode="outlined"
+          mode="contained"
           onPress={() => {
             addTypeHandler(categoryIndex, catData);
             Keyboard.dismiss();
           }}
-          style={[{ marginHorizontal: 40, marginVertical: 20 }]}
         >
           {localization.Save[storedSettings.language]}
         </Button>
       </View>
       <FlatList
-        numColumns={1}
+        contentContainerStyle={styles.list}
         extraData={refresh}
         data={catData}
         renderItem={({ item, index }) => (
-          <View
-            style={{
-              display: "flex",
-              flex: 1,
-              alignItems: "center",
-            }}
-          >
-            {/* <CategoryItem key={index} type={item} /> */}
-            <EditItemList
-              item={item}
-              setRefresh={setRefresh}
-              CollectionsState={catData}
-              isCatType={true}
-              catIndex={categoryIndex}
-              ignoreNum={
-                clothesList[storedSettings.language][categoryIndex]?.length
-              }
-              currentIndex={index}
-              key={index}
-            />
-          </View>
+          <EditItemList
+            item={item}
+            setRefresh={setRefresh}
+            CollectionsState={catData}
+            isCatType={true}
+            catIndex={categoryIndex}
+            ignoreNum={
+              clothesList[storedSettings.language][categoryIndex]?.length
+            }
+            currentIndex={index}
+            key={index}
+          />
         )}
       />
-      <View />
     </ThemeView>
   );
 };
 const styles = StyleSheet.create({
-  customWidth: { width: "80%" },
+  form: {
+    paddingHorizontal: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  list: {
+    padding: theme.spacing.md,
+  },
 });

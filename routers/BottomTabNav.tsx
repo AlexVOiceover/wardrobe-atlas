@@ -1,11 +1,17 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { AddNewCloths } from "../screens/bottomNav/AddNewCloths";
+import Icon from "react-native-vector-icons/Ionicons";
 import { HomeBottom } from "../screens/bottomNav/HomeBottom";
+import { More } from "../screens/bottomNav/More";
 import { OutfitLog } from "../screens/bottomNav/OutfitLog";
 import { localization } from "../utils/localization";
+import { theme } from "../utils/theme";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 const Tab = createBottomTabNavigator();
+const tabIcon =
+  (name: string) =>
+  ({ color, size }: { color: string; size: number }) =>
+    <Icon name={name} color={color} size={size} />;
 export default function MyTabs() {
   const { language } = useSelector((s: RootState) => s.settings);
   return (
@@ -13,26 +19,38 @@ export default function MyTabs() {
       screenOptions={{
         headerShown: false,
         animation: "none",
-        tabBarIcon: () => null,
-        tabBarIconStyle: { display: "none" },
-        tabBarActiveTintColor: "#111111",
-        tabBarInactiveTintColor: "#555555",
-        tabBarActiveBackgroundColor: "#eeeeee",
-        tabBarStyle: { backgroundColor: "#ffffff" },
+        tabBarActiveTintColor: theme.colors.text,
+        tabBarInactiveTintColor: theme.colors.muted,
+        tabBarStyle: {
+          backgroundColor: theme.colors.background,
+          borderTopColor: theme.colors.border,
+          elevation: 0,
+        },
       }}
     >
       <Tab.Screen
-        name={localization.My_closet[language]}
+        name="Closet"
         component={HomeBottom}
+        options={{
+          title: localization.Closet[language],
+          tabBarIcon: tabIcon("shirt-outline"),
+        }}
       />
       <Tab.Screen
-        name="Add"
-        component={AddNewCloths}
-        options={{ title: localization.Add[language] }}
-      />
-      <Tab.Screen
-        name={localization.Outfit_Log[language]}
+        name="Outfits"
         component={OutfitLog}
+        options={{
+          title: localization.Outfits[language],
+          tabBarIcon: tabIcon("calendar-outline"),
+        }}
+      />
+      <Tab.Screen
+        name="More"
+        component={More}
+        options={{
+          title: localization.More[language],
+          tabBarIcon: tabIcon("ellipsis-horizontal"),
+        }}
       />
     </Tab.Navigator>
   );

@@ -10,7 +10,7 @@ Download `Wardrobe-Atlas.apk` from [Releases](https://github.com/AlexVOiceover/w
 
 Releases contain the version on `main`. To test changes before merge, download the APK artifact ZIP from the corresponding [pull request build](https://github.com/AlexVOiceover/wardrobe-atlas/actions), extract it and open the APK.
 
-The app checks published GitHub Releases on launch, on return and periodically while open. Settings includes Check for updates, with visible download/error status and installation-permission guidance. The shared header shows the installed Android version. Android requires approval to install an update. Current builds use the repository's development signing key and are for personal testing.
+The app checks published GitHub Releases on launch, on return and periodically while open. Settings includes Check for updates, with visible download/error status and installation-permission guidance. Settings shows the installed Android version. Android requires approval to install an update. Current builds use the repository's development signing key and are for personal testing.
 
 Wardrobes group clothes by physical location. Each garment record (including its full quantity) can belong to one wardrobe or remain Unassigned. Manage wardrobes from Home; assign them in garment and bulk creation forms. Deleting a wardrobe keeps its clothes and history. Backups include all wardrobes and clothes regardless of the current filter. New wardrobe backups require a compatible app version.
 
@@ -38,7 +38,7 @@ Checks:
 ```sh
 npx tsc --noEmit
 npm run lint
-npm test -- --config jest.config.js --runInBand
+npm test
 ```
 
 Build an ARM64 APK from `android/`:
