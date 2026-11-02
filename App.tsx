@@ -1,3 +1,5 @@
+import { AppHeader } from "./components/AppHeader";
+import { UpdateControls } from "./components/UpdateControls";
 import { StatusBar } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Navigator from "./routers/stack";
@@ -65,6 +67,8 @@ function App(): ReactElement {
                 backgroundColor={backgroundStyle.backgroundColor}
               />
               <GestureHandlerRootView style={{ flex: 1 }}>
+                <AppHeader />
+                <UpdateControls />
                 <Navigator />
               </GestureHandlerRootView>
             </SafeAreaView>
