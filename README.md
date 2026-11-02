@@ -33,6 +33,7 @@ Checks:
 
 ```sh
 npx tsc --noEmit
+npm run lint
 npm test -- --config jest.config.js --runInBand
 ```
 

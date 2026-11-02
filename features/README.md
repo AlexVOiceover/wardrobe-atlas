@@ -4,7 +4,7 @@
 
 - [Item form cleanup and scrolling](item-form-cleanup/PLAN.md)
 
-- [Locations / wardrobes (draft)](wardrobes/PLAN.md)
+- [Locations / wardrobes](wardrobes/PLAN.md)
 - [Android releases and updates](android-auto-updates/PLAN.md)
 - [Minimal functional base](minimal-functional-base/PLAN.md)
 - [Core cleanup](core-cleanup/PLAN.md)

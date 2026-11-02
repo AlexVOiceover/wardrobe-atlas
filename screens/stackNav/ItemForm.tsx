@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Button, Switch } from "react-native-paper";
 import { useState } from "react";
 import { BackButton } from "../../components/BackButton";
+import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addItem,
@@ -66,6 +67,7 @@ export const ItemForm = ({
   const [wardrobeId, setWardrobeId] = useState<string | undefined>(
     storedItems ? storedItems.wardrobeId : selected,
   );
+  const [deleteVisible, setDeleteVisible] = useState(false);
   const [name, setName] = useState(storedItems ? storedItems.name : "");
   const [collection, setCollection] = useState(storedItems?.collection ?? []);
   const [type, setType] = useState(storedItems ? storedItems.type : "");
@@ -227,8 +229,8 @@ export const ItemForm = ({
       console.log("colorExtractor error:", e);
     }
   };
-  const handleImagePicker = async (type: number) => {
-    if (type == 0) {
+  const handleImagePicker = async (source: number) => {
+    if (source === 0) {
       await launchImageLibrary(
         {
           mediaType: "photo",
@@ -249,12 +251,12 @@ export const ItemForm = ({
               0,
               null,
             )
-              .then(async response => {
+              .then(async resized => {
                 const base64 = await ReactNativeBlobUtil.fs.readFile(
-                  response.uri,
+                  resized.uri,
                   "base64",
                 );
-                console.log("imageSize", response.size);
+                console.log("imageSize", resized.size);
                 setImageUrl(base64 || "");
                 setImageModalVisible(false);
               })
@@ -264,7 +266,7 @@ export const ItemForm = ({
           }
         },
       );
-    } else if (1) {
+    } else {
       try {
         await launchCamera(
           {
@@ -285,12 +287,12 @@ export const ItemForm = ({
                 0,
                 null,
               )
-                .then(async response => {
+                .then(async resized => {
                   const base64 = await ReactNativeBlobUtil.fs.readFile(
-                    response.uri,
+                    resized.uri,
                     "base64",
                   );
-                  console.log("imageSize", response.size);
+                  console.log("imageSize", resized.size);
                   setImageUrl(base64 || "");
                   setImageModalVisible(false);
                 })
@@ -308,6 +310,11 @@ export const ItemForm = ({
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   return (
     <>
+      <ConfirmationDialog
+        visible={deleteVisible}
+        setVisible={setDeleteVisible}
+        onConfirm={deleteItemHandler}
+      />
       <ColorModal
         colors={colors}
         setColors={setColors}
@@ -599,7 +606,7 @@ export const ItemForm = ({
                 {localization.Save[storedSettings.language]}
               </Button>
               {editingIndex && (
-                <Button mode="outlined" onPress={deleteItemHandler}>
+                <Button mode="outlined" onPress={() => setDeleteVisible(true)}>
                   {localization.Delete[storedSettings.language]}
                 </Button>
               )}

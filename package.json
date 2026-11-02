@@ -1,11 +1,11 @@
 {
-  "name": "closet-archive",
+  "name": "wardrobe-atlas",
   "version": "1.2.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "lint": "eslint .",
+    "lint": "eslint . --ext .js,.ts,.tsx --max-warnings 0",
     "start": "react-native start",
     "test": "jest"
   },
@@ -63,7 +63,7 @@
     "fast-xml-parser": "5.5.8"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "jest": {
     "preset": "react-native"

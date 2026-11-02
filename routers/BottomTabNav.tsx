@@ -25,7 +25,11 @@ export default function MyTabs() {
         name={localization.My_closet[language]}
         component={HomeBottom}
       />
-      <Tab.Screen name="Add" component={AddNewCloths} />
+      <Tab.Screen
+        name="Add"
+        component={AddNewCloths}
+        options={{ title: localization.Add[language] }}
+      />
       <Tab.Screen
         name={localization.Outfit_Log[language]}
         component={OutfitLog}

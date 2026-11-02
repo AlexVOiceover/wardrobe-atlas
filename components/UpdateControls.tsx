@@ -47,7 +47,7 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
           mode="outlined"
           disabled={busy}
           onPress={() => {
-            void checkForUpdates({ manual: true });
+            checkForUpdates({ manual: true });
           }}
         >
           {localization.CheckForUpdates[language]}
@@ -66,7 +66,7 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
         <Button
           mode="outlined"
           onPress={() => {
-            void allowUpdateInstallation();
+            allowUpdateInstallation();
           }}
         >
           {localization.AllowUpdates[language]}
@@ -76,7 +76,7 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
         <Button
           mode="outlined"
           onPress={() => {
-            void resumePendingUpdate();
+            resumePendingUpdate();
           }}
         >
           {localization.InstallUpdate[language]}
@@ -86,7 +86,7 @@ export function UpdateControls({ settings = false }: { settings?: boolean }) {
         <Button
           mode="outlined"
           onPress={() => {
-            void checkForUpdates({ manual: true });
+            checkForUpdates({ manual: true });
           }}
         >
           {localization.TryAgain[language]}

@@ -206,6 +206,7 @@ const itemsSlice = createSlice({
       const eventIndex = state.logs.findIndex(
         x => x.eventId === action.payload.selectedLogId,
       );
+      if (eventIndex < 0) return;
       state.logs.splice(eventIndex, 1);
     },
     addLog: (state, action) => {
@@ -213,6 +214,7 @@ const itemsSlice = createSlice({
       const itemIndex = state.items.findIndex(
         x => x.id === action.payload.selectedId,
       );
+      if (itemIndex < 0) return;
       const logIdsSet = new Set(state.items[itemIndex].logIds || []);
       if (!logIdsSet.has(action.payload.logId)) {
         // if this new log doesn't exist add it to the list
@@ -247,6 +249,7 @@ const itemsSlice = createSlice({
       const itemIndex = state.items.findIndex(
         x => x.id === action.payload.selectedId,
       );
+      if (itemIndex < 0) return;
       state.items.splice(itemIndex, 1);
     },
     importItems: (state, action) => {

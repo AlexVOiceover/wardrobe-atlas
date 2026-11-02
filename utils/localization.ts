@@ -1,5 +1,6 @@
 export const localization = {
   Edit: ["Edit", "Editar"],
+  Add: ["Add", "Añadir"],
   Cancel: ["Cancel", "Cancelar"],
   Wardrobes: ["Wardrobes", "Armarios"],
   Wardrobe: ["Wardrobe", "Armario"],

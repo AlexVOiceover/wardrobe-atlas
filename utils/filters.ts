@@ -126,27 +126,27 @@ export function HomeFilter(
       }
 
       if (filters.categories.length > 0) {
-        newArray[i] = newArray[i].filter(item =>
-          filters.categories.includes(item.category),
+        newArray[i] = newArray[i].filter(garment =>
+          filters.categories.includes(garment.category),
         );
       }
 
       if (filters.types.length > 0) {
-        newArray[i] = newArray[i].filter(item =>
-          filters.types.includes(item.type),
+        newArray[i] = newArray[i].filter(garment =>
+          filters.types.includes(garment.type),
         );
       }
-      if (filters.season != "") {
-        newArray[i] = newArray[i].filter(item => filters.season == item.season);
+      if (filters.season !== "") {
+        newArray[i] = newArray[i].filter(garment => filters.season === garment.season);
       }
       if (filters.colors.length > 0) {
         newArray[i] = newArray[i].filter(
-          item =>
-            filters.colors.includes(categorizeColor(item.primaryColor || "")) ||
+          garment =>
+            filters.colors.includes(categorizeColor(garment.primaryColor || "")) ||
             filters.colors.includes(
-              categorizeColor(item.secondaryColor || ""),
+              categorizeColor(garment.secondaryColor || ""),
             ) ||
-            filters.colors.includes(categorizeColor(item.tertiaryColor || "")),
+            filters.colors.includes(categorizeColor(garment.tertiaryColor || "")),
         );
       }
     }
@@ -171,23 +171,23 @@ export function HomeFilter(
     }
 
     if (filters.categories.length > 0) {
-      newArray = newArray.filter(item =>
-        filters.categories.includes(item.category),
+      newArray = newArray.filter(garment =>
+        filters.categories.includes(garment.category),
       );
     }
 
     if (filters.types.length > 0) {
-      newArray = newArray.filter(item => filters.types.includes(item.type));
+      newArray = newArray.filter(garment => filters.types.includes(garment.type));
     }
-    if (filters.season != "") {
-      newArray = newArray.filter(item => filters.season == item.season);
+    if (filters.season !== "") {
+      newArray = newArray.filter(garment => filters.season === garment.season);
     }
     if (filters.colors.length > 0) {
       newArray = newArray.filter(
-        item =>
-          filters.colors.includes(categorizeColor(item.primaryColor || "")) ||
-          filters.colors.includes(categorizeColor(item.secondaryColor || "")) ||
-          filters.colors.includes(categorizeColor(item.tertiaryColor || "")),
+        garment =>
+          filters.colors.includes(categorizeColor(garment.primaryColor || "")) ||
+          filters.colors.includes(categorizeColor(garment.secondaryColor || "")) ||
+          filters.colors.includes(categorizeColor(garment.tertiaryColor || "")),
       );
     }
     return newArray;

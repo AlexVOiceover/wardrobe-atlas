@@ -38,7 +38,7 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
     if (newType.length > 20) {
       errors.push("Please enter a name within 20 characters max");
     }
-    if (allList?.find(x => x.label.toLowerCase() == newType.toLowerCase())) {
+    if (allList?.find(x => x.label.toLowerCase() === newType.toLowerCase())) {
       errors.push("Please enter a different name");
     }
     if (errors.length > 0) {
