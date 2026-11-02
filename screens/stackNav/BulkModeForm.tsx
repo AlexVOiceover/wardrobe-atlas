@@ -57,7 +57,6 @@ export const BulkModeForm = ({
     getCollectionSortValue(storedSettings.collectionSortValue),
   );
   const language = storedSettings.language ?? 0;
-  const isRTL = language === 1;
   const combiningTypesData = useMemo(() => {
     if (selectedCategory < defaultCategories.length) {
       return [
@@ -187,7 +186,7 @@ export const BulkModeForm = ({
           <CustomInput
             mode="outlined"
             textContentType="name"
-            style={[styles.input, { textAlign: isRTL ? "right" : "left" }]}
+            style={[styles.input, { textAlign: "left" }]}
             label={localization.Prefix[language]}
             value={prefix}
             onChangeText={setPrefix}
@@ -241,12 +240,7 @@ export const BulkModeForm = ({
             style={[styles.input, { zIndex: 0 }]}
           />
 
-          <View
-            style={[
-              styles.infoRow,
-              { flexDirection: isRTL ? "row-reverse" : "row" },
-            ]}
-          >
+          <View style={[styles.infoRow, { flexDirection: "row" }]}>
             <Icon name="info-circle" size={15} color="#111111" />
             <ThemeText customStyle={styles.infoText}>
               {localization.bulkInfo[language]}

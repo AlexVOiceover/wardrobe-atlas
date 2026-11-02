@@ -1,11 +1,5 @@
 // import { useNavigation } from "@react-navigation/native";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button, Switch } from "react-native-paper";
 import { useState } from "react";
 import { BackButton } from "../../components/BackButton";
@@ -15,9 +9,6 @@ import {
   updateItem,
   itemRefresher,
   deleteItem,
-  resetLaundryCounter,
-  laundryRefresher,
-  enableLaundry4Object,
 } from "../../redux/itemsSlice";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import ColorModal from "../../components/ColorModal";
@@ -41,7 +32,6 @@ import {
 } from "../../utils/collectionOrder";
 import { clothesList, localization } from "../../utils/localization";
 import { defaultCategories } from "./Category";
-import { LaundryOptionsModal } from "../../components/LaundryOptionsModal";
 import { ImageViewer } from "../../components/ImageViewer";
 export function get_random<T>(list: T[]): T {
   return list[Math.floor(Math.random() * list.length)];
@@ -106,20 +96,10 @@ export const ItemForm = ({
   const [isAutoOn, setIsAutoOn] = useState(
     storedItems ? storedItems.automaticColor : false,
   );
-  const [LaundryCheck, setLaundryCheck] = useState(
-    storedItems?.laundryable ?? true,
-  );
   const colorScheme = String("LIGHT") as ThemeNameType;
   const dispatch = useDispatch();
   const [visible, setVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
-  const [openLaundryOpt, setOpenLaundryOpt] = useState(false);
-  const [maxLaundryNumber, setMaxLaundryNumber] = useState(
-    storedItems ? storedItems.maxLaundryNumber : 0,
-  );
-  const [overrideMaxLaundry, setOverrideMaxLaundry] = useState(
-    storedItems ? storedItems.overrideMaxLaundry : false,
-  );
   const combiningTypesData =
     (selectedCategory ?? storedItems.category) < defaultCategories.length
       ? [
@@ -144,12 +124,7 @@ export const ItemForm = ({
   function deleteItemHandler() {
     dispatch(deleteItem({ selectedId: storedItems.id }));
     dispatch(itemRefresher());
-    dispatch(laundryRefresher());
     navigation.popToTop("Category");
-  }
-  function resetLaundryCounterHandler() {
-    dispatch(resetLaundryCounter({ selectedId: storedItems.id }));
-    dispatch(laundryRefresher());
   }
   function addItemHandler() {
     const errors = [];
@@ -186,17 +161,8 @@ export const ItemForm = ({
           primaryColor: colors[0],
           secondaryColor: colors[1],
           tertiaryColor: colors[2],
-          overrideMaxLaundry: overrideMaxLaundry,
-          maxLaundryNumber: maxLaundryNumber,
         }),
       );
-      dispatch(
-        enableLaundry4Object({
-          selectedId: storedItems.id,
-          laundryValue: LaundryCheck,
-        }),
-      );
-      dispatch(laundryRefresher());
     } else {
       dispatch(
         addItem({
@@ -340,16 +306,7 @@ export const ItemForm = ({
         setVisible={setVisible}
         colorSelection={colorSelection}
       />
-      <LaundryOptionsModal
-        openLaundryOpt={openLaundryOpt}
-        setOpenLaundryOpt={setOpenLaundryOpt}
-        LaundryCheck={LaundryCheck}
-        setLandryCheck={setLaundryCheck}
-        maxLaundryNumber={maxLaundryNumber}
-        setMaxLaundryNumber={setMaxLaundryNumber}
-        overrideMaxLaundry={overrideMaxLaundry}
-        setOverrideMaxLaundry={setOverrideMaxLaundry}
-      />
+
       <CustomModal
         setVisible={setImageModalVisible}
         visible={imageModalVisible}
@@ -376,52 +333,11 @@ export const ItemForm = ({
           }
         />
         <View style={[{ alignItems: "center", rowGap: 8 }]}>
-          <View style={[{ flexDirection: "row", marginTop: 16 }]}>
-            <View style={[{ width: "33.333333333333336%" }]}></View>
-            <View
-              style={[
-                {
-                  width: "33.333333333333336%",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                },
-              ]}
-            >
-              <ImageViewer
-                imageUrl={imageUrl}
-                setImageModalVisible={setImageModalVisible}
-              />
-            </View>
-            <View
-              style={[
-                {
-                  width: "33.333333333333336%",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                },
-              ]}
-            >
-              {editingIndex && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setOpenLaundryOpt(true);
-                  }}
-                  style={[
-                    {
-                      flexDirection: "column",
-                      alignItems: "center",
-                      marginRight: 20,
-                    },
-                  ]}
-                >
-                  <ThemeText>
-                    {localization.Laundry_Options[storedSettings.language]}
-                  </ThemeText>
-                  <ThemeText>{storedItems.laundryCounter}</ThemeText>
-                </TouchableOpacity>
-              )}
-            </View>
+          <View style={{ alignItems: "center", padding: 8 }}>
+            <ImageViewer
+              imageUrl={imageUrl}
+              setImageModalVisible={setImageModalVisible}
+            />
           </View>
           <CustomInput
             mode="outlined"
@@ -429,7 +345,7 @@ export const ItemForm = ({
             style={[
               styles.customWidth,
               {
-                textAlign: storedSettings.language == 1 ? "right" : "left",
+                textAlign: "left",
               },
             ]}
             label={localization.Name[storedSettings.language]}
@@ -577,17 +493,7 @@ export const ItemForm = ({
             />
           </View>
 
-          <View
-            style={[
-              [
-                {},
-                storedSettings.language == 1
-                  ? { flexDirection: "row-reverse" }
-                  : { flexDirection: "row" },
-                {},
-              ],
-            ]}
-          >
+          <View style={[[{}, { flexDirection: "row" }, {}]]}>
             <Icon name="info-circle" size={15} color="#111111" />
             <ThemeText customStyle={[{ marginHorizontal: 8 }]}>
               {localization.You_can_add[storedSettings.language]}
@@ -726,16 +632,6 @@ export const ItemForm = ({
                 {localization.Delete[storedSettings.language]}
               </Button>
             )}
-            {editingIndex &&
-              (storedItems.laundryCounter ?? 0) >=
-                (storedItems.overrideMaxLaundry ?? false
-                  ? storedItems.maxLaundryNumber
-                  : storedSettings.laundryNumber) &&
-              (storedItems.laundryable ?? true) && (
-                <Button mode="outlined" onPress={resetLaundryCounterHandler}>
-                  {localization.Cleaned[storedSettings.language]}
-                </Button>
-              )}
           </View>
         </View>
       </ThemeView>

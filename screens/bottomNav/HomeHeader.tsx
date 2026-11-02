@@ -63,7 +63,7 @@ const HomeHeader = ({
             setOpenColorFilter(false);
           }}
         >
-          {["Filters", "الفلاتر", "Filtros", "Filtri"][language]}
+          {["Filters", "Filtros"][language]}
         </Button>
         <Button
           mode="outlined"

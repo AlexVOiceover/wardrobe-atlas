@@ -56,7 +56,6 @@ export const ItemSelector = () => {
     search,
     storedSettings.collectionSortValue,
   ]);
-  const isRTL = storedSettings.language === 1;
   return (
     <ThemeView>
       <BackButton
@@ -71,12 +70,9 @@ export const ItemSelector = () => {
               onSurfaceVariant: isDarkMode ? colors.black : colors.white,
             },
           }}
-          style={[
-            styles.searchBar,
-            { flexDirection: isRTL ? "row-reverse" : "row" },
-          ]}
+          style={[styles.searchBar, { flexDirection: "row" }]}
           inputStyle={{
-            textAlign: isRTL ? "right" : "left",
+            textAlign: "left",
           }}
           value={search}
           placeholder={

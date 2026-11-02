@@ -1,12 +1,7 @@
 # Feature plans
 
-| Feature | Status |
-| --- | --- |
-| [Android releases and updates](android-auto-updates/PLAN.md) | Merged; phone update test pending |
-| [Minimal functional base](minimal-functional-base/PLAN.md) | PR #2; Android build verified, phone checks pending |
+- [Android releases and updates](android-auto-updates/PLAN.md)
+- [Minimal functional base](minimal-functional-base/PLAN.md)
+- [Core cleanup](core-cleanup/PLAN.md)
 
-Each feature has one `PLAN.md`: scope, behavior, data/compatibility, implementation, acceptance checks and unresolved decisions. Update it when those change.
-
-Follow [AGENTS.md](../AGENTS.md): agree the plan, obtain explicit implementation approval, work on a feature branch and leave the PR for owner review. Merging or publishing requires a separate explicit instruction.
-
-[Android icon and logging-reminder removal](android-icon-no-log-reminders/PLAN.md): implementation and release authorized; verification in progress.
+Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility and acceptance checks. Implementation approval and merge/publication approval are separate.
