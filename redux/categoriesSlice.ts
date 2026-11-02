@@ -29,7 +29,7 @@ const categoriesSlice = createSlice({
         screen: "ItemForm",
         spriteSheet: customCategorySprite,
         index:
-          state.Categories.length == 0
+          state.Categories.length === 0
             ? 4
             : state.Categories[state.Categories.length - 1].index + 1,
       } as Category);
@@ -38,6 +38,7 @@ const categoriesSlice = createSlice({
       const categoryIndex = state.Categories.findIndex(
         (x) => x.index === action.payload.index,
       );
+      if (categoryIndex < 0) return;
       try {
         state.Categories.splice(categoryIndex, 1);
         state.CategoryCustomTypes.splice(categoryIndex, 1);

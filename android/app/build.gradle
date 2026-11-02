@@ -85,7 +85,7 @@ android {
     ndkVersion rootProject.ext.ndkVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.myclosetx"
+    namespace "com.wardrobeatlas.app"
     def atlasBuildNumber = Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "0")
     defaultConfig {
         applicationId "com.wardrobeatlas.app"

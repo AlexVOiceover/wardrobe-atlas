@@ -361,7 +361,7 @@ export function startAutomaticUpdates(): () => void {
   if (Platform.OS !== "android" || Number(BUILD_NUMBER) <= 0)
     return () => undefined;
   const check = () => {
-    if (AppState.currentState === "active") void checkForUpdates();
+    if (AppState.currentState === "active") checkForUpdates();
   };
   const timer = setTimeout(check, 1500);
   const polling = setInterval(check, ACTIVE_POLL_MS);

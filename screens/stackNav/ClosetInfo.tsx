@@ -58,7 +58,7 @@ const InfoCardCategories = ({
   language: number;
 }) => {
   const counts = Categories.map(
-    cat => items.filter(it => cat.index == it.category).length,
+    cat => items.filter(it => cat.index === it.category).length,
   );
   return (
     <View>
@@ -136,25 +136,25 @@ export const ClosetInfo = ({}) => {
         }
         showsVerticalScrollIndicator={false}
         data={closetInfo[storedSettings.language]}
-        renderItem={({ item, index }) =>
+        renderItem={({ item: title, index }) =>
           index > 2 ? (
             <InfoCardWrapper
               index={index}
               key={"infoCard" + index}
-              title={item}
+              title={title}
             >
-              {(data[index] as item[]).map((item: item) => {
+              {(data[index] as item[]).map((garment: item) => {
                 return (
                   <ItemBox
-                    primary={item.primaryColor || "#fff"}
-                    secondary={item.secondaryColor || "#fff"}
-                    tertiary={item.tertiaryColor || "#fff"}
-                    key={item.id}
-                    image={item.image}
-                    name={item.name}
-                    type={item.type}
-                    id={item.id}
-                    logs={item.logIds || []}
+                    primary={garment.primaryColor || "#fff"}
+                    secondary={garment.secondaryColor || "#fff"}
+                    tertiary={garment.tertiaryColor || "#fff"}
+                    key={garment.id}
+                    image={garment.image}
+                    name={garment.name}
+                    type={garment.type}
+                    id={garment.id}
+                    logs={garment.logIds || []}
                     addSpace={true}
                   />
                 );
@@ -164,7 +164,7 @@ export const ClosetInfo = ({}) => {
             <InfoCardNumber
               index={index}
               key={"infoCardNum" + index}
-              title={item}
+              title={title}
               value={data[index] as number}
             />
           )

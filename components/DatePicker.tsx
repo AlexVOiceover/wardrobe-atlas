@@ -46,20 +46,19 @@ export const DatePicker = ({
       >
         <ThemeText>{title}</ThemeText>
         <ThemeText>{date ? dayjs(date).format("DD/MM/YYYY") : ""}</ThemeText>
-        {type == "time" ||
-          (type == "both" && (
-            <ThemeText>
-              {date ? dayjs(date).format("h:mm a") : "Select Date"}
-            </ThemeText>
-          ))}
+        {(type === "time" || type === "both") && (
+          <ThemeText>
+            {date ? dayjs(date).format("h:mm a") : "Select Date"}
+          </ThemeText>
+        )}
       </Pressable>
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
         date={safeDate}
         display={
-          type == "both" ? "inline" : type == "date" ? "spinner" : "clock"
+          type === "both" ? "inline" : type === "date" ? "spinner" : "clock"
         }
-        mode={type == "both" ? "datetime" : type == "date" ? "date" : "time"}
+        mode={type === "both" ? "datetime" : type === "date" ? "date" : "time"}
         onConfirm={(picked: Date) => {
           setDatePickerVisibility(false);
           setDate(picked);

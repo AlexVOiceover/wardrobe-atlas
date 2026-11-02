@@ -38,7 +38,7 @@ export const OutfitLog = () => {
     setIsOpen(prev => !prev);
   };
   useEffect(() => {
-    let info = logsState.find(x => x.eventId == modalEventId);
+    let info = logsState.find(x => x.eventId === modalEventId);
     setModalInfo(info);
   }, [modalEventId, logsState]);
   const filteredLogs = useMemo(() => {

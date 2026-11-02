@@ -1,4 +1,4 @@
-package com.myclosetx
+package com.wardrobeatlas.app
 
 import android.content.Intent
 import android.content.pm.PackageInfo

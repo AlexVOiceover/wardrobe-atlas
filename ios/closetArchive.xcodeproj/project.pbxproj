@@ -497,7 +497,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "ClosetArchive/Info.plist";
-             INFOPLIST_KEY_CFBundleDisplayName = "Closet-Archive";
+             INFOPLIST_KEY_CFBundleDisplayName = "Wardrobe Atlas";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -524,7 +524,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 3;
 				INFOPLIST_FILE = "ClosetArchive/Info.plist";
-             INFOPLIST_KEY_CFBundleDisplayName = "Closet-Archive";
+             INFOPLIST_KEY_CFBundleDisplayName = "Wardrobe Atlas";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

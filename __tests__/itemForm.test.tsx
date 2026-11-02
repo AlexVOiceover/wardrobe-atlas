@@ -36,6 +36,9 @@ jest.mock("../components/BackButton", () => ({ BackButton: "BackButton" }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/ColorModal", () => "ColorModal");
 jest.mock("../components/CustomModal", () => "CustomModal");
+jest.mock("../components/ConfirmationDialog", () => ({
+  ConfirmationDialog: "ConfirmationDialog",
+}));
 jest.mock("../components/DatePicker", () => ({ DatePicker: "DatePicker" }));
 jest.mock("../components/ImageViewer", () => ({ ImageViewer: "ImageViewer" }));
 jest.mock("../screens/stackNav/Category", () => ({
@@ -156,6 +159,34 @@ test("editing preserves existing fit and season while keeping Delete reachable i
         season: "Winter",
         image: "photo",
       }),
+    }),
+  );
+});
+
+test("garment delete only happens after confirming the dialog", () => {
+  mockState.itemsList.items = [
+    { id: "a", name: "Coat", collection: [], category: 0 },
+  ];
+  const tree = render("a");
+  const dialog = () => tree.root.findByType("ConfirmationDialog" as any);
+  const pressDelete = () =>
+    tree.root
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === "Delete")!
+      .props.onPress();
+  expect(dialog().props.visible).toBe(false);
+  act(() => pressDelete());
+  expect(dialog().props.visible).toBe(true);
+  expect(mockDispatch).not.toHaveBeenCalled();
+  act(() => dialog().props.setVisible(false));
+  expect(dialog().props.visible).toBe(false);
+  expect(mockDispatch).not.toHaveBeenCalled();
+  act(() => pressDelete());
+  act(() => dialog().props.onConfirm());
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/deleteItem",
+      payload: { selectedId: "a" },
     }),
   );
 });

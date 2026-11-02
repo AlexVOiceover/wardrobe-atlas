@@ -6,15 +6,16 @@ import { useMemo } from "react";
 export default function useHeatmap(itemLogs: string[]) {
   const storedEvents = useSelector((state: RootState) => state.itemsList.logs);
   const language = useSelector((s: RootState) => s.settings.language);
-  const currentDate = new Date();
-
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(currentDate.getMonth() - 1);
-
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
   const recency = useMemo(() => {
+    const currentDate = new Date();
+
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
     const filteredEventsLastMonth = storedEvents.filter(x => {
       const eventDate = new Date(JSON.parse(x.eventDate));
       return (

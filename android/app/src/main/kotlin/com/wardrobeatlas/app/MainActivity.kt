@@ -1,4 +1,4 @@
-package com.myclosetx
+package com.wardrobeatlas.app
 
 import android.os.Bundle
 import com.facebook.react.ReactActivity
@@ -11,7 +11,7 @@ class MainActivity : ReactActivity() {
     super.onCreate(savedInstanceState)
   }
 
-  override fun getMainComponentName(): String = "Closet-Archive"
+  override fun getMainComponentName(): String = "WardrobeAtlas"
 
   override fun createReactActivityDelegate(): ReactActivityDelegate =
     DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)

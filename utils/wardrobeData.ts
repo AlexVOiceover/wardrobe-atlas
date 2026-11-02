@@ -23,8 +23,8 @@ function pick<T>(value: unknown, keys: readonly (keyof T)[]): T {
 }
 
 /** Every load/export uses the current model, so unsupported fields cannot persist. */
-export function normalizeWardrobe(value: unknown, version?: number): RootState {
-  const raw = record(value);
+export function normalizeWardrobe(state: unknown, version?: number): RootState {
+  const raw = record(state);
   const settings = record(raw.settings);
   const items = record(raw.itemsList);
   const categories = record(raw.CategoryList);
