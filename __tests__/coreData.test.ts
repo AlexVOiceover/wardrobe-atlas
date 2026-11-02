@@ -187,3 +187,13 @@ test("text export still includes garment details and outfit events", () => {
   expect(text).toContain("Dinner");
   expect(text).toContain("Keep this");
 });
+
+
+test("LLM item export includes wardrobe names and leaves the inventory unchanged", () => {
+  mockWardrobe.itemsList.wardrobes = [{ id: "home", name: "Home" }];
+  mockWardrobe.itemsList.items[0].wardrobeId = "home";
+  expect(generateLLMText()).toContain("- wardrobe: Home");
+  expect(mockWardrobe.itemsList.items[0].image).toBe("photo-data");
+  mockWardrobe.itemsList.wardrobes = [];
+  delete mockWardrobe.itemsList.items[0].wardrobeId;
+});
