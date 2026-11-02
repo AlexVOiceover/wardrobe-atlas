@@ -116,7 +116,7 @@ test("current Spanish persists across saved state and repeated backup round trip
   const saved = { ...mockWardrobe, _persist: { version: 1, rehydrated: true } };
   expect(normalizeWardrobe(saved).settings.language).toBe(1);
   const backup = createWardrobeBackup(mockWardrobe);
-  expect(backup.formatVersion).toBe(1);
+  expect(backup.formatVersion).toBe(2);
   const restored = readWardrobeBackup(JSON.parse(JSON.stringify(backup)));
   expect(restored).toEqual(mockWardrobe);
   expect(readWardrobeBackup(createWardrobeBackup(restored))).toEqual(

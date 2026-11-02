@@ -1,3 +1,11 @@
+import { Text } from "react-native";
+import { Button } from "react-native-paper";
+import {
+  WardrobeSelector,
+  useWardrobeView,
+} from "../../components/WardrobeSelector";
+import { filterByWardrobe } from "../../utils/wardrobes";
+import { localization as l } from "../../utils/localization";
 import { View, ScrollView, Keyboard, StyleSheet } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import React, { useEffect, useRef, useState, useMemo } from "react";
@@ -29,6 +37,14 @@ export function HomeBottom() {
   //this is the main page
   const navigation = useNavigation<any>();
   const itemsState = useSelector((state: RootState) => state.itemsList);
+  const { selected, select } = useWardrobeView();
+  const activeWardrobe =
+    selected && !itemsState.wardrobes.some(w => w.id === selected)
+      ? undefined
+      : selected;
+  useEffect(() => {
+    if (activeWardrobe !== selected) select(undefined);
+  }, [activeWardrobe, selected, select]);
   const [search, setSearch] = useState("");
   const searchFocus = useRef<any>(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -88,7 +104,7 @@ export function HomeBottom() {
       itemsState.collectionTags,
       getCollectionSortValue(storedSettings.collectionSortValue),
     );
-    let items = itemsState.items;
+    let items = filterByWardrobe(itemsState.items, activeWardrobe);
     if (tags.length > 0) {
       for (let i = 0; i < tags.length; i++) {
         const col = items.filter(x => x.collection?.includes(tags[i].value));
@@ -102,6 +118,7 @@ export function HomeBottom() {
     );
     return { final, nonColRaw, tags };
   }, [
+    activeWardrobe,
     itemsState.items,
     itemsState.collectionTags,
     storedSettings.collectionSortValue,
@@ -153,6 +170,7 @@ export function HomeBottom() {
         />
       </SideModal>
 
+      <WardrobeSelector all value={activeWardrobe} onChange={select} />
       <HomeHeader
         navigation={navigation}
         storedSettings={storedSettings}
@@ -171,6 +189,26 @@ export function HomeBottom() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollViewContent}
         >
+          {!filteredData.collections.some(group => group.length) &&
+            !filteredData.nonCollectnized.length && (
+              <View>
+                <Text>{l.NoWardrobeItems[storedSettings.language]}</Text>
+                <Button onPress={() => navigation.navigate("Category")}>
+                  {l.AddGarment[storedSettings.language]}
+                </Button>
+                <Button
+                  onPress={() => {
+                    setSearch("");
+                    setCategoriesFilter([]);
+                    setTypeFilter([]);
+                    setSeasonFilter("");
+                    setColorFilter([]);
+                  }}
+                >
+                  {l.ClearWardrobeFilters[storedSettings.language]}
+                </Button>
+              </View>
+            )}
           {groupedCollectionsRaw.tags.map((collection, index) => {
             const collectionItems = filteredData.collections[index];
             if (!collectionItems || collectionItems.length === 0) return null;

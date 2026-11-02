@@ -1,3 +1,4 @@
+import { validWardrobeId, wardrobeNameError } from "../utils/wardrobes";
 import { createSlice } from "@reduxjs/toolkit";
 import "react-native-get-random-values";
 import { nanoid } from "nanoid";
@@ -12,7 +13,9 @@ export type logsType = {
   additionalNotes?: string;
   logTime: string; //iso??
 };
+export type Wardrobe = { id: string; name: string };
 export type item = {
+  wardrobeId?: string;
   id: string;
   name: string;
   type: string;
@@ -32,6 +35,7 @@ export type item = {
   logIds?: string[];
 };
 export type itemsList = {
+  wardrobes: Wardrobe[];
   items: item[];
   collectionTags: CollectionTag[];
   logs: logsType[];
@@ -45,6 +49,7 @@ export type CollectionTag = {
   arrangement: number;
 };
 const initialState: itemsList = {
+  wardrobes: [],
   items: [],
   collectionTags: [],
   logs: [],
@@ -54,8 +59,30 @@ const itemsSlice = createSlice({
   name: "itemsList",
   initialState: initialState,
   reducers: {
+    addWardrobe: (state, action) => {
+      if (!wardrobeNameError(state.wardrobes, action.payload.name))
+        state.wardrobes.push({
+          id: nanoid(),
+          name: action.payload.name.trim(),
+        });
+    },
+    renameWardrobe: (state, action) => {
+      const wardrobe = state.wardrobes.find(w => w.id === action.payload.id);
+      if (
+        wardrobe &&
+        !wardrobeNameError(state.wardrobes, action.payload.name, wardrobe.id)
+      )
+        wardrobe.name = action.payload.name.trim();
+    },
+    deleteWardrobe: (state, action) => {
+      state.wardrobes = state.wardrobes.filter(w => w.id !== action.payload.id);
+      state.items.forEach(item => {
+        if (item.wardrobeId === action.payload.id) delete item.wardrobeId;
+      });
+    },
     addItem: (state, action) => {
       state.items.push({
+        wardrobeId: validWardrobeId(state.wardrobes, action.payload.wardrobeId),
         id: nanoid(),
         name: action.payload.name,
         image: action.payload.image,
@@ -79,7 +106,15 @@ const itemsSlice = createSlice({
       } as item);
     },
     updateItem: (state, action) => {
-      const itemIndex = action.payload.itemIndex;
+      const itemIndex = action.payload.id
+        ? state.items.findIndex(item => item.id === action.payload.id)
+        : action.payload.itemIndex;
+      if (!state.items[itemIndex]) return;
+      if ("wardrobeId" in action.payload)
+        state.items[itemIndex].wardrobeId = validWardrobeId(
+          state.wardrobes,
+          action.payload.wardrobeId,
+        );
       state.items[itemIndex].name = action.payload.name;
       state.items[itemIndex].image = action.payload.image;
       state.items[itemIndex].type = action.payload.type;
@@ -215,6 +250,7 @@ const itemsSlice = createSlice({
       state.items.splice(itemIndex, 1);
     },
     importItems: (state, action) => {
+      state.wardrobes = action.payload.wardrobes ?? [];
       state.items = action.payload.items;
       state.collectionTags = normalizeCollectionTags(
         action.payload.collectionTags,
@@ -225,6 +261,9 @@ const itemsSlice = createSlice({
   },
 });
 export const {
+  addWardrobe,
+  renameWardrobe,
+  deleteWardrobe,
   addItem,
   updateItem,
   addCollection,

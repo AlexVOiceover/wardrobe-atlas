@@ -1,5 +1,6 @@
 # Feature plans
 
+- [Locations / wardrobes (draft)](wardrobes/PLAN.md)
 - [Android releases and updates](android-auto-updates/PLAN.md)
 - [Minimal functional base](minimal-functional-base/PLAN.md)
 - [Core cleanup](core-cleanup/PLAN.md)
