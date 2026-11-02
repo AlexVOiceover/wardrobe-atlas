@@ -1,4 +1,37 @@
 export const localization = {
+  RecentUsage: [
+    "Show recent usage",
+    "عرض الاستخدام الأخير",
+    "Mostrar uso reciente",
+    "Mostra uso recente",
+  ],
+  RecentUsageHelp: [
+    "Show whether a garment was used this week or this month.",
+    "عرض ما إذا تم ارتداء القطعة هذا الأسبوع أو هذا الشهر.",
+    "Indica si usaste una prenda esta semana o este mes.",
+    "Indica se un capo è stato usato questa settimana o questo mese.",
+  ],
+  UsedThisWeek: [
+    "Used this week",
+    "تم ارتداؤها هذا الأسبوع",
+    "Usada esta semana",
+    "Usato questa settimana",
+  ],
+  UsedThisMonth: [
+    "Used this month",
+    "تم ارتداؤها هذا الشهر",
+    "Usada este mes",
+    "Usato questo mese",
+  ],
+  NotUsedThisMonth: [
+    "Not used this month",
+    "لم تُرتدَ هذا الشهر",
+    "Sin usar este mes",
+    "Non usato questo mese",
+  ],
+  Uses: ["Uses", "مرات الاستخدام", "Usos", "Utilizzi"],
+  AddPhoto: ["Add photo", "إضافة صورة", "Añadir foto", "Aggiungi foto"],
+
   Welcome: [
     "Welcome back, ",
     "مرحبًا بك ",
@@ -151,12 +184,7 @@ export const localization = {
     "Seleccionar un color",
     "Scegli un colore",
   ],
-  SearchPlaceholder: [
-    "Search",
-    "بحث",
-    "Buscar",
-    "Cerca",
-  ],
+  SearchPlaceholder: ["Search", "بحث", "Buscar", "Cerca"],
   SetBlack: ["Set Black", "تعيين الأسود", "Establecer Negro", "Imposta Nero"],
   Primary_color: [
     "Primary color",
@@ -233,15 +261,30 @@ export const localization = {
   Language: ["Language", "اللغة", "Idioma", "Lingua"],
   Export: ["Export", "تصدير", "Exportar", "Esporta"],
   Import: ["Import", "استيراد", "Importar", "Importa"],
-  LLMExport: ["copy to feed LLM", "نسخ لتغذية LLM", "copiar para alimentar LLM", "copia per alimentare LLM"],
-  LLMConfirmTitle: ["Confirm Export to LLM", "تأكيد التصدير إلى LLM", "Confirmar exportación a LLM", "Conferma esportazione a LLM"],
+  LLMExport: [
+    "copy to feed LLM",
+    "نسخ لتغذية LLM",
+    "copiar para alimentar LLM",
+    "copia per alimentare LLM",
+  ],
+  LLMConfirmTitle: [
+    "Confirm Export to LLM",
+    "تأكيد التصدير إلى LLM",
+    "Confirmar exportación a LLM",
+    "Conferma esportazione a LLM",
+  ],
   LLMConfirmMessage: [
     "By exporting your wardrobe data you acknowledge that it is your responsibility how this information is used and shared.\n\nFor maximum privacy we strongly recommend pasting this data into a local LLM running on your own device instead of cloud-based services.\n\nContinue?",
     "بتصدير بيانات خزانتك، تقر بأنك مسؤول عن كيفية استخدام هذه المعلومات ومشاركتها.\n\nلأقصى خصوصية، نوصي بشدة بلصق هذه البيانات في نموذج لغوي محلي يعمل على جهازك بدلاً من الخدمات السحابية.\n\nمتابعة؟",
     "Al exportar los datos de tu armario, reconoces que eres responsable de cómo se utiliza y comparte esta información.\n\nPara máxima privacidad, recomendamos encarecidamente pegar estos datos en un LLM local que se ejecute en tu propio dispositivo en lugar de servicios en la nube.\n\n¿Continuar?",
     "Esportando i dati del tuo armadio, riconosci di essere responsabile di come queste informazioni vengono utilizzate e condivise.\n\nPer la massima privacy, ti consigliamo vivamente di incollare questi dati in un LLM locale in esecuzione sul tuo dispositivo invece che su servizi cloud.\n\nContinuare?",
   ],
-  LLMIncludeSections: ["Include sections", "الأقسام المضمّنة", "Incluir secciones", "Includi sezioni"],
+  LLMIncludeSections: [
+    "Include sections",
+    "الأقسام المضمّنة",
+    "Incluir secciones",
+    "Includi sezioni",
+  ],
   Categories: ["Categories", "الفئات", "Categorías", "Categorie"],
   Items: ["Items", "العناصر", "Artículos", "Articoli"],
   LLM_info: [
@@ -250,9 +293,24 @@ export const localization = {
     "Exporta los datos de tu armario como texto limpio para IA y LLMs.",
     "Esporta i dati del tuo armadio come testo pulito per IA/LLM.",
   ],
-  LLMCopied: ["Copied for LLM", "تم النسخ لـ LLM", "Copiado para LLM", "Copiato per LLM"],
-  LLMLoadingPreparing: ["Preparing LLM export…", "جاري تحضير تصدير LLM…", "Preparando exportación a LLM…", "Preparazione esportazione LLM…"],
-  LLMLoadingStatus: ["Preparing LLM-readable text…", "جاري تحضير نص قابل للقراءة بواسطة LLM…", "Preparando texto legible para LLM…", "Preparazione del testo leggibile per LLM…"],
+  LLMCopied: [
+    "Copied for LLM",
+    "تم النسخ لـ LLM",
+    "Copiado para LLM",
+    "Copiato per LLM",
+  ],
+  LLMLoadingPreparing: [
+    "Preparing LLM export…",
+    "جاري تحضير تصدير LLM…",
+    "Preparando exportación a LLM…",
+    "Preparazione esportazione LLM…",
+  ],
+  LLMLoadingStatus: [
+    "Preparing LLM-readable text…",
+    "جاري تحضير نص قابل للقراءة بواسطة LLM…",
+    "Preparando texto legible para LLM…",
+    "Preparazione del testo leggibile per LLM…",
+  ],
   ClosetInfo: [
     "Closet Info",
     "معلومات الخزانة",

@@ -6,7 +6,6 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint
 import com.facebook.react.defaults.DefaultReactHost
-import org.devio.rn.splashscreen.SplashScreenReactPackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -16,7 +15,6 @@ class MainApplication : Application(), ReactApplication {
     get() {
       if (mReactHost == null) {
         val packages = PackageList(this).packages.toMutableList()
-        packages.add(SplashScreenReactPackage())
         mReactHost = DefaultReactHost.getDefaultReactHost(
           applicationContext,
           packages

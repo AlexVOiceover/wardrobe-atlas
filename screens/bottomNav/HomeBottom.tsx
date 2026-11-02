@@ -1,10 +1,4 @@
-import {
-  View,
-  useColorScheme,
-  ScrollView,
-  Keyboard,
-  StyleSheet,
-} from "react-native";
+import { View, ScrollView, Keyboard, StyleSheet } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
@@ -12,10 +6,7 @@ import { RootState } from "../../redux/store";
 import { ItemBox } from "../../components/ItemBox";
 import { item } from "../../redux/itemsSlice";
 import { useNavigation } from "@react-navigation/native";
-import settingsIcon from "../../assets/images/settings.png";
-import settingsIconDark from "../../assets/images/settingsUnselected.png";
 import { colors } from "../../utils/colors";
-import { useSharedValue } from "react-native-reanimated";
 import { SideModal } from "../../components/SideModal";
 import HomeFilterPanel, {
   HomeFilterActions,
@@ -32,11 +23,9 @@ import {
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
 import { defaultCategories } from "../stackNav/Category";
-import useWidthScreen from "../../hooks/useWidthScreen";
 import { ThemeNameType } from "react-native-dropdown-picker";
 import { CollectionContainer } from "../../components/CollectionContainer";
 import { localization } from "../../utils/localization";
-
 export function HomeBottom() {
   //this is the main page
   const navigation = useNavigation<any>();
@@ -44,19 +33,16 @@ export function HomeBottom() {
   const [search, setSearch] = useState("");
   const searchFocus = useRef<any>(null);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const isDarkMode = useColorScheme() === "dark";
-
+  const isDarkMode = false;
   const [sortValue, setSortValue] = useState("LA");
   const [categoriesFilter, setCategoriesFilter] = useState<any[]>([]);
   const [TypeFilter, setTypeFilter] = useState<string[]>([]);
   const [seasonFilter, setSeasonFilter] = useState("");
   const [colorFilter, setColorFilter] = useState<string[]>([]);
-
   const [OpenCategoriesFilter, setOpenCategoriesFilter] = useState(false);
   const [OpenTypeFilter, setOpenTypeFilter] = useState(false);
   const [OpenSeasonFilter, setOpenSeasonFilter] = useState(false);
   const [OpenColorFilter, setOpenColorFilter] = useState(false);
-
   const filterState: HomeFilterState = {
     sortValue,
     seasonFilter,
@@ -68,7 +54,6 @@ export function HomeBottom() {
     OpenTypeFilter,
     OpenColorFilter,
   };
-
   const filterActions: HomeFilterActions = {
     setSortValue,
     setSeasonFilter,
@@ -79,41 +64,28 @@ export function HomeBottom() {
     setOpenCategoriesFilter,
     setOpenTypeFilter,
   };
-
   const refreshLaundry = useSelector(
     (state: RootState) => state.itemsList.refreshLaundry,
   );
   const storedSettings = useSelector((state: RootState) => state.settings);
-
   const storedCategories = useSelector(
     (state: RootState) => state.CategoryList.Categories,
   );
-
   const storedCatTypes = useSelector(
     (state: RootState) => state.CategoryList.CategoryCustomTypes,
   );
-
   const CategoriesList = defaultCategories
     .concat(storedCategories)
     ?.map(cat => ({
       label: cat.name[storedSettings.language ?? 0],
       value: cat.index,
     }));
-
-  const colorScheme = (useColorScheme()?.toUpperCase() ??
-    "LIGHT") as ThemeNameType;
-  const space = useSharedValue(-20);
+  const colorScheme = "LIGHT" as ThemeNameType;
   const [isOpen, setIsOpen] = useState(false);
-  const screenWidth = useWidthScreen();
-
   const handleOpenDrawer = () => {
     Keyboard.dismiss();
     setIsOpen(prev => !prev);
-    if (!isOpen) {
-      space.value = screenWidth / 2 - 20;
-    }
   };
-
   const groupedCollectionsRaw = useMemo(() => {
     let final: item[][] = [];
     let tags = getOrderedCollectionTags(
@@ -121,7 +93,6 @@ export function HomeBottom() {
       getCollectionSortValue(storedSettings.collectionSortValue),
     );
     let items = itemsState.items;
-
     if (tags.length > 0) {
       for (let i = 0; i < tags.length; i++) {
         const col = items.filter(x => x.collection?.includes(tags[i].value));
@@ -130,18 +101,15 @@ export function HomeBottom() {
     } else {
       final.push([]);
     }
-
     const nonColRaw = items.filter(
       x => !x.collection || x.collection.length === 0,
     );
-
     return { final, nonColRaw, tags };
   }, [
     itemsState.items,
     itemsState.collectionTags,
     storedSettings.collectionSortValue,
   ]);
-
   const filteredData = useMemo(() => {
     const filters = {
       categories: categoriesFilter,
@@ -150,7 +118,6 @@ export function HomeBottom() {
       season: seasonFilter,
       colors: colorFilter,
     };
-
     const filteredCol = HomeFilter(
       filters,
       [...groupedCollectionsRaw.final],
@@ -161,7 +128,6 @@ export function HomeBottom() {
       [...groupedCollectionsRaw.nonColRaw],
       false,
     ) as item[];
-
     return {
       collections: filterCollectionsBySearch(filteredCol, search),
       nonCollectnized: filterItemsBySearch(filteredNon, search),
@@ -175,11 +141,9 @@ export function HomeBottom() {
     colorFilter,
     search,
   ]);
-
   useEffect(() => {
     if (categoriesFilter.length !== 1) setTypeFilter([]);
   }, [categoriesFilter]);
-
   const laundryItems = useMemo(() => {
     if (!storedSettings.enableLaundry) return [];
     return itemsState.items.filter(
@@ -197,10 +161,9 @@ export function HomeBottom() {
     storedSettings.laundryNumber,
     refreshLaundry,
   ]);
-
   return (
     <ThemeView customStyle={styles.screenContainer}>
-      <SideModal space={space} isOpen={isOpen} setIsOpen={setIsOpen}>
+      <SideModal isOpen={isOpen} setIsOpen={setIsOpen}>
         <HomeFilterPanel
           filterState={filterState}
           filterActions={filterActions}
@@ -215,8 +178,6 @@ export function HomeBottom() {
         navigation={navigation}
         storedSettings={storedSettings}
         isDarkMode={isDarkMode}
-        settingsIcon={settingsIcon}
-        settingsIconDark={settingsIconDark}
         handleOpenDrawer={handleOpenDrawer}
         setOpenColorFilter={setOpenColorFilter}
         setIsSearchVisible={setIsSearchVisible}
@@ -235,7 +196,7 @@ export function HomeBottom() {
             laundryItems.length > 0 &&
             !search && (
               <CollectionContainer
-                color={colors.gray}
+                color="#111111"
                 label={
                   localization.Laundry_reminder[storedSettings.language ?? 0]
                 }
@@ -266,11 +227,10 @@ export function HomeBottom() {
           {groupedCollectionsRaw.tags.map((collection, index) => {
             const collectionItems = filteredData.collections[index];
             if (!collectionItems || collectionItems.length === 0) return null;
-
             return (
               <CollectionContainer
                 key={`collection-${collection.value}`}
-                color={collection.color ?? colors.white}
+                color="#111111"
                 label={collection.label}
               >
                 <View style={styles.gridContainer}>
@@ -332,24 +292,20 @@ export function HomeBottom() {
     </ThemeView>
   );
 }
-
 const styles = StyleSheet.create({
   // Main Layout
   screenContainer: {
     paddingHorizontal: 20,
   },
   contentContainer: {
-    backgroundColor: colors.lightGray,
+    backgroundColor: "#ffffff",
     marginTop: "1%",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    height: "85%",
+    flex: 1,
     paddingBottom: 10,
   },
   scrollViewContent: {
     flexGrow: 1,
   },
-
   // Item Grids
   gridContainer: {
     flexDirection: "row",
@@ -358,11 +314,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   gridItem: {
-    width: "25%",
+    width: "100%",
     alignItems: "center",
     paddingVertical: 5,
   },
-
   // Spacing & Utilities
   bottomSpacerSmall: {
     height: 24,

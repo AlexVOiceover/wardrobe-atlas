@@ -1,7 +1,5 @@
-import { StyleSheet, TextInput, View, useColorScheme } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 import { TextInput as TextInput2, TextInputProps } from "react-native-paper";
-import { colors } from "../utils/colors";
-
 export interface CustomInputProps extends TextInputProps {
   left?: React.ReactElement;
   right?: React.ReactElement;
@@ -17,10 +15,9 @@ export const CustomInput = ({
     multiline={textArea}
     numberOfLines={textArea ? 4 : 1}
     theme={{
-      roundness: 10,
+      roundness: 0,
       colors: {
-        background:
-          useColorScheme() === "light" ? colors.white : colors.darkblue,
+        background: "#ffffff",
       },
     }}
     {...props}
@@ -28,15 +25,14 @@ export const CustomInput = ({
       <View style={styles.inputContainer}>
         {left && <View style={styles.customLeft}>{left}</View>}
         <TextInput
-          className={`${right ? "w-10/12" : "w-full"}`}
           {...inputProps}
+          style={[inputProps.style, { flex: 1, color: "#111111" }]}
         />
         {right && <View style={styles.customRight}>{right}</View>}
       </View>
     )}
   />
 );
-
 const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",

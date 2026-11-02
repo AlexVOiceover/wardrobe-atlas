@@ -16,7 +16,12 @@ export default function Navigator() {
   const Stack = createNativeStackNavigator();
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{
+          animation: "none",
+          contentStyle: { backgroundColor: "#ffffff" },
+        }}
+      >
         <Stack.Screen
           name="StackNavHome"
           component={Home} //it has the bottomNav & notifications

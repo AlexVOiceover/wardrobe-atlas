@@ -10,7 +10,6 @@ import {
 import { PermissionsAndroid, Platform } from "react-native";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-
 export async function GetAllPermissions() {
   try {
     if (Platform.OS === "android") {
@@ -24,7 +23,6 @@ export async function GetAllPermissions() {
   }
   return null;
 }
-
 const laundryNotification = (numberOfLaundry: number) => {
   PushNotification.localNotificationSchedule({
     channelId: "channel-id-1",
@@ -38,10 +36,9 @@ const laundryNotification = (numberOfLaundry: number) => {
     id: "2",
     allowWhileIdle: true,
     ignoreInForeground: true,
-    color: "#fff23f",
+    color: "#111111",
   });
 };
-
 const createChannels = (selectedLang: number, userName: string) => {
   PushNotification.channelExists("channel-id-1", function (exists) {
     if (!exists) {
@@ -50,7 +47,7 @@ const createChannels = (selectedLang: number, userName: string) => {
           channelId: "channel-id-1",
           channelName: "ClosetArchive",
         },
-        (created) => console.log(`createChannel returned '${created}'`),
+        created => console.log(`createChannel returned '${created}'`),
       );
     }
   });
@@ -71,44 +68,37 @@ const createChannels = (selectedLang: number, userName: string) => {
     ignoreInForeground: true,
   });
 };
-
 export function Home() {
   const storedSettings = useSelector((state: RootState) => state.settings);
   const storedItems = useSelector((state: RootState) => state.itemsList.items);
-  const refreshLaundry = useSelector(
-    (state: RootState) => state.itemsList.refreshLaundry,
-  );
   const numberOfLaundry = useMemo(() => {
     return storedItems.filter(
-      (item) =>
+      item =>
         (item.laundryCounter ?? 0) >=
           (item.overrideMaxLaundry ?? false
             ? item.maxLaundryNumber
             : storedSettings.laundryNumber) &&
         (item.laundryable ?? true),
     ).length;
-  }, [storedSettings.laundryNumber, refreshLaundry]);
-
+  }, [storedSettings.laundryNumber, storedItems]);
   const selectedLang = useSelector(
     (state: RootState) => state.settings.language,
   );
   useEffect(() => {
     GetAllPermissions();
   }, []);
-
   useEffect(() => {
     laundryNotification(numberOfLaundry);
     if (storedSettings.enableLaundry != true || numberOfLaundry == 0) {
       PushNotification.cancelLocalNotification("2");
     }
-  }, [storedSettings.enableLaundry, , numberOfLaundry]);
+  }, [storedSettings.enableLaundry, numberOfLaundry]);
   useEffect(() => {
     createChannels(selectedLang, storedSettings.name);
     if (storedSettings.enableReminder != true) {
       PushNotification.cancelLocalNotification("1");
     }
-  }, [storedSettings.enableReminder]);
-
+  }, [storedSettings.enableReminder, selectedLang, storedSettings.name]);
   return (
     <ThemeView>
       <MyTabs />

@@ -1,12 +1,10 @@
 import { Button } from "react-native-paper";
 import { BackButton } from "../../components/BackButton";
 import { ThemeView } from "../../components/ThemeView";
-import { colors } from "../../utils/colors";
 import { CustomInput } from "../../components/CustomInput";
 import {
   Text,
   View,
-  useColorScheme,
   StyleSheet,
   ScrollView,
   Keyboard,
@@ -30,7 +28,6 @@ import {
   getCollectionSortValue,
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
-
 export const BulkModeForm = ({
   navigation,
   route,
@@ -43,12 +40,11 @@ export const BulkModeForm = ({
   const [imageNum, setImageNum] = useState(2);
   const [openType, setOpenType] = useState(false);
   const [openCollection, setOpenCollection] = useState(false);
-  const colorScheme = String(useColorScheme()?.toUpperCase()) as ThemeNameType;
+  const colorScheme = String("LIGHT") as ThemeNameType;
   const [collection, setCollection] = useState([]);
   const [type, setType] = useState("");
   const dispatch = useDispatch();
   const [errorsList, setErrorsList] = useState<string[]>([]);
-
   const storedSettings = useSelector((state: RootState) => state.settings);
   const collectionState = useSelector(
     (state: RootState) => state.itemsList.collectionTags,
@@ -60,10 +56,8 @@ export const BulkModeForm = ({
     collectionState,
     getCollectionSortValue(storedSettings.collectionSortValue),
   );
-
   const language = storedSettings.language ?? 0;
   const isRTL = language === 1;
-
   const combiningTypesData = useMemo(() => {
     if (selectedCategory < defaultCategories.length) {
       return [
@@ -83,7 +77,6 @@ export const BulkModeForm = ({
       })) || []
     );
   }, [selectedCategory, language, storedCatTypes]);
-
   const createItemsFromUris = async (uris: string[]) => {
     try {
       for (let i = 0; i < uris.length; i++) {
@@ -95,12 +88,10 @@ export const BulkModeForm = ({
           40,
           0,
         );
-
         const imgBase64 = await ReactNativeBlobUtil.fs.readFile(
           response.uri,
           "base64",
         );
-
         dispatch(
           addItem({
             name: prefix + ` ${i + 1}`,
@@ -131,7 +122,6 @@ export const BulkModeForm = ({
       );
     }
   };
-
   const handleImagePicker = async (mode: number) => {
     if (mode === 0) {
       try {
@@ -139,13 +129,10 @@ export const BulkModeForm = ({
           mediaType: "photo",
           selectionLimit: imageNum,
         });
-
         if (response.didCancel || !response.assets) return;
-
         const uris = response.assets
           .map(asset => asset.uri)
           .filter((uri): uri is string => !!uri);
-
         createItemsFromUris(uris);
       } catch (error) {
         console.error("Gallery picker error:", error);
@@ -173,17 +160,14 @@ export const BulkModeForm = ({
       }
     }
   };
-
   const addItemHandler = (mode: number) => {
     Keyboard.dismiss();
     const errors = [];
-
     if (prefix.trim().length <= 0) {
       errors.push("Please enter item prefix");
     } else if (prefix.length > 20) {
       errors.push("Please enter a name within 20 characters");
     }
-
     if (errors.length > 0) {
       setErrorsList(errors);
       return;
@@ -191,7 +175,6 @@ export const BulkModeForm = ({
     setErrorsList([]);
     handleImagePicker(mode);
   };
-
   return (
     <ThemeView>
       <BackButton pageTitle={localization.addMultiItems[language]} />
@@ -203,9 +186,6 @@ export const BulkModeForm = ({
         <View style={styles.formContainer}>
           <CustomInput
             mode="outlined"
-            outlineColor={colors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={colors.mainGreen}
             textContentType="name"
             style={[styles.input, { textAlign: isRTL ? "right" : "left" }]}
             label={localization.Prefix[language]}
@@ -241,7 +221,7 @@ export const BulkModeForm = ({
               multiple={true}
               theme={colorScheme}
               showBadgeDot={false}
-              badgeTextStyle={{ color: colors.black }}
+              badgeTextStyle={{ color: "#111111" }}
               mode="BADGE"
               listMode="SCROLLVIEW"
               placeholder={localization.Collection[language]}
@@ -252,9 +232,6 @@ export const BulkModeForm = ({
 
           <CustomInput
             mode="outlined"
-            outlineColor={colors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={colors.mainGreen}
             label={localization.NumberOfItems[language]}
             value={imageNum.toString()}
             onChangeText={text =>
@@ -270,7 +247,7 @@ export const BulkModeForm = ({
               { flexDirection: isRTL ? "row-reverse" : "row" },
             ]}
           >
-            <Icon name="info-circle" size={15} color={colors.mainCyan} />
+            <Icon name="info-circle" size={15} color="#111111" />
             <ThemeText customStyle={styles.infoText}>
               {localization.bulkInfo[language]}
             </ThemeText>
@@ -289,9 +266,7 @@ export const BulkModeForm = ({
           <View style={styles.buttonGroup}>
             <Button
               style={styles.actionButton}
-              mode="contained"
-              buttonColor={colors.mainCyan}
-              textColor={colors.white}
+              mode="outlined"
               onPress={() => addItemHandler(0)}
             >
               {localization.startLocalImages[language]}
@@ -299,9 +274,7 @@ export const BulkModeForm = ({
 
             <Button
               style={styles.actionButton}
-              mode="contained"
-              buttonColor={colors.mainCyan}
-              textColor={colors.white}
+              mode="outlined"
               onPress={() => addItemHandler(1)}
             >
               {localization.startWCamera[language]}
@@ -312,7 +285,6 @@ export const BulkModeForm = ({
     </ThemeView>
   );
 };
-
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
@@ -329,11 +301,10 @@ const styles = StyleSheet.create({
     width: "80%",
   },
   picker: {
-    borderColor: colors.mainGreen,
-    borderRadius: 4,
+    borderColor: "#777777",
   },
   pickerDropdown: {
-    borderColor: colors.mainGreen,
+    borderColor: "#777777",
   },
   infoRow: {
     width: "80%",
@@ -348,7 +319,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   errorText: {
-    color: "#C70039",
+    color: "#111111",
     fontSize: 14,
     marginBottom: 4,
   },
@@ -358,7 +329,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   actionButton: {
-    borderRadius: 8,
     paddingVertical: 4,
   },
 });

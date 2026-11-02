@@ -9,11 +9,8 @@ import { addEventLog, addLog } from "../../redux/itemsSlice";
 import { nanoid } from "nanoid";
 import { CommonActions } from "@react-navigation/native";
 import { Button } from "react-native-paper";
-import { ThemeText } from "../../components/ThemeText";
-import { colors } from "../../utils/colors";
 import { localization } from "../../utils/localization";
 import { RootState } from "../../redux/store";
-
 export const EventLogForm = ({
   navigation,
   route,
@@ -24,17 +21,14 @@ export const EventLogForm = ({
   const [eventName, setEventName] = useState("");
   const [eventDate, setEventDate] = useState(new Date());
   const [additionalNotes, setAdditionalNotes] = useState("");
-
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [errorsList, setErrorsList] = useState<string[]>([]);
   const { selectedIDs } = route.params;
   const dispatch = useDispatch();
   const storedSettings = useSelector((state: RootState) => state.settings);
-
   async function addEventHandler() {
     const generatedId = nanoid(); // event Id
     const errors = [];
-
     if (eventName.length <= 0) {
       errors.push("Please enter a name for this event");
     }
@@ -55,7 +49,6 @@ export const EventLogForm = ({
         additionalNotes: additionalNotes,
       }),
     );
-
     selectedIDs.forEach((id: string) => {
       dispatch(addLog({ selectedId: id, logId: generatedId }));
     });
@@ -68,23 +61,22 @@ export const EventLogForm = ({
         <BackButton
           pageTitle={localization.EventInfo[storedSettings.language]}
         />
-        <View className="flex items-center gap-y-3 mt-4">
+        <View style={[{ alignItems: "center", rowGap: 12, marginTop: 16 }]}>
           <CustomInput
             mode="outlined"
-            outlineColor={colors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={colors.mainGreen}
             textContentType="name"
-            style={[
-              styles.customWidth,
-              {
-                textAlign: storedSettings.language == 1 ? "right" : "left",
-              },
-            ]}
-            className="mb-5"
             label={localization.EventName[storedSettings.language]}
             value={eventName}
             onChange={text => setEventName(text.nativeEvent.text)}
+            style={[
+              { marginBottom: 20 },
+              [
+                styles.customWidth,
+                {
+                  textAlign: storedSettings.language == 1 ? "right" : "left",
+                },
+              ],
+            ]}
           />
           <DatePicker
             title={localization.EventDate[storedSettings.language]}
@@ -96,9 +88,6 @@ export const EventLogForm = ({
           />
           <CustomInput
             mode="outlined"
-            outlineColor={colors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={colors.mainGreen}
             textContentType="name"
             style={[
               styles.customWidth,
@@ -115,7 +104,7 @@ export const EventLogForm = ({
             <View>
               {errorsList.map((error, index) => {
                 return (
-                  <Text key={index} className="text-[#C70039]">
+                  <Text key={index} style={[{}]}>
                     {error}
                   </Text>
                 );
@@ -124,9 +113,7 @@ export const EventLogForm = ({
           )}
           <Button
             // className="mb-5"
-            mode="contained"
-            buttonColor={colors.mainCyan}
-            textColor={colors.white}
+            mode="outlined"
             onPress={addEventHandler}
           >
             {localization.Save[storedSettings.language]}

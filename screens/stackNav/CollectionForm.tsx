@@ -1,23 +1,13 @@
-import {
-  Keyboard,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-} from "react-native";
+import { Keyboard, StyleSheet, Text, View } from "react-native";
 import { Button } from "react-native-paper";
 import { useMemo, useState } from "react";
 import { BackButton } from "../../components/BackButton";
 import { ThemeView } from "../../components/ThemeView";
 import { CustomInput } from "../../components/CustomInput";
-import ColorModal from "../../components/ColorModal";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { ThemeText } from "../../components/ThemeText";
 import { addCollection, moveCollection } from "../../redux/itemsSlice";
-// replaced FlashList with FlatList from react-native
-import Icon2 from "react-native-vector-icons/MaterialIcons";
 import { colors as appColors } from "./../../utils/colors";
 import { localization } from "../../utils/localization";
 import { CollectionList } from "../../components/CollectionList";
@@ -29,12 +19,9 @@ import {
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
 import { setCollectionSortValue } from "../../redux/settingsSlice";
-
 export const CollectionForm = () => {
   // const navigation = useNavigation<any>();
   const [name, setName] = useState("");
-  const [visible, setVisible] = useState(false);
-  const [colors, setColors] = useState([appColors.defaultCollectionColor]);
   const [refresh, setRefresh] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const CollectionsState = useSelector(
@@ -44,16 +31,12 @@ export const CollectionForm = () => {
   const sortValue = getCollectionSortValue(storedSettings.collectionSortValue);
   const [errorsList, setErrorsList] = useState<string[]>([]);
   const dispatch = useDispatch();
-  const colorScheme = String(
-    useColorScheme()?.toUpperCase() ?? "LIGHT",
-  ) as ThemeNameType;
+  const colorScheme = String("LIGHT") as ThemeNameType;
   const language = storedSettings.language;
-
   const orderedCollections = useMemo(
     () => getOrderedCollectionTags(CollectionsState, sortValue),
     [CollectionsState, sortValue],
   );
-
   const sortOptions = useMemo(
     () => [
       {
@@ -71,7 +54,6 @@ export const CollectionForm = () => {
     ],
     [language],
   );
-
   const handleSortValueChange = (
     valueOrUpdater:
       | CollectionSortValue
@@ -81,13 +63,10 @@ export const CollectionForm = () => {
       typeof valueOrUpdater === "function"
         ? valueOrUpdater(sortValue)
         : valueOrUpdater;
-
     dispatch(setCollectionSortValue({ collectionSortValue: nextSortValue }));
   };
-
   const addCollectionHandler = async () => {
     const errors = [];
-
     if (name.length <= 0) {
       errors.push("Please enter a name for this Collection");
     }
@@ -107,42 +86,22 @@ export const CollectionForm = () => {
     dispatch(
       addCollection({
         name: name,
-        color: colors[0],
+        color: appColors.defaultCollectionColor,
       }),
     );
   };
-
   const moveCollectionHandler = (value: string, direction: "up" | "down") => {
     dispatch(moveCollection({ value, direction }));
     setRefresh(prev => !prev);
   };
-
   return (
     <>
-      <ColorModal
-        colors={colors}
-        setColors={setColors}
-        visible={visible}
-        setVisible={setVisible}
-        colorSelection={0}
-      />
       <ThemeView>
         <BackButton pageTitle={localization.Add_a_collection[language]} />
 
         <View style={styles.formGroup}>
-          <TouchableOpacity
-            style={[styles.colorButton, { backgroundColor: colors[0] }]}
-            onPress={() => {
-              setVisible(true);
-            }}
-          >
-            <Icon2 name="colorize" size={30} color={appColors.mainCyan} />
-          </TouchableOpacity>
           <CustomInput
             mode="outlined"
-            outlineColor={appColors.mainGreen}
-            selectionColor="#C0C0C0"
-            activeOutlineColor={appColors.mainGreen}
             textContentType="name"
             style={styles.inputWidth}
             label={localization.Collection_name[language]}
@@ -163,9 +122,7 @@ export const CollectionForm = () => {
         </View>
 
         <Button
-          mode="contained"
-          buttonColor={appColors.mainCyan}
-          textColor={appColors.white}
+          mode="outlined"
           onPress={() => {
             addCollectionHandler();
             Keyboard.dismiss();
@@ -220,15 +177,14 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderWidth: 2,
-    borderColor: appColors.gray,
-    borderRadius: 12,
+    borderColor: "#777777",
     marginTop: 8,
   },
   inputWidth: {
     width: "80%",
   },
   errorText: {
-    color: appColors.error,
+    color: appColors.defaultCollectionColor,
   },
   saveButton: {
     marginHorizontal: 40,
@@ -237,14 +193,13 @@ const styles = StyleSheet.create({
   divider: {
     width: "100%",
     height: 4,
-    backgroundColor: appColors.gray,
+    backgroundColor: "#ffffff",
   },
   sectionTitle: {
     width: "100%",
     textAlign: "center",
     fontSize: 20,
     marginVertical: 20,
-    fontStyle: "italic",
   },
   sortRow: {
     width: "80%",
@@ -262,9 +217,9 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   sortDropdown: {
-    borderColor: appColors.mainGreen,
+    borderColor: "#777777",
   },
   sortDropdownContainer: {
-    borderColor: appColors.mainGreen,
+    borderColor: "#777777",
   },
 });

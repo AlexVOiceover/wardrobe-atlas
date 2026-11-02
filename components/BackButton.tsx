@@ -1,30 +1,17 @@
 import { useNavigation } from "@react-navigation/native";
-import {
-  Keyboard,
-  TouchableOpacity,
-  View,
-  useColorScheme,
-  StyleSheet,
-} from "react-native";
+import { Keyboard, TouchableOpacity, View, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { colors } from "../utils/colors";
 import { ThemeText } from "./ThemeText";
-
 interface BackButtonProps {
   pageTitle?: string;
 }
-
 export const BackButton = ({ pageTitle }: BackButtonProps) => {
   const navigation = useNavigation<any>();
-  const isDarkMode = useColorScheme() === "dark";
-
   return (
     <View style={styles.container}>
       {pageTitle && (
         <View style={styles.titleContainer}>
-          <ThemeText customStyle={{ fontSize: 20, fontStyle: "italic" }}>
-            {pageTitle}
-          </ThemeText>
+          <ThemeText customStyle={{ fontSize: 20 }}>{pageTitle}</ThemeText>
         </View>
       )}
       <TouchableOpacity
@@ -34,16 +21,11 @@ export const BackButton = ({ pageTitle }: BackButtonProps) => {
           navigation.goBack();
         }}
       >
-        <Icon
-          name="caret-back"
-          size={30}
-          color={isDarkMode ? colors.white : colors.black}
-        />
+        <Icon name="caret-back" size={30} color="#111111" />
       </TouchableOpacity>
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     width: "100%",
