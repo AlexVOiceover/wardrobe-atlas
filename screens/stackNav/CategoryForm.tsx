@@ -63,7 +63,7 @@ export const CategoryForm = ({ navigation }: { navigation: any }) => {
             style={[
               styles.customWidth,
               {
-                textAlign: storedSettings.language == 1 ? "right" : "left",
+                textAlign: "left",
               },
             ]}
             label={localization.Category_Name[storedSettings.language]}

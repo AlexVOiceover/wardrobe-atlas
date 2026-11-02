@@ -1,72 +1,29 @@
-import { RootState, persistor, store } from "../redux/store"; // Replace with the correct path to your rootReducer file
+import { persistor, store } from "../redux/store";
 import * as ScopedStorage from "react-native-scoped-storage";
 import { importCategory } from "../redux/categoriesSlice";
 import { importItems } from "../redux/itemsSlice";
 import { importSettings } from "../redux/settingsSlice";
-import { normalizeCollectionTags } from "./collectionOrder";
+import { readWardrobeBackup } from "./wardrobeData";
 
-// Function to import the Redux store from a JSON file in the Documents folder
 export const importStoreFromJson = async (
-  setCheckboxes: (enableLaundry: boolean, enableHeatMap: boolean) => void,
+  syncDisplay: (enabled: boolean) => void,
 ) => {
   try {
-    // Open the Document Picker to allow the user to select a file
     const file = await ScopedStorage.openDocument(true, "utf8");
-
-    if (file) {
-      // Check if the selected file is a JSON file based on MIME type or file extension
-      if (file.mime === "application/json" || file.name.endsWith(".json")) {
-        // Read the serialized state from the selected JSON file
-        const serializedState = file.data;
-        const state: RootState = JSON.parse(serializedState);
-        const normalizedCollectionTags = normalizeCollectionTags(
-          state.itemsList.collectionTags || [],
-        );
-        store.dispatch(
-          importCategory({
-            Categories: state.CategoryList.Categories,
-            CategoryCustomTypes: state.CategoryList?.CategoryCustomTypes,
-          }),
-        );
-        store.dispatch(
-          importItems({
-            collectionTags: normalizedCollectionTags,
-            logs: state.itemsList.logs,
-            items: state.itemsList.items,
-            refreshItems: state.itemsList.refreshItems,
-            refreshLaundry: state.itemsList.refreshLaundry,
-          }),
-        );
-        store.dispatch(
-          importSettings({
-            language:
-              typeof state.settings.language === "string"
-                ? 0
-                : state.settings.language,
-            laundryNumber: state.settings.laundryNumber,
-            name: state.settings.name,
-            enableLaundry: state.settings.enableLaundry,
-            enableReminder: false,
-            collectionSortValue: state.settings.collectionSortValue,
-          }),
-        );
-        await persistor.persist();
-        setCheckboxes(
-          state.settings.enableLaundry,
-          state.settings.enableHeatMap,
-        );
-        console.log("Store imported successfully.");
-        return true;
-      } else {
-        console.log("Selected file is not a JSON file.");
-        return false;
-      }
-    } else {
-      console.log("No file selected.");
+    if (
+      !file ||
+      (file.mime !== "application/json" && !file.name.endsWith(".json"))
+    )
       return false;
-    }
+    const state = readWardrobeBackup(JSON.parse(file.data));
+    store.dispatch(importCategory(state.CategoryList));
+    store.dispatch(importItems(state.itemsList));
+    store.dispatch(importSettings(state.settings));
+    await persistor.flush();
+    syncDisplay(state.settings.enableHeatMap);
+    return true;
   } catch (error) {
-    console.error("Error importing store:", error);
+    console.error("Import failed:", error);
     return false;
   }
 };

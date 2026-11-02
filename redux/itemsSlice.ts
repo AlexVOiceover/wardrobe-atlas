@@ -5,7 +5,6 @@ import {
   moveCollectionTag,
   normalizeCollectionTags,
 } from "../utils/collectionOrder";
-
 export type logsType = {
   eventId: string; //common ID for any combined items.
   eventDate: string;
@@ -13,7 +12,6 @@ export type logsType = {
   additionalNotes?: string;
   logTime: string; //iso??
 };
-
 export type item = {
   id: string;
   name: string;
@@ -32,17 +30,12 @@ export type item = {
   secondaryColor?: string;
   tertiaryColor?: string;
   logIds?: string[];
-  laundryCounter: number;
-  laundryable: boolean;
-  overrideMaxLaundry: boolean;
-  maxLaundryNumber: number;
 };
 export type itemsList = {
   items: item[];
   collectionTags: CollectionTag[];
   logs: logsType[];
   refreshItems: boolean;
-  refreshLaundry: boolean;
 };
 export type CollectionTag = {
   label: string;
@@ -51,15 +44,12 @@ export type CollectionTag = {
   isOpen: boolean;
   arrangement: number;
 };
-
 const initialState: itemsList = {
   items: [],
   collectionTags: [],
   logs: [],
   refreshItems: false,
-  refreshLaundry: false,
 };
-
 const itemsSlice = createSlice({
   name: "itemsList",
   initialState: initialState,
@@ -85,11 +75,7 @@ const itemsSlice = createSlice({
         secondaryColor: action.payload.secondaryColor,
         tertiaryColor: action.payload.tertiaryColor,
         logIds: [],
-        laundryCounter: 0,
         season: action.payload.season,
-        laundryable: true,
-        overrideMaxLaundry: false,
-        maxLaundryNumber: 0,
       } as item);
     },
     updateItem: (state, action) => {
@@ -109,9 +95,6 @@ const itemsSlice = createSlice({
       state.items[itemIndex].secondaryColor = action.payload.secondaryColor;
       state.items[itemIndex].tertiaryColor = action.payload.tertiaryColor;
       state.items[itemIndex].season = action.payload.season;
-      state.items[itemIndex].overrideMaxLaundry =
-        action.payload.overrideMaxLaundry;
-      state.items[itemIndex].maxLaundryNumber = action.payload.maxLaundryNumber;
     },
     addCollection: (state, action) => {
       state.collectionTags.push({
@@ -124,8 +107,7 @@ const itemsSlice = createSlice({
     },
     updateCollection: (state, action) => {
       const collectionIndex = state.collectionTags.findIndex(
-        (x) =>
-          x.label === action.payload.name || x.value === action.payload.name,
+        x => x.label === action.payload.name || x.value === action.payload.name,
       );
       if (collectionIndex < 0) {
         return;
@@ -137,8 +119,7 @@ const itemsSlice = createSlice({
     },
     toggleCollection: (state, action) => {
       const collectionIndex = state.collectionTags.findIndex(
-        (x) =>
-          x.label === action.payload.name || x.value === action.payload.name,
+        x => x.label === action.payload.name || x.value === action.payload.name,
       );
       if (collectionIndex < 0) {
         return;
@@ -148,21 +129,20 @@ const itemsSlice = createSlice({
     },
     deleteCollection: (state, action) => {
       const collectionIndex = state.collectionTags.findIndex(
-        (x) =>
-          x.label === action.payload.name || x.value === action.payload.name,
+        x => x.label === action.payload.name || x.value === action.payload.name,
       );
       if (collectionIndex < 0) {
         return;
       }
-      const deletedCollectionValue = state.collectionTags[collectionIndex].value;
+      const deletedCollectionValue =
+        state.collectionTags[collectionIndex].value;
       state.collectionTags.splice(collectionIndex, 1);
       state.collectionTags = normalizeCollectionTags(state.collectionTags);
       try {
         for (let i = 0; i < state.items.length; i++) {
           let itemCollectionIndex = state.items[i].collection?.findIndex(
-            (x) => x === deletedCollectionValue,
+            x => x === deletedCollectionValue,
           );
-
           if (itemCollectionIndex !== undefined && itemCollectionIndex !== -1) {
             state.items[i].collection?.splice(itemCollectionIndex, 1);
           }
@@ -189,21 +169,20 @@ const itemsSlice = createSlice({
     },
     deleteEventLog: (state, action) => {
       const eventIndex = state.logs.findIndex(
-        (x) => x.eventId === action.payload.selectedLogId,
+        x => x.eventId === action.payload.selectedLogId,
       );
       state.logs.splice(eventIndex, 1);
     },
     addLog: (state, action) => {
       //this added to add the eventId to the item/s
       const itemIndex = state.items.findIndex(
-        (x) => x.id === action.payload.selectedId,
+        x => x.id === action.payload.selectedId,
       );
       const logIdsSet = new Set(state.items[itemIndex].logIds || []);
       if (!logIdsSet.has(action.payload.logId)) {
         // if this new log doesn't exist add it to the list
         logIdsSet.add(action.payload.logId);
         state.items[itemIndex].logIds = Array.from(logIdsSet);
-        state.items[itemIndex].laundryCounter += 1;
       }
     },
     deleteLog: (state, action) => {
@@ -221,34 +200,19 @@ const itemsSlice = createSlice({
       );
       for (let i of itemIndices) {
         const logIndex = state.items[i].logIds?.findIndex(
-          (x) => x === action.payload.selectedLogId,
+          x => x === action.payload.selectedLogId,
         );
         state.items[i].logIds?.splice(logIndex as number, 1);
       }
     },
-    itemRefresher: (state) => {
+    itemRefresher: state => {
       state.refreshItems = !state.refreshItems;
-    },
-    laundryRefresher: (state) => {
-      state.refreshLaundry = !state.refreshLaundry;
     },
     deleteItem: (state, action) => {
       const itemIndex = state.items.findIndex(
-        (x) => x.id === action.payload.selectedId,
+        x => x.id === action.payload.selectedId,
       );
       state.items.splice(itemIndex, 1);
-    },
-    resetLaundryCounter: (state, action) => {
-      const itemIndex = state.items.findIndex(
-        (x) => x.id === action.payload.selectedId,
-      );
-      state.items[itemIndex].laundryCounter = 0;
-    },
-    enableLaundry4Object: (state, action) => {
-      const itemIndex = state.items.findIndex(
-        (x) => x.id === action.payload.selectedId,
-      );
-      state.items[itemIndex].laundryable = action.payload.laundryValue;
     },
     importItems: (state, action) => {
       state.items = action.payload.items;
@@ -257,7 +221,6 @@ const itemsSlice = createSlice({
       );
       state.logs = action.payload.logs;
       state.refreshItems = action.payload.refreshItems;
-      state.refreshLaundry = action.payload.refreshLaundry;
     },
   },
 });
@@ -274,10 +237,7 @@ export const {
   addEventLog,
   deleteEventLog,
   itemRefresher,
-  laundryRefresher,
   deleteItem,
-  resetLaundryCounter,
-  enableLaundry4Object,
   importItems,
 } = itemsSlice.actions;
 export default itemsSlice.reducer;

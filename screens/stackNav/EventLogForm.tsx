@@ -73,7 +73,7 @@ export const EventLogForm = ({
               [
                 styles.customWidth,
                 {
-                  textAlign: storedSettings.language == 1 ? "right" : "left",
+                  textAlign: "left",
                 },
               ],
             ]}
@@ -92,7 +92,7 @@ export const EventLogForm = ({
             style={[
               styles.customWidth,
               {
-                textAlign: storedSettings.language == 1 ? "right" : "left",
+                textAlign: "left",
               },
             ]}
             textArea={true}
