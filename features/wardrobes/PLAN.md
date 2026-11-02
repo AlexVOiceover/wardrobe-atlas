@@ -1,6 +1,6 @@
 # Locations / wardrobes
 
-Status: Implementation authorized by the owner on 2026-11-02. Validation in progress.
+Status: Implementation authorized by the owner on 2026-11-02. Implemented and validated; release delivery follows the main workflow.
 
 ## Goal
 
@@ -92,6 +92,6 @@ Confirmed by the owner: a wardrobe is a physical location, with one location per
 - 47 tests pass across 8 suites, including wardrobe creation/renaming, Unicode names, stable-ID moves, safe deletion, filtering, legacy/v1 Spanish migration, backup round trips, malformed references, selector behavior and management cancellation/validation.
 - TypeScript and production Android JavaScript bundling pass.
 - Targeted ESLint passes with no errors; existing shadowing/equality warnings remain in the legacy garment form and data normalizer. New wardrobe files pass without warnings.
-- Android PR build and published Release verification pending. No connected phone installation or visual check performed.
+- Signed Android PR build passed: https://github.com/AlexVOiceover/wardrobe-atlas/actions/runs/41465853172. Release delivery is tracked by the main workflow after merging PR #7. No connected phone installation or visual check performed.
 
 The pre-existing `feature/wardrobes` branch is preserved. This work uses `feature/wardrobes-v1` based on current main.
