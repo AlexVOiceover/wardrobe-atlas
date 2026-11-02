@@ -1,6 +1,5 @@
 import { View } from "react-native";
 import { Button, Searchbar } from "react-native-paper";
-import { ThemeText } from "../../components/ThemeText";
 import { localization } from "../../utils/localization";
 type Props = {
   navigation: any;
@@ -28,9 +27,6 @@ const HomeHeader = ({
   const language = storedSettings.language ?? 0;
   return (
     <View style={{ padding: 8, gap: 8 }}>
-      <ThemeText>
-        {localization.Welcome[language] + storedSettings.name}
-      </ThemeText>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4 }}>
         <Button mode="outlined" onPress={() => navigation.navigate("Settings")}>
           {localization.Settings[language]}

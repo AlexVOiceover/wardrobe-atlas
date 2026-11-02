@@ -10,7 +10,7 @@ Download `Wardrobe-Atlas.apk` from [Releases](https://github.com/AlexVOiceover/w
 
 Releases contain the version on `main`. To test changes before merge, download the APK artifact ZIP from the corresponding [pull request build](https://github.com/AlexVOiceover/wardrobe-atlas/actions), extract it and open the APK.
 
-The app checks published GitHub Releases on launch and when returning to the foreground. Android requires approval to install an update. Current builds use the repository's development signing key and are for personal testing.
+The app checks published GitHub Releases on launch, on return and periodically while open. Settings includes Check for updates, with visible download/error status and installation-permission guidance. The shared header shows the installed Android version. Android requires approval to install an update. Current builds use the repository's development signing key and are for personal testing.
 
 ## Develop
 

@@ -1,4 +1,51 @@
 export const localization = {
+  CheckForUpdates: ["Check for updates", "Buscar actualizaciones"],
+  AllowUpdates: ["Open Android settings", "Abrir ajustes de Android"],
+  InstallUpdate: ["Install update", "Instalar actualización"],
+  TryAgain: ["Try again", "Reintentar"],
+  UpdateAutomatic: [
+    "Updates are checked automatically.",
+    "Las actualizaciones se comprueban automáticamente.",
+  ],
+  UpdateChecking: ["Checking for updates…", "Buscando actualizaciones…"],
+  UpdateDownloading: ["Downloading update…", "Descargando actualización…"],
+  UpdatePermission: [
+    "Allow updates for Wardrobe Atlas in Android settings, then return here.",
+    "Permite las actualizaciones de Wardrobe Atlas en los ajustes de Android y vuelve aquí.",
+  ],
+  UpdateReady: [
+    "An update is ready to install.",
+    "Hay una actualización lista para instalar.",
+  ],
+  UpdateInstalling: [
+    "Confirm installation in Android.",
+    "Confirma la instalación en Android.",
+  ],
+  UpdateCurrent: ["You are up to date.", "La aplicación está actualizada."],
+  UpdateNetworkError: [
+    "Could not check or download the update. Check your connection and try again.",
+    "No se pudo comprobar o descargar la actualización. Revisa tu conexión y reintenta.",
+  ],
+  UpdateRateLimit: [
+    "The update service is busy. Please try again later.",
+    "El servicio de actualizaciones está ocupado. Reintenta más tarde.",
+  ],
+  UpdateVerificationError: [
+    "The download could not be verified. Please try again.",
+    "No se pudo verificar la descarga. Reintenta.",
+  ],
+  UpdateInstallError: [
+    "Android could not open the installer or update settings. Please try again.",
+    "Android no pudo abrir el instalador o los ajustes de actualización. Reintenta.",
+  ],
+  UpdateUnavailable: [
+    "A new update is being published. Please check again shortly.",
+    "Se está publicando una actualización. Vuelve a comprobar en unos momentos.",
+  ],
+  UpdateUnsupported: [
+    "Updating is unavailable in this build.",
+    "Las actualizaciones no están disponibles en esta compilación.",
+  ],
   RecentUsage: ["Show recent usage", "Mostrar uso reciente"],
   RecentUsageHelp: [
     "Show whether a garment was used this week or this month.",
@@ -9,7 +56,6 @@ export const localization = {
   NotUsedThisMonth: ["Not used this month", "Sin usar este mes"],
   Uses: ["Uses", "Usos"],
   AddPhoto: ["Add photo", "Añadir foto"],
-  Welcome: ["Welcome back, ", "Bienvenido de nuevo, "],
   Collection: ["Collection", "Colección"],
   Collections: ["Collections", "Colecciones"],
   Collection_name: ["Collection name", "Nombre de la colección"],
