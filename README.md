@@ -1,6 +1,6 @@
 # Wardrobe Atlas
 
-A minimal Android wardrobe app built with React Native and TypeScript. Manage clothes, physical wardrobes, categories, collections and outfit logs. Data is stored locally, with import/export and optional export for LLMs.
+A minimal Android wardrobe app built with React Native and TypeScript. Manage clothes, physical wardrobes, categories, collections and outfit logs. Data is stored locally, with JSON backup export and import.
 
 English and Spanish are supported. The interface uses plain lists, forms and system fonts. Garment photos and colors remain functional; decorative artwork, custom animations and appearance editors have been removed.
 
