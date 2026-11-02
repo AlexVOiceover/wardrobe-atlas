@@ -143,28 +143,6 @@ export const localization = {
   Language: ["Language", "Idioma"],
   Export: ["Export", "Exportar"],
   Import: ["Import", "Importar"],
-  LLMExport: ["copy to feed LLM", "copiar para alimentar LLM"],
-  LLMConfirmTitle: ["Confirm Export to LLM", "Confirmar exportación a LLM"],
-  LLMConfirmMessage: [
-    "By exporting your wardrobe data you acknowledge that it is your responsibility how this information is used and shared.\n\nFor maximum privacy we strongly recommend pasting this data into a local LLM running on your own device instead of cloud-based services.\n\nContinue?",
-    "Al exportar los datos de tu armario, reconoces que eres responsable de cómo se utiliza y comparte esta información.\n\nPara máxima privacidad, recomendamos encarecidamente pegar estos datos en un LLM local que se ejecute en tu propio dispositivo en lugar de servicios en la nube.\n\n¿Continuar?",
-  ],
-  LLMIncludeSections: ["Include sections", "Incluir secciones"],
-  Categories: ["Categories", "Categorías"],
-  Items: ["Items", "Artículos"],
-  LLM_info: [
-    "Export your wardrobe data as clean text for AI/LLMs.",
-    "Exporta los datos de tu armario como texto limpio para IA y LLMs.",
-  ],
-  LLMCopied: ["Copied for LLM", "Copiado para LLM"],
-  LLMLoadingPreparing: [
-    "Preparing LLM export…",
-    "Preparando exportación a LLM…",
-  ],
-  LLMLoadingStatus: [
-    "Preparing LLM-readable text…",
-    "Preparando texto legible para LLM…",
-  ],
   ClosetInfo: ["Closet Info", "Armario Info"],
   Tops: ["Tops", "Tops"],
   Bottoms: ["Bottoms", "Parte inferior"],

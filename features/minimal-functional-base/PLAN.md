@@ -34,7 +34,7 @@ Install over v0.1.10 and check existing data, then:
 3. Create/rename/reorder/delete collections; verify membership, sorting and expansion.
 4. Search/filter by name, category, type, season and color; close filters both ways.
 5. Select garments; create/edit/delete outfit logs; check counts/statistics and text recency.
-6. Exercise settings, import/export and LLM export.
+6. Exercise settings, backup import/export.
 7. Check scrolling, keyboard access, small screens, dark-mode readability and APK updates.
 
 Full phone parity, data preservation on an installed device, iOS compilation and end-to-end updating remain unverified. See the current core-cleanup plan for subsequent changes.

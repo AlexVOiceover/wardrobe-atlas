@@ -45,7 +45,7 @@ Confirmed by the owner: a wardrobe is a physical location, with one location per
 - Resolve edit/move/delete operations by stable garment/wardrobe ID. Reject nonexistent assignment targets; handle a deleted selection safely before saving a form.
 - Default the home view to All on startup. Keep the viewing selection transient for v1 rather than adding another persisted preference.
 - Extend `redux/itemsSlice.ts`, garment/bulk forms, home navigation/filtering and `utils/localization.ts`. Add a small management screen through `routers/stack.tsx`.
-- Extend `utils/wardrobeData.ts`, import/export and `utils/exportForLLM.ts`; include names and garment assignments in the LLM export when items are included.
+- Extend `utils/wardrobeData.ts` and backup import/export to include names and garment assignments.
 - No new dependency or native Android change is expected.
 
 ## Storage and migration
@@ -77,7 +77,7 @@ Confirmed by the owner: a wardrobe is a physical location, with one location per
 - Cover a location deleted while its form/filter is active and invalid/missing assignment IDs.
 - Migrate legacy data and v1 data, including both historical Spanish encodings; repeated normalization is stable.
 - Round-trip a new backup with multiple wardrobes, assignments, photos and logs. Import an old backup over populated new data without stale locations remaining.
-- LLM export includes usable location names; full backups contain all items even while one location is selected.
+- Full backups contain wardrobes and all items even while one location is selected.
 - Run meaningful reducer/normalization/filter/UI tests, TypeScript and relevant lint. Validate the Android PR build, then the published Release once implementation is authorized. Report phone checks separately from automated checks.
 
 ## Implementation decisions
