@@ -11,8 +11,6 @@ import { RootState } from "../../redux/store";
 import { CustomInput } from "../../components/CustomInput";
 import {
   changeLanguage,
-  laundryNumberSetter,
-  setEnableLaundry,
   setHeatMap,
   userNameSetter,
 } from "../../redux/settingsSlice";
@@ -28,16 +26,13 @@ import {
 import Clipboard from "@react-native-clipboard/clipboard";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { colors } from "../../utils/colors";
-import { laundryRefresher } from "../../redux/itemsSlice";
+import {} from "../../redux/itemsSlice";
 import { localization } from "../../utils/localization";
-import { handleNumberChange } from "../../utils/validators";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 export const Settings = () => {
   const [openLang, setOpenLang] = useState(false);
   const storedSettings = useSelector((state: RootState) => state.settings);
-  const { language, name, laundryNumber, enableLaundry, enableHeatMap } =
-    storedSettings;
-  const isRtl = language === 1;
+  const { language, name, enableHeatMap } = storedSettings;
   const [lang, setLang] = useState(language);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -50,21 +45,16 @@ export const Settings = () => {
   const onToggleSnackBar = () => setVisible(!visible);
   const onDismissSnackBar = () => setVisible(false);
   const [exportOrImport, setExportOrImport] = useState(0);
-  const [checkedLau, setCheckedLau] = useState(enableLaundry);
   const [checkedHeatMap, setCheckedHeatMap] = useState(enableHeatMap);
   const [llmConfirmVisible, setLlmConfirmVisible] = useState(false);
   const [isLLMGenerating, setIsLLMGenerating] = useState(false);
   const [llmSections, setLlmSections] = useState<LLMExportSections>(
     DEFAULT_LLM_EXPORT_SECTIONS,
   );
-  const setCheckboxes = (
-    newEnableLaundry: boolean,
-    newEnableHeatMap: boolean,
-  ) => {
-    setCheckedLau(newEnableLaundry);
+  const setCheckboxes = (newEnableHeatMap: boolean) => {
     setCheckedHeatMap(newEnableHeatMap);
   };
-  const rowStyle = isRtl ? styles.rowReverse : styles.row;
+  const rowStyle = styles.row;
   const toggleLlmSection = (key: keyof LLMExportSections) => {
     setLlmSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -117,13 +107,10 @@ export const Settings = () => {
           <CustomInput
             mode="outlined"
             textContentType="name"
-            style={[{ width: "50%" }, { textAlign: isRtl ? "right" : "left" }]}
+            style={[{ width: "50%" }, { textAlign: "left" }]}
             label={localization.User_Name[language]}
             value={name}
-            onChange={(text: any) =>
-              text.nativeEvent.text.length < 8 &&
-              dispatch(userNameSetter({ name: text.nativeEvent.text }))
-            }
+            onChangeText={value => dispatch(userNameSetter({ name: value }))}
           />
         </View>
         <View style={[rowStyle, { columnGap: 8 }, { zIndex: 20 }]}>
@@ -182,51 +169,6 @@ export const Settings = () => {
 
         <View style={rowStyle}>
           <ThemeText customStyle={styles.textLabel5}>
-            {localization.Laundry_reminder[language]}
-          </ThemeText>
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            style={styles.laundryInput}
-            label={localization.N[language]}
-            value={laundryNumber.toString()}
-            onChange={(text: any) =>
-              handleNumberChange(
-                () => {
-                  dispatch(
-                    laundryNumberSetter({
-                      number: Number(text.nativeEvent.text),
-                    }),
-                  );
-                  dispatch(laundryRefresher());
-                },
-                text.nativeEvent.text,
-                0,
-                30,
-              )
-            }
-            keyboardType="numeric"
-          />
-          <ThemeText customStyle={styles.textLabel5}>
-            {localization.Times[language]}
-          </ThemeText>
-          <Checkbox
-            status={checkedLau ? "checked" : "unchecked"}
-            onPress={() => {
-              setCheckedLau(prev => !prev);
-              dispatch(setEnableLaundry({ enableLaundry: !checkedLau }));
-            }}
-          />
-        </View>
-        <View style={{ flexDirection: isRtl ? "row-reverse" : "row" }}>
-          <Icon name="info-circle" size={15} color="#111111" />
-          <ThemeText customStyle={styles.infoText}>
-            {localization.ThisWillRemind[language]}
-          </ThemeText>
-        </View>
-
-        <View style={rowStyle}>
-          <ThemeText customStyle={styles.textLabel5}>
             {localization.RecentUsage[language]}
           </ThemeText>
           <Checkbox
@@ -237,7 +179,7 @@ export const Settings = () => {
             }}
           />
         </View>
-        <View style={{ flexDirection: isRtl ? "row-reverse" : "row" }}>
+        <View style={{ flexDirection: "row" }}>
           <Icon name="info-circle" size={15} color="#111111" />
           <ThemeText customStyle={styles.infoText}>
             {localization.RecentUsageHelp[language]}
@@ -254,7 +196,7 @@ export const Settings = () => {
             {localization.LLMExport[language]}
           </Button>
         </View>
-        <View style={{ flexDirection: isRtl ? "row-reverse" : "row" }}>
+        <View style={{ flexDirection: "row" }}>
           <Icon name="info-circle" size={15} color="#111111" />
           <ThemeText customStyle={styles.infoText}>
             {localization.LLM_info[language]}
@@ -275,10 +217,7 @@ export const Settings = () => {
           {localization.LLMIncludeSections[language]}
         </ThemeText>
         {llmSectionOptions.map(({ key, label }) => (
-          <View
-            key={key}
-            style={[styles.llmSectionRow, isRtl && styles.rowReverse]}
-          >
+          <View key={key} style={[styles.llmSectionRow, false]}>
             <ThemeText customStyle={styles.llmSectionLabel}>{label}</ThemeText>
             <Checkbox
               status={llmSections[key] ? "checked" : "unchecked"}
@@ -308,11 +247,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  rowReverse: {
-    flexDirection: "row-reverse",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
   textLabel10: {
     paddingBottom: 10,
     fontSize: 15,
@@ -328,10 +262,6 @@ const styles = StyleSheet.create({
   dropdown: {
     borderColor: "#777777",
     zIndex: 10,
-  },
-  laundryInput: {
-    width: 50,
-    marginHorizontal: 20,
   },
   infoText: {
     fontSize: 12,

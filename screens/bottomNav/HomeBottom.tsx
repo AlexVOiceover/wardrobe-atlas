@@ -25,7 +25,6 @@ import {
 import { defaultCategories } from "../stackNav/Category";
 import { ThemeNameType } from "react-native-dropdown-picker";
 import { CollectionContainer } from "../../components/CollectionContainer";
-import { localization } from "../../utils/localization";
 export function HomeBottom() {
   //this is the main page
   const navigation = useNavigation<any>();
@@ -64,9 +63,6 @@ export function HomeBottom() {
     setOpenCategoriesFilter,
     setOpenTypeFilter,
   };
-  const refreshLaundry = useSelector(
-    (state: RootState) => state.itemsList.refreshLaundry,
-  );
   const storedSettings = useSelector((state: RootState) => state.settings);
   const storedCategories = useSelector(
     (state: RootState) => state.CategoryList.Categories,
@@ -77,7 +73,7 @@ export function HomeBottom() {
   const CategoriesList = defaultCategories
     .concat(storedCategories)
     ?.map(cat => ({
-      label: cat.name[storedSettings.language ?? 0],
+      label: cat.name[storedSettings.language ?? 0] || cat.name[0],
       value: cat.index,
     }));
   const colorScheme = "LIGHT" as ThemeNameType;
@@ -144,23 +140,6 @@ export function HomeBottom() {
   useEffect(() => {
     if (categoriesFilter.length !== 1) setTypeFilter([]);
   }, [categoriesFilter]);
-  const laundryItems = useMemo(() => {
-    if (!storedSettings.enableLaundry) return [];
-    return itemsState.items.filter(
-      x =>
-        (x.laundryCounter ?? 0) >=
-          (x.overrideMaxLaundry ?? false
-            ? x.maxLaundryNumber
-            : storedSettings.laundryNumber) &&
-        (x.laundryable ?? true),
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    itemsState.items,
-    storedSettings.enableLaundry,
-    storedSettings.laundryNumber,
-    refreshLaundry,
-  ]);
   return (
     <ThemeView customStyle={styles.screenContainer}>
       <SideModal isOpen={isOpen} setIsOpen={setIsOpen}>
@@ -192,38 +171,6 @@ export function HomeBottom() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollViewContent}
         >
-          {storedSettings.enableLaundry &&
-            laundryItems.length > 0 &&
-            !search && (
-              <CollectionContainer
-                color="#111111"
-                label={
-                  localization.Laundry_reminder[storedSettings.language ?? 0]
-                }
-                LaundryReminder={true}
-              >
-                <View style={styles.gridContainer}>
-                  {laundryItems.map((lItem, lIndex) => (
-                    <View
-                      key={`laundry-${lItem.id}-${lIndex}`}
-                      style={styles.gridItem}
-                    >
-                      <ItemBox
-                        primary={lItem.primaryColor || colors.white}
-                        secondary={lItem.secondaryColor || colors.white}
-                        tertiary={lItem.tertiaryColor || colors.white}
-                        image={lItem.image}
-                        name={lItem.name}
-                        type={lItem.type}
-                        id={lItem.id}
-                        logs={lItem.logIds || []}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </CollectionContainer>
-            )}
-
           {groupedCollectionsRaw.tags.map((collection, index) => {
             const collectionItems = filteredData.collections[index];
             if (!collectionItems || collectionItems.length === 0) return null;

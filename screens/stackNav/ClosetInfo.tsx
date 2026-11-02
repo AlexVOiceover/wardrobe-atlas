@@ -65,7 +65,7 @@ const InfoCardCategories = ({
       {Categories.map((category, index) => (
         <View key={"Card" + index} style={[styles.cardNumber]}>
           <ThemeText>
-            {category.name[language] + " " + categoryInfo[language]}
+            {(category.name[language] || category.name[0]) + " " + categoryInfo[language]}
           </ThemeText>
           <View style={styles.countRow}>
             <ThemeText customStyle={[{}]}>

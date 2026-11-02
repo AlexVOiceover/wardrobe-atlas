@@ -13,27 +13,13 @@ import {
   REGISTER,
 } from "redux-persist";
 import settingsSlice from "./settingsSlice";
-import { normalizeCollectionTags } from "../utils/collectionOrder";
-
+import { normalizeWardrobe } from "../utils/wardrobeData";
 const persistConfig = {
   key: "root",
+  version: 1,
   storage: FilesystemStorage,
-  migrate: async (state: any) => {
-    if (!state?.itemsList) {
-      return state;
-    }
-
-    return {
-      ...state,
-      settings: { ...state.settings, enableReminder: false },
-      itemsList: {
-        ...state.itemsList,
-        collectionTags: normalizeCollectionTags(
-          state.itemsList.collectionTags || [],
-        ),
-      },
-    };
-  },
+  migrate: async (state: any) =>
+    state ? { ...normalizeWardrobe(state), _persist: state._persist } : state,
 };
 const rootReducer = combineReducers({
   CategoryList: categoriesSlice,
@@ -42,7 +28,6 @@ const rootReducer = combineReducers({
 });
 export type RootState = ReturnType<typeof rootReducer>;
 const persistedReducer = persistReducer(persistConfig, rootReducer);
-
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: getDefaultMiddleware =>
@@ -52,5 +37,4 @@ export const store = configureStore({
       },
     }),
 });
-
 export const persistor = persistStore(store);

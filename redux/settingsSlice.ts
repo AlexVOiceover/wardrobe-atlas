@@ -3,13 +3,9 @@ import {
   COLLECTION_SORT_VALUES,
   type CollectionSortValue,
 } from "../utils/collectionOrder";
-
 export type SettingsType = {
   language: number;
   name: string;
-  laundryNumber: number;
-  enableLaundry: boolean;
-  enableReminder: boolean;
   enableHeatMap: boolean;
   appVer: string;
   collectionSortValue: CollectionSortValue;
@@ -17,9 +13,6 @@ export type SettingsType = {
 const initialState: SettingsType = {
   language: 0,
   name: "User",
-  laundryNumber: 5,
-  enableLaundry: true,
-  enableReminder: false,
   enableHeatMap: false,
   appVer: "1.0.1",
   collectionSortValue: COLLECTION_SORT_VALUES.CUSTOM,
@@ -29,16 +22,10 @@ const settingsSlice = createSlice({
   initialState: initialState,
   reducers: {
     changeLanguage: (state, action) => {
-      state.language = action.payload.lang;
+      state.language = action.payload.lang === 1 ? 1 : 0;
     },
     userNameSetter: (state, action) => {
       state.name = action.payload.name;
-    },
-    laundryNumberSetter: (state, action) => {
-      state.laundryNumber = action.payload.number;
-    },
-    setEnableLaundry: (state, action) => {
-      state.enableLaundry = action.payload.enableLaundry;
     },
     setHeatMap: (state, action) => {
       state.enableHeatMap = action.payload.enableHeatMap;
@@ -48,11 +35,10 @@ const settingsSlice = createSlice({
         action.payload.collectionSortValue ?? COLLECTION_SORT_VALUES.CUSTOM;
     },
     importSettings: (state, action) => {
-      state.language = action.payload.language;
-      state.laundryNumber = action.payload.laundryNumber;
+      state.language = action.payload.language === 1 ? 1 : 0;
       state.name = action.payload.name;
-      state.enableLaundry = action.payload.enableLaundry;
-      state.enableReminder = false;
+      state.enableHeatMap = action.payload.enableHeatMap === true;
+      state.appVer = action.payload.appVer || state.appVer;
       state.collectionSortValue =
         action.payload.collectionSortValue ?? COLLECTION_SORT_VALUES.CUSTOM;
     },
@@ -64,8 +50,6 @@ const settingsSlice = createSlice({
 export const {
   changeLanguage,
   userNameSetter,
-  laundryNumberSetter,
-  setEnableLaundry,
   setHeatMap,
   setCollectionSortValue,
   importSettings,

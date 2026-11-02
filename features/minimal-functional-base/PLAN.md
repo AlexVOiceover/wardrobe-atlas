@@ -1,12 +1,12 @@
 # Minimal functional base
 
-Status: Implemented in [PR #2](https://github.com/AlexVOiceover/wardrobe-atlas/pull/2), awaiting owner review and phone checks. Scope and implementation approved on 2026-11-01. Documentation cleanup was subsequently authorized in the same chat.
+Status: Merged in [PR #2](https://github.com/AlexVOiceover/wardrobe-atlas/pull/2). Scope and implementation approved on 2026-11-01. Documentation cleanup was subsequently authorized in the same chat.
 
 ## Scope and acceptance
 
 - Plain light UI: system fonts, neutral colors, labeled lists/buttons/forms. Keep only layout, contrast and interaction styles.
 - Remove custom animation, carousels, sprites, decorative artwork/fonts and unused styling dependencies. Disable configurable navigation/Paper animations. Platform behavior and functional input feedback remain.
-- Preserve wardrobe operations, photos, garment colors/filters, categories/types, collections, logs/statistics, laundry/reminders, settings, import/export and Android updates.
+- Preserve wardrobe operations, photos, garment colors/filters, categories/types, collections, logs/statistics, settings, import/export and Android updates.
 - Replace colored usage indicators with text. Remove appearance-only collection color and custom category icon editors, retaining their saved fields for compatibility.
 - Preserve application ID, signing key, storage schema and import/export format. No upstream changes, redesign, new product features or iOS validation.
 
@@ -34,7 +34,7 @@ Install over v0.1.10 and check existing data, then:
 3. Create/rename/reorder/delete collections; verify membership, sorting and expansion.
 4. Search/filter by name, category, type, season and color; close filters both ways.
 5. Select garments; create/edit/delete outfit logs; check counts/statistics and text recency.
-6. Exercise laundry/reminders, settings, import/export and LLM export.
+6. Exercise settings, import/export and LLM export.
 7. Check scrolling, keyboard access, small screens, dark-mode readability and APK updates.
 
-Full phone parity, data preservation on an installed device, iOS compilation and end-to-end updating remain unverified. Keep this PR unmerged and do not publish without the owner's explicit instruction.
+Full phone parity, data preservation on an installed device, iOS compilation and end-to-end updating remain unverified. See the current core-cleanup plan for subsequent changes.
