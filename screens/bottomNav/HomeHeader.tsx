@@ -10,6 +10,7 @@ type Props = {
   onWardrobeChange: (id?: string) => void;
   filterCount: number;
   openGridSize: () => void;
+  startSelecting: () => void;
   handleOpenDrawer: () => void;
   setIsSearchVisible: (v: boolean) => void;
   isSearchVisible: boolean;
@@ -22,6 +23,7 @@ const HomeHeader = ({
   onWardrobeChange,
   filterCount,
   openGridSize,
+  startSelecting,
   handleOpenDrawer,
   setIsSearchVisible,
   isSearchVisible,
@@ -40,6 +42,11 @@ const HomeHeader = ({
         name="grid-outline"
         label={localization.GridSize[language]}
         onPress={openGridSize}
+      />
+      <HeaderIcon
+        name="checkbox-outline"
+        label={localization.Select[language]}
+        onPress={startSelecting}
       />
       <HeaderIcon
         name="search-outline"

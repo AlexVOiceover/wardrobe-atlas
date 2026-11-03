@@ -507,3 +507,29 @@ test("season chips start all on and save only the chosen seasons", () => {
     }),
   );
 });
+
+test("In storage starts off for new garments and is saved when switched on", () => {
+  const tree = render();
+  const storage = () =>
+    tree.root
+      .findAllByType("Switch" as any)
+      .find(s => s.props.accessibilityLabel === "In storage")!;
+  expect(storage().props.value).toBe(false);
+  act(() => storage().props.onValueChange(true));
+  const type = tree.root
+    .findAllByType("Dropdown" as any)
+    .find(d => d.props.placeholder === "Type")!;
+  act(() => type.props.setValue(type.props.items[0].value));
+  act(() =>
+    tree.root
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === "Save")!
+      .props.onPress(),
+  );
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/addItem",
+      payload: expect.objectContaining({ stored: true }),
+    }),
+  );
+});

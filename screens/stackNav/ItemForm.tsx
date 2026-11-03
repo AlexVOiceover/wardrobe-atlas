@@ -82,6 +82,7 @@ export const ItemForm = ({
     selectedCategory ?? storedItems?.category ?? -1,
   );
   const [type, setType] = useState(storedItems ? storedItems.type : "");
+  const [stored, setStored] = useState(storedItems?.stored === true);
   const [seasons, setSeasons] = useState<string[]>(
     storedItems?.seasons ?? [...SEASONS],
   );
@@ -207,6 +208,7 @@ export const ItemForm = ({
           type: type,
           fit: storedItems?.fit ?? "",
           seasons: seasons,
+          stored: stored,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -229,6 +231,7 @@ export const ItemForm = ({
           type: type,
           fit: storedItems?.fit ?? "",
           seasons: seasons,
+          stored: stored,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -494,6 +497,18 @@ export const ItemForm = ({
               ))}
             </View>
           </View>
+          <View style={styles.storageRow}>
+            <ThemeText customStyle={styles.sectionLabel}>
+              {localization.InStorage[storedSettings.language]}
+            </ThemeText>
+            <Switch
+              accessibilityLabel={
+                localization.InStorage[storedSettings.language]
+              }
+              value={stored}
+              onValueChange={setStored}
+            />
+          </View>
           <View style={styles.colors}>
             <View style={styles.colorsHeader}>
               <ThemeText customStyle={styles.sectionLabel}>
@@ -711,6 +726,11 @@ const styles = StyleSheet.create({
   },
   seasons: {
     gap: theme.spacing.xs,
+  },
+  storageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: theme.touch,
   },
   seasonChips: {
     flexDirection: "row",

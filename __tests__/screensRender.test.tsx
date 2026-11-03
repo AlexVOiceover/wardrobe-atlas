@@ -45,6 +45,7 @@ const mockState: any = {
     ],
   },
 };
+const mockDispatch = jest.fn();
 const mockNavigation = {
   navigate: jest.fn(),
   goBack: jest.fn(),
@@ -53,7 +54,7 @@ const mockNavigation = {
 };
 jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select(mockState),
-  useDispatch: () => jest.fn(),
+  useDispatch: () => mockDispatch,
 }));
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => mockNavigation,
@@ -192,9 +193,9 @@ test("tapping a garment opens the use log; a long press edits it", async () => {
     );
   const sheet = () =>
     tree!.root.findByType(require("../components/QuickLogSheet").QuickLogSheet);
-  expect(sheet().props.garment).toBeUndefined();
+  expect(sheet().props.garments).toEqual([]);
   await act(async () => card().props.onPress());
-  expect(sheet().props.garment.id).toBe("shirt");
+  expect(sheet().props.garments.map((g: any) => g.id)).toEqual(["shirt"]);
   expect(mockNavigation.navigate).not.toHaveBeenCalledWith("ItemForm", {
     editingIndex: "shirt",
   });
@@ -202,5 +203,87 @@ test("tapping a garment opens the use log; a long press edits it", async () => {
   expect(mockNavigation.navigate).toHaveBeenCalledWith("ItemForm", {
     editingIndex: "shirt",
   });
+  await act(async () => tree!.unmount());
+});
+
+test("select mode ticks garments and stores, moves or logs them together", async () => {
+  mockDispatch.mockClear();
+  mockNavigation.navigate.mockClear();
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <HomeBottom />
+      </WardrobeProvider>,
+    );
+  });
+  const press = (label: string, long = false) =>
+    act(async () => {
+      const node = tree!.root.find(
+        x =>
+          x.props.accessibilityLabel === label &&
+          !!(long ? x.props.onLongPress : x.props.onPress),
+      );
+      long ? node.props.onLongPress() : node.props.onPress();
+    });
+  const bar = () =>
+    tree!.root.findByType(require("../components/SelectionBar").SelectionBar);
+  const sheet = () =>
+    tree!.root.findByType(require("../components/QuickLogSheet").QuickLogSheet);
+  await press("Seleccionar prendas");
+  expect(
+    tree!.root.findAll(x => x.props.accessibilityLabel === "Añadir prenda"),
+  ).toHaveLength(0);
+  // Taps and long presses tick instead of opening the sheet or the form
+  await press("Linen shirt");
+  expect(bar().props.count).toBe(1);
+  expect(sheet().props.garments).toEqual([]);
+  await press("Linen shirt", true);
+  expect(bar().props.count).toBe(0);
+  expect(mockNavigation.navigate).not.toHaveBeenCalledWith("ItemForm", {
+    editingIndex: "shirt",
+  });
+  await press("Seleccionar todo");
+  expect(bar().props.count).toBe(2);
+  expect(bar().props.canStore).toBe(true);
+  expect(bar().props.canUnstore).toBe(false);
+  await press("Almacenar");
+  expect(mockDispatch).toHaveBeenLastCalledWith({
+    type: "itemsList/setGarmentsStored",
+    payload: { ids: ["shirt", "coat"], stored: true },
+  });
+  // Storing ends select mode and offers Undo
+  expect(
+    tree!.root.findAll(x => x.props.accessibilityLabel === "Añadir prenda"),
+  ).not.toHaveLength(0);
+  const snackbar = tree!.root.findByType("Snackbar" as any);
+  expect(snackbar.props.children).toBe("2 prendas almacenadas");
+  await act(async () => snackbar.props.action.onPress());
+  expect(mockDispatch).toHaveBeenLastCalledWith({
+    type: "itemsList/setGarmentsStored",
+    payload: { ids: ["shirt", "coat"], stored: false },
+  });
+  // Move
+  await press("Seleccionar prendas");
+  await press("Coat");
+  await press("Mover");
+  await press("Casa");
+  expect(mockDispatch).toHaveBeenLastCalledWith({
+    type: "itemsList/setGarmentsWardrobe",
+    payload: { ids: ["coat"], wardrobeId: "home" },
+  });
+  // Log use opens one sheet for every ticked garment
+  await press("Seleccionar prendas");
+  await press("Seleccionar todo");
+  await press("Registrar uso");
+  expect(sheet().props.garments.map((g: any) => g.id)).toEqual([
+    "shirt",
+    "coat",
+  ]);
+  // ✕ ends the mode
+  await press("Dejar de seleccionar");
+  expect(
+    tree!.root.findAll(x => x.props.accessibilityLabel === "Añadir prenda"),
+  ).not.toHaveLength(0);
   await act(async () => tree!.unmount());
 });

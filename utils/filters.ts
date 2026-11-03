@@ -118,6 +118,8 @@ export type SortValuesType = {
   seasons: string[];
   colors: string[];
   collections?: string[];
+  // "inUse", "stored" or empty for both.
+  storage?: string;
   // Latest use per garment id, needed for the "last used" sorts.
   lastUsed?: Record<string, string>;
 };
@@ -169,6 +171,8 @@ function sortAndFilter(filters: SortValuesType, array: item[]) {
       (filters.seasons.length === 0 ||
         filters.seasons.some(season => garment.seasons?.includes(season))) &&
       (filters.colors.length === 0 || matchesColors(garment, filters.colors)) &&
+      (!filters.storage ||
+        (filters.storage === "stored") === (garment.stored === true)) &&
       (collections.length === 0 ||
         collections.some(value => garment.collection?.includes(value))),
   );
@@ -199,13 +203,15 @@ export function activeFilterCount(filters: {
   TypeFilter: unknown[];
   colorFilter: unknown[];
   collectionFilter?: unknown[];
+  storageFilter?: string;
 }) {
   return (
     filters.seasonFilter.length +
     filters.categoriesFilter.length +
     filters.TypeFilter.length +
     filters.colorFilter.length +
-    (filters.collectionFilter?.length ?? 0)
+    (filters.collectionFilter?.length ?? 0) +
+    (filters.storageFilter ? 1 : 0)
   );
 }
 export function filterCollectionsBySearch(array: item[][], search: string) {

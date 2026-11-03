@@ -13,6 +13,9 @@ export type ItemSummaryProps = {
   id: string;
   logs?: string[];
   density?: CardDensity;
+  stored?: boolean;
+  // Undefined outside select mode.
+  selected?: boolean;
 };
 export const garmentSummary = (garment: item): ItemSummaryProps => ({
   id: garment.id,
@@ -23,6 +26,7 @@ export const garmentSummary = (garment: item): ItemSummaryProps => ({
   secondary: garment.secondaryColor || "",
   tertiary: garment.tertiaryColor || "",
   logs: garment.logIds || [],
+  stored: garment.stored === true,
 });
 /** A garment card; without handlers a tap opens the garment form. */
 export const ItemBox = ({
@@ -38,6 +42,9 @@ export const ItemBox = ({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={props.name}
+      accessibilityState={
+        props.selected === undefined ? undefined : { selected: props.selected }
+      }
       onPress={
         onPress ??
         (() => navigation.navigate("ItemForm", { editingIndex: props.id }))

@@ -13,8 +13,11 @@ import categoriesReducer, {
 import itemsReducer, {
   clearGarmentCategory,
   clearGarmentType,
+  setGarmentsStored,
+  setGarmentsWardrobe,
   updateItem,
 } from "../redux/itemsSlice";
+import { ItemBox, garmentSummary } from "../components/ItemBox";
 import settingsReducer, { toggleSection } from "../redux/settingsSlice";
 import {
   categoryTypes,
@@ -23,7 +26,7 @@ import {
   nextCategoryIndex,
   visibleCategories,
 } from "../utils/categories";
-import { HomeFilter } from "../utils/filters";
+import { activeFilterCount, HomeFilter } from "../utils/filters";
 import {
   createWardrobeBackup,
   readWardrobeBackup,
@@ -36,7 +39,7 @@ const mockDispatch = jest.fn();
 const mockState: any = {
   settings: { language: 0 },
   CategoryList: { ...CurrentCategories },
-  itemsList: { items: [] },
+  itemsList: { items: [], logs: [] },
 };
 jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select(mockState),
@@ -45,11 +48,14 @@ jest.mock("react-redux", () => ({
 jest.mock("nanoid", () => ({ nanoid: () => "log-1" }));
 jest.mock("react-native-get-random-values", () => ({}));
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
-jest.mock("react-native-paper", () => ({ Button: "Button" }));
+jest.mock("react-native-paper", () => ({ Button: "Button", Switch: "Switch" }));
 jest.mock("react-native-modal-datetime-picker", () => "DateModal");
 jest.mock("../components/BottomSheet", () => ({ BottomSheet: "BottomSheet" }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
+jest.mock("@react-navigation/native", () => ({
+  useNavigation: () => ({ navigate: jest.fn() }),
+}));
 jest.mock("../components/ConfirmationDialog", () => ({
   ConfirmationDialog: "ConfirmationDialog",
 }));
@@ -350,7 +356,7 @@ describe("quick use log", () => {
   const sheet = (onLogged = jest.fn(), onEdit = jest.fn()) =>
     render(
       <QuickLogSheet
-        garment={shirt}
+        garments={[shirt]}
         lastUsed="2026-10-28T10:00:00.000Z"
         language={0}
         onClose={jest.fn()}
@@ -517,4 +523,176 @@ test("the season filter keeps garments in any chosen season", () => {
   expect(
     HomeFilter({ ...filters, seasons: [] }, [...garments], false),
   ).toHaveLength(3);
+});
+
+describe("storage", () => {
+  const items = (): any => ({
+    wardrobes: [{ id: "home", name: "Home" }],
+    collectionTags: [],
+    logs: [],
+    items: [
+      garment("a", 0, "", { wardrobeId: "home" }),
+      garment("b", 0, "", { stored: true }),
+      garment("c", 0, ""),
+    ],
+  });
+  test("several garments are stored, unstored and moved at once", () => {
+    let state = itemsReducer(
+      items(),
+      setGarmentsStored({ ids: ["a", "c"], stored: true }),
+    );
+    expect(state.items.map(g => g.stored)).toEqual([true, true, true]);
+    state = itemsReducer(
+      state,
+      setGarmentsStored({ ids: ["b"], stored: false }),
+    );
+    expect(state.items.map(g => g.stored)).toEqual([true, false, true]);
+    state = itemsReducer(
+      state,
+      setGarmentsWardrobe({ ids: ["b", "c"], wardrobeId: "home" }),
+    );
+    expect(state.items.map(g => g.wardrobeId)).toEqual([
+      "home",
+      "home",
+      "home",
+    ]);
+    // Unassigned, or a wardrobe that no longer exists
+    state = itemsReducer(
+      state,
+      setGarmentsWardrobe({ ids: ["a"], wardrobeId: "" }),
+    );
+    state = itemsReducer(
+      state,
+      setGarmentsWardrobe({ ids: ["b"], wardrobeId: "gone" }),
+    );
+    expect(state.items.map(g => g.wardrobeId)).toEqual([
+      undefined,
+      undefined,
+      "home",
+    ]);
+  });
+
+  test("stored survives a backup round trip and old garments load as in use", () => {
+    const restored = readWardrobeBackup(
+      JSON.parse(
+        JSON.stringify(
+          createWardrobeBackup({
+            settings: {},
+            CategoryList: {},
+            itemsList: {
+              items: [
+                { id: "a", stored: true },
+                { id: "b" },
+                { id: "c", stored: "yes" },
+              ],
+              logs: [],
+            },
+          }),
+        ),
+      ),
+    );
+    expect(restored.itemsList.items.map(g => g.stored)).toEqual([
+      true,
+      false,
+      false,
+    ]);
+  });
+
+  test("the storage filter shows stored or in-use garments and counts once", () => {
+    const garments = items().items;
+    const filters = {
+      sortValue: "LA",
+      categories: [],
+      types: [],
+      seasons: [],
+      colors: [],
+    };
+    const ids = (storage: string) =>
+      HomeFilter({ ...filters, storage }, [...garments], false).map(g => g.id);
+    expect(ids("stored")).toEqual(["b"]);
+    expect(ids("inUse")).toEqual(["a", "c"]);
+    expect(ids("")).toEqual(["a", "b", "c"]);
+    expect(
+      activeFilterCount({
+        seasonFilter: [],
+        categoriesFilter: [],
+        TypeFilter: [],
+        colorFilter: [],
+        storageFilter: "stored",
+      }),
+    ).toBe(1);
+  });
+
+  test("stored garments are faded with a box icon; selection shows a tick", () => {
+    const tree = render(
+      <ItemBox {...garmentSummary(garment("b", 0, "", { stored: true }))} />,
+    );
+    expect(
+      tree.root.findAll(n => n.props.accessibilityLabel === "In storage"),
+    ).not.toHaveLength(0);
+    const picked = render(
+      <ItemBox
+        {...garmentSummary(garment("c", 0, ""))}
+        selected
+        onPress={jest.fn()}
+      />,
+    );
+    expect(
+      picked.root.findAll(n => n.props.accessibilityLabel === "In storage"),
+    ).toHaveLength(0);
+    expect(
+      picked.root.find(n => n.props.accessibilityState?.selected === true),
+    ).toBeTruthy();
+  });
+
+  test("logging several garments makes one Outfit entry; one garment can be stored from the sheet", () => {
+    const shirt = garment("shirt", 0, "", { name: "Shirt" });
+    const jeans = garment("jeans", 1, "", { name: "Jeans" });
+    const onLogged = jest.fn();
+    const tree = render(
+      <QuickLogSheet
+        garments={[shirt, jeans]}
+        language={0}
+        onClose={jest.fn()}
+        onEdit={jest.fn()}
+        onLogged={onLogged}
+      />,
+    );
+    expect(JSON.stringify(tree.toJSON())).toContain("2 garments");
+    expect(tree.root.findAllByType("Switch" as any)).toHaveLength(0);
+    act(() =>
+      tree.root
+        .findAllByType("Button" as any)
+        .find(b => b.props.children === "Log use")!
+        .props.onPress(),
+    );
+    const actions = mockDispatch.mock.calls.map(call => call[0]);
+    expect(actions.map(a => a.type)).toEqual([
+      "itemsList/addEventLog",
+      "itemsList/addLog",
+      "itemsList/addLog",
+    ]);
+    expect(actions[0].payload.eventName).toBe("Outfit");
+    expect(actions.slice(1).map(a => a.payload.selectedId)).toEqual([
+      "shirt",
+      "jeans",
+    ]);
+    mockDispatch.mockClear();
+    const single = render(
+      <QuickLogSheet
+        garments={[shirt]}
+        language={0}
+        onClose={jest.fn()}
+        onEdit={jest.fn()}
+        onLogged={jest.fn()}
+      />,
+    );
+    act(() =>
+      single.root.findByType("Switch" as any).props.onValueChange(true),
+    );
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: "itemsList/setGarmentsStored",
+      payload: { ids: ["shirt"], stored: true },
+    });
+  });
 });

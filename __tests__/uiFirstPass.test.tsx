@@ -113,6 +113,7 @@ test("Reset clears sort, category, type, season and color together", () => {
     setTypeFilter: jest.fn(),
     setColorFilter: jest.fn(),
     setCollectionFilter: jest.fn(),
+    setStorageFilter: jest.fn(),
   };
   resetHomeFilters(actions);
   expect(actions.setSortValue).toHaveBeenCalledWith("LA");
@@ -121,6 +122,7 @@ test("Reset clears sort, category, type, season and color together", () => {
   expect(actions.setTypeFilter).toHaveBeenCalledWith([]);
   expect(actions.setColorFilter).toHaveBeenCalledWith([]);
   expect(actions.setCollectionFilter).toHaveBeenCalledWith([]);
+  expect(actions.setStorageFilter).toHaveBeenCalledWith("");
 });
 
 test("filter panel keeps one Reset, translates chips and shows types for a single category", () => {
@@ -134,6 +136,7 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
         TypeFilter: [],
         colorFilter: [],
         collectionFilter: [],
+        storageFilter: "",
       }}
       filterActions={
         {
