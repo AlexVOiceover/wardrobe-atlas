@@ -141,9 +141,6 @@ export const ItemForm = ({
     if (name.length <= 0) {
       errors.push(localization.NameRequired[storedSettings.language]);
     }
-    if (name.length > 20) {
-      errors.push(localization.NameTooLong[storedSettings.language]);
-    }
     if (!type && combiningTypesData.length > 0) {
       errors.push(localization.TypeRequired[storedSettings.language]);
     }

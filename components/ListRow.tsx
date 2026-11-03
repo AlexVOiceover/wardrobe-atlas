@@ -26,7 +26,7 @@ export const ListRow = ({
   >
     {icon && <Icon name={icon} size={22} color={theme.colors.text} />}
     <View style={styles.text}>
-      <ThemeText>{title}</ThemeText>
+      <ThemeText numberOfLines={2}>{title}</ThemeText>
       {subtitle && <ThemeText customStyle={captionText}>{subtitle}</ThemeText>}
     </View>
     {right}

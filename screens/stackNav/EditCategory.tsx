@@ -37,9 +37,6 @@ export const EditCategory = ({ route }: { navigation: any; route: any }) => {
     if (newType.length <= 0) {
       errors.push(localization.TypeNameRequired[storedSettings.language]);
     }
-    if (newType.length > 20) {
-      errors.push(localization.NameTooLong[storedSettings.language]);
-    }
     if (allList?.find(x => x.label.toLowerCase() === newType.toLowerCase())) {
       errors.push(localization.NameTaken[storedSettings.language]);
     }

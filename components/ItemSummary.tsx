@@ -33,8 +33,14 @@ export function ItemSummary({
           <Icon name="shirt-outline" size={32} color={theme.colors.muted} />
         </View>
       )}
-      <ThemeText customStyle={styles.name}>{name}</ThemeText>
-      {!!type && <ThemeText customStyle={captionText}>{type}</ThemeText>}
+      <ThemeText numberOfLines={2} customStyle={styles.name}>
+        {name}
+      </ThemeText>
+      {!!type && (
+        <ThemeText numberOfLines={1} customStyle={captionText}>
+          {type}
+        </ThemeText>
+      )}
       <View style={styles.meta}>
         {swatches.map((color, index) => (
           <View
