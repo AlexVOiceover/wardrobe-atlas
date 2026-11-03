@@ -3,7 +3,8 @@ import {
   useWardrobeView,
 } from "../../components/WardrobeSelector";
 import { validWardrobeId } from "../../utils/wardrobes";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import { Button, Switch } from "react-native-paper";
 import { useState } from "react";
 import { PageHeader } from "../../components/PageHeader";
@@ -94,6 +95,21 @@ export const ItemForm = ({
     storedItems?.tertiaryColor || "",
   ]);
   const [colorSelection, setColorSelection] = useState(0);
+  // Secondary and tertiary colors are optional; show them only when set or added.
+  const [colorSlots, setColorSlots] = useState(
+    storedItems?.tertiaryColor ? 3 : storedItems?.secondaryColor ? 2 : 1,
+  );
+  const removeColor = (index: number) => {
+    // Removing secondary moves tertiary up so shown rows stay contiguous.
+    setColors(prev => {
+      const next = [...prev.filter((_, i) => i !== index), ""];
+      return next.slice(0, 3);
+    });
+    setColorSlots(prev => prev - 1);
+  };
+  const savedColors = colors.map((color, index) =>
+    index < colorSlots ? color : "",
+  );
   const [openType, setOpenType] = useState(false);
   const [openSizeUnit, setOpenSizeUnit] = useState(false);
   const [openCollection, setOpenCollection] = useState(false);
@@ -166,9 +182,9 @@ export const ItemForm = ({
           purchaseDate: JSON.stringify(purchaseDate),
           image: imageUrl,
           automaticColor: isAutoOn,
-          primaryColor: colors[0],
-          secondaryColor: colors[1],
-          tertiaryColor: colors[2],
+          primaryColor: savedColors[0],
+          secondaryColor: savedColors[1],
+          tertiaryColor: savedColors[2],
         }),
       );
     } else {
@@ -187,9 +203,9 @@ export const ItemForm = ({
           purchaseDate: JSON.stringify(purchaseDate),
           image: imageUrl,
           automaticColor: isAutoOn,
-          primaryColor: colors[0],
-          secondaryColor: colors[1],
-          tertiaryColor: colors[2],
+          primaryColor: savedColors[0],
+          secondaryColor: savedColors[1],
+          tertiaryColor: savedColors[2],
         }),
       );
     }
@@ -217,7 +233,12 @@ export const ItemForm = ({
         pal.dominant || pal.vibrant || pal.darkVibrant || "#777777";
       const secondary = pal.muted || pal.vibrant || "#999999";
       const tertiary = pal.darkVibrant || "#555555";
-      setColors([primary, secondary, tertiary]);
+      // Only fill the color rows that are shown
+      setColors(
+        [primary, secondary, tertiary].map((color, index) =>
+          index < colorSlots ? color : "",
+        ),
+      );
       try {
         await ReactNativeBlobUtil.fs.unlink(tmp);
       } catch {}
@@ -318,6 +339,7 @@ export const ItemForm = ({
         visible={visible}
         setVisible={setVisible}
         colorSelection={colorSelection}
+        image={imageUrl || undefined}
       />
 
       <CustomModal
@@ -457,26 +479,59 @@ export const ItemForm = ({
               localization.Primary_color,
               localization.Secondary_color,
               localization.Tertiary_color,
-            ].map((label, index) => (
-              <ListRow
-                key={index}
-                title={label[storedSettings.language]}
-                onPress={() => {
-                  setVisible(true);
-                  setColorSelection(index);
-                }}
-                right={
-                  <View
-                    style={[
-                      styles.colorSwatch,
-                      {
-                        backgroundColor: colors[index] || theme.colors.surface,
-                      },
-                    ]}
-                  />
-                }
-              />
-            ))}
+            ]
+              .slice(0, colorSlots)
+              .map((label, index) => (
+                <ListRow
+                  key={index}
+                  title={label[storedSettings.language]}
+                  onPress={() => {
+                    setVisible(true);
+                    setColorSelection(index);
+                  }}
+                  right={
+                    <View style={styles.colorActions}>
+                      <View
+                        style={[
+                          styles.colorSwatch,
+                          {
+                            backgroundColor:
+                              colors[index] || theme.colors.surface,
+                          },
+                        ]}
+                      />
+                      {index > 0 && (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`${
+                            localization.RemoveColor[storedSettings.language]
+                          }: ${label[storedSettings.language]}`}
+                          onPress={() => removeColor(index)}
+                          style={styles.removeColor}
+                        >
+                          <Icon
+                            name="close"
+                            size={20}
+                            color={theme.colors.muted}
+                          />
+                        </Pressable>
+                      )}
+                    </View>
+                  }
+                />
+              ))}
+          {!isAutoOn && colorSlots < 3 && (
+            <Button
+              mode="text"
+              icon="plus"
+              disabled={!colors[colorSlots - 1]}
+              onPress={() => setColorSlots(colorSlots + 1)}
+            >
+              {colorSlots === 1
+                ? localization.AddSecondaryColor[storedSettings.language]
+                : localization.AddTertiaryColor[storedSettings.language]}
+            </Button>
+          )}
 
           <FormErrors errors={errorsList} />
           <Button mode="contained" onPress={addItemHandler}>
@@ -512,6 +567,17 @@ const styles = StyleSheet.create({
   },
   sizeField: {
     flex: 1,
+  },
+  colorActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+  },
+  removeColor: {
+    width: theme.touch,
+    height: theme.touch,
+    justifyContent: "center",
+    alignItems: "center",
   },
   colorSwatch: {
     width: 24,
