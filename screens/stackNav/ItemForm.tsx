@@ -38,6 +38,11 @@ import {
 import { localization } from "../../utils/localization";
 import { categoryTypes, visibleCategories } from "../../utils/categories";
 import { ImageViewer } from "../../components/ImageViewer";
+import {
+  isCutout,
+  removeBackground,
+  type BackgroundError,
+} from "../../utils/backgroundRemoval";
 import { OptionalDateField } from "../../components/OptionalDateField";
 import { FormErrors } from "../../components/FormErrors";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
@@ -113,6 +118,27 @@ export const ItemForm = ({
     storedItems ? storedItems.image : "",
   );
   const [errorsList, setErrorsList] = useState<string[]>([]);
+  // The photo before its background was removed, for Undo until Save.
+  const [photoBeforeCutout, setPhotoBeforeCutout] = useState<string>();
+  const [cutoutStatus, setCutoutStatus] = useState<
+    "" | "working" | BackgroundError
+  >("");
+  const cutoutMessages: Record<BackgroundError, readonly string[]> = {
+    preparing: localization.BackgroundPreparing,
+    noSubject: localization.BackgroundNoSubject,
+    unsupported: localization.BackgroundUnsupported,
+    failed: localization.BackgroundFailed,
+  };
+  const cutOut = async () => {
+    const original = imageUrl;
+    setCutoutStatus("working");
+    const result = await removeBackground(original);
+    if ("image" in result) {
+      setPhotoBeforeCutout(original);
+      setImageUrl(result.image);
+      setCutoutStatus("");
+    } else setCutoutStatus(result.error);
+  };
   const [colors, setColors] = useState([
     storedItems?.primaryColor || "",
     storedItems?.secondaryColor || "",
@@ -313,6 +339,8 @@ export const ItemForm = ({
                 );
                 console.log("imageSize", resized.size);
                 setImageUrl(base64 || "");
+                setPhotoBeforeCutout(undefined);
+                setCutoutStatus("");
                 if (isAutoOn && base64) {
                   colorsExtractor(base64);
                 }
@@ -352,6 +380,8 @@ export const ItemForm = ({
                   );
                   console.log("imageSize", resized.size);
                   setImageUrl(base64 || "");
+                  setPhotoBeforeCutout(undefined);
+                  setCutoutStatus("");
                   if (isAutoOn && base64) {
                     colorsExtractor(base64);
                   }
@@ -443,6 +473,43 @@ export const ItemForm = ({
               />
             </View>
           </View>
+          {!!imageUrl && (!isCutout(imageUrl) || photoBeforeCutout) && (
+            <View style={styles.cutout}>
+              <View style={styles.cutoutActions}>
+                {photoBeforeCutout ? (
+                  <Button
+                    icon="undo"
+                    compact
+                    onPress={() => {
+                      setImageUrl(photoBeforeCutout);
+                      setPhotoBeforeCutout(undefined);
+                    }}
+                  >
+                    {localization.Undo[storedSettings.language]}
+                  </Button>
+                ) : (
+                  <Button
+                    icon="content-cut"
+                    compact
+                    disabled={cutoutStatus === "working"}
+                    onPress={cutOut}
+                  >
+                    {cutoutStatus === "working"
+                      ? localization.RemovingBackground[storedSettings.language]
+                      : localization.RemoveBackground[storedSettings.language]}
+                  </Button>
+                )}
+              </View>
+              {cutoutStatus !== "" && cutoutStatus !== "working" && (
+                <ThemeText
+                  accessibilityLiveRegion="polite"
+                  customStyle={captionText}
+                >
+                  {cutoutMessages[cutoutStatus][storedSettings.language]}
+                </ThemeText>
+              )}
+            </View>
+          )}
           <View style={styles.pairRow}>
             <View style={styles.pairField}>
               <DropDownPicker
@@ -709,6 +776,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
     gap: theme.spacing.sm,
+  },
+  cutout: {
+    marginTop: -theme.spacing.sm,
+  },
+  cutoutActions: {
+    flexDirection: "row",
   },
   pairRow: {
     flexDirection: "row",

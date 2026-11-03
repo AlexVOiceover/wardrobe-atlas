@@ -125,6 +125,8 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
     // On-device translation of category names
     implementation("com.google.mlkit:translate:17.0.3")
+    // On-device background removal for garment photos (model via Play services)
+    implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
     
 
     if (hermesEnabled.toBoolean()) {

@@ -47,6 +47,11 @@ jest.mock("../components/OptionalDateField", () => ({
   OptionalDateField: "OptionalDateField",
 }));
 jest.mock("../components/ImageViewer", () => ({ ImageViewer: "ImageViewer" }));
+const mockRemoveBackground = jest.fn();
+jest.mock("../utils/backgroundRemoval", () => ({
+  ...jest.requireActual("../utils/backgroundRemoval"),
+  removeBackground: (image: string) => mockRemoveBackground(image),
+}));
 
 beforeEach(() => {
   mockDispatch.mockClear();
@@ -530,6 +535,51 @@ test("In storage starts off for new garments and is saved when switched on", () 
     expect.objectContaining({
       type: "itemsList/addItem",
       payload: expect.objectContaining({ stored: true }),
+    }),
+  );
+});
+
+test("Remove background replaces the photo, Undo brings it back, and Save stores the cutout", async () => {
+  mockState.itemsList.items = [
+    {
+      id: "shirt",
+      name: "Shirt",
+      type: "Shirt",
+      category: 0,
+      image: "/9j/photo",
+      collection: [],
+    },
+    {
+      id: "cut",
+      name: "Cut",
+      type: "Shirt",
+      category: 0,
+      image: "UklGRcut",
+      collection: [],
+    },
+  ];
+  const photo = (tree: ReactTestRenderer) =>
+    tree.root.findByType("ImageViewer" as any).props.imageUrl;
+  // Already cut out: no button
+  expect(button(render("cut"), "Remove background")).toBeUndefined();
+  const tree = render("shirt");
+  mockRemoveBackground.mockResolvedValueOnce({ error: "noSubject" });
+  await act(async () => button(tree, "Remove background")!.props.onPress());
+  expect(photo(tree)).toBe("/9j/photo");
+  expect(JSON.stringify(tree.toJSON())).toContain("No garment found");
+  mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+  await act(async () => button(tree, "Remove background")!.props.onPress());
+  expect(mockRemoveBackground).toHaveBeenLastCalledWith("/9j/photo");
+  expect(photo(tree)).toBe("UklGRnew");
+  act(() => button(tree, "Undo")!.props.onPress());
+  expect(photo(tree)).toBe("/9j/photo");
+  mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+  await act(async () => button(tree, "Remove background")!.props.onPress());
+  act(() => button(tree, "Save")!.props.onPress());
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/updateItem",
+      payload: expect.objectContaining({ id: "shirt", image: "UklGRnew" }),
     }),
   );
 });

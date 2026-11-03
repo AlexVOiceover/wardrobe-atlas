@@ -18,6 +18,9 @@ jest.mock("react-native-paper", () => ({
 }));
 jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
+jest.mock("../components/BulkBackgroundRemoval", () => ({
+  BulkBackgroundRemoval: "BulkBackgroundRemoval",
+}));
 jest.mock("../components/UpdateControls", () => ({
   UpdateControls: "UpdateControls",
 }));
@@ -43,6 +46,9 @@ test("Settings retains working JSON backup actions and update controls after tex
   expect(tree!.root.findByType("UpdateControls" as any).props.settings).toBe(
     true,
   );
+  expect(
+    tree!.root.findAllByType("BulkBackgroundRemoval" as any),
+  ).toHaveLength(1);
   await act(async () => {
     await buttons()[0].props.onPress();
   });

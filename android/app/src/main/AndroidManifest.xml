@@ -18,6 +18,10 @@
       android:allowBackup="false"
       android:largeHeap="true"
       android:theme="@style/AppTheme">
+      <!-- Play services downloads the background removal model with the app. -->
+      <meta-data
+        android:name="com.google.mlkit.vision.DEPENDENCIES"
+        android:value="subject_segment" />
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"

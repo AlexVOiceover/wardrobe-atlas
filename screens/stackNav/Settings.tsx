@@ -20,6 +20,7 @@ import { theme } from "../../utils/theme";
 import { FilterChip } from "../../components/FilterChip";
 import { ListRow } from "../../components/ListRow";
 import { SectionHeading } from "../../components/SectionHeading";
+import { BulkBackgroundRemoval } from "../../components/BulkBackgroundRemoval";
 export const Settings = () => {
   const storedSettings = useSelector((state: RootState) => state.settings);
   const { language, name, enableHeatMap } = storedSettings;
@@ -95,6 +96,10 @@ export const Settings = () => {
               {localization.Import[language]}
             </Button>
           </View>
+        </View>
+        <View>
+          <SectionHeading title={localization.Photos[language]} />
+          <BulkBackgroundRemoval language={language} />
         </View>
         <View>
           <SectionHeading title={localization.Display[language]} />
