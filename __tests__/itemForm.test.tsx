@@ -119,7 +119,7 @@ test("new item saves typed name, chosen type and wardrobe without generated name
   act(() => name.props.onChange({ nativeEvent: { text: "My blue shirt" } }));
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Type")!;
+    .find(d => d.props.placeholder === "Subcategory")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root
@@ -151,7 +151,7 @@ test("long garment names save without a length limit", () => {
   act(() => name.props.onChange({ nativeEvent: { text: longName } }));
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Type")!;
+    .find(d => d.props.placeholder === "Subcategory")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root
@@ -312,7 +312,7 @@ const input = (tree: ReactTestRenderer, label: string) =>
 const chooseFirstType = (tree: ReactTestRenderer) => {
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Type")!;
+    .find(d => d.props.placeholder === "Subcategory")!;
   act(() => type.props.setValue(type.props.items[0].value));
   return type.props.items[0].label as string;
 };
@@ -458,8 +458,8 @@ test("the category picker moves a garment and clears its type; no collection hin
   ]);
   act(() => dropdown("Category").props.setValue(() => 2));
   expect(dropdown("Category").props.value).toBe(2);
-  expect(dropdown("Type").props.value).toBe("");
-  act(() => dropdown("Type").props.setValue("Sneakers"));
+  expect(dropdown("Subcategory").props.value).toBe("");
+  act(() => dropdown("Subcategory").props.setValue("Sneakers"));
   act(() =>
     tree.root
       .findAllByType("Button" as any)
@@ -490,7 +490,7 @@ test("season chips start all on and save only the chosen seasons", () => {
   expect(chip("Summer").props.accessibilityState.selected).toBe(false);
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Type")!;
+    .find(d => d.props.placeholder === "Subcategory")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root
@@ -518,7 +518,7 @@ test("In storage starts off for new garments and is saved when switched on", () 
   act(() => storage().props.onValueChange(true));
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Type")!;
+    .find(d => d.props.placeholder === "Subcategory")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root

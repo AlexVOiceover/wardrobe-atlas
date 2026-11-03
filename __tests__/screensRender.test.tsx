@@ -3,10 +3,9 @@ import { act, create, ReactTestRenderer } from "react-test-renderer";
 import { HomeBottom } from "../screens/bottomNav/HomeBottom";
 import { OutfitLog } from "../screens/bottomNav/OutfitLog";
 import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
-import { CategoryForm } from "../screens/stackNav/CategoryForm";
 import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
+import { ManageCategories } from "../screens/stackNav/ManageCategories";
 import { CollectionForm } from "../screens/stackNav/CollectionForm";
-import { EditCategory } from "../screens/stackNav/EditCategory";
 import { EventLogForm } from "../screens/stackNav/EventLogForm";
 import { ItemForm } from "../screens/stackNav/ItemForm";
 import { ItemSelector } from "../screens/stackNav/ItemSelector";
@@ -119,15 +118,11 @@ test.each<[string, React.ReactElement]>([
   ["Closet", <HomeBottom />],
   ["Outfits", <OutfitLog />],
   ["Closet info", <ClosetInfo />],
+  ["Categories", <ManageCategories />],
   ["Select items", <ItemSelector />],
   ["Settings", <Settings />],
   ["Wardrobes", <Wardrobes />],
   ["Collections", <CollectionForm />],
-  ["Category form", <CategoryForm {...navProps} />],
-  [
-    "Edit category",
-    <EditCategory {...navProps} route={{ params: { categoryIndex: 0 } }} />,
-  ],
   [
     "Event form",
     <EventLogForm {...navProps} route={{ params: { selectedIDs: [] } }} />,

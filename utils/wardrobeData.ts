@@ -18,13 +18,19 @@ const record = (value: unknown): Record<string, unknown> =>
     ? (value as Record<string, unknown>)
     : {};
 const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-// Renames of built-in categories and types: non-empty strings only.
+// Names are [English, Spanish]; an older single text is used for both.
+const bothNames = (value: unknown): string[] | undefined => {
+  const names = (Array.isArray(value) ? value : [value]).filter(
+    (name): name is string => typeof name === "string" && !!name.trim(),
+  );
+  return names.length > 0 ? [names[0], names[1] ?? names[0]] : undefined;
+};
+// Renames of built-in categories and types.
 const renames = (value: unknown) =>
   Object.fromEntries(
-    Object.entries(record(value)).filter(
-      (entry): entry is [string, string] =>
-        typeof entry[1] === "string" && entry[1].trim().length > 0,
-    ),
+    Object.entries(record(value))
+      .map(([key, names]) => [key, bothNames(names)])
+      .filter((entry): entry is [string, string[]] => !!entry[1]),
   );
 // Garments used to hold at most one season; without one they get all four.
 const garmentSeasons = (garment: Record<string, unknown>) =>
@@ -144,13 +150,17 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
         };
       }),
       CategoryCustomTypes: list(categories.CategoryCustomTypes).map(value => ({
-        customTypes: list(record(value).customTypes).map(type =>
-          pick<CategoryCustomType["customTypes"][number]>(type, [
-            "label",
-            "value",
-            "icon",
-          ]),
-        ),
+        customTypes: list(record(value).customTypes).map(type => {
+          const labels = bothNames(record(type).labels);
+          return {
+            ...pick<CategoryCustomType["customTypes"][number]>(type, [
+              "label",
+              "value",
+              "icon",
+            ]),
+            ...(labels ? { labels } : {}),
+          };
+        }),
       })),
       hiddenCategories: list(categories.hiddenCategories).filter(
         (index): index is number => Number.isInteger(index),

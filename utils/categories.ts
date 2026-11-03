@@ -14,6 +14,13 @@ const builtInNames = [
   localization.Accessories,
 ];
 export type CategoryOption = { index: number; label: string };
+/** A stored name in the given language; older data has one text for both. */
+const inLanguage = (name: unknown, language: number): string | undefined =>
+  Array.isArray(name)
+    ? name[language] || name[0]
+    : typeof name === "string"
+    ? name
+    : undefined;
 export type TypeOption = { value: string; label: string };
 
 /** Built-in and custom categories the user hasn't deleted, with their names. */
@@ -26,7 +33,9 @@ export function visibleCategories(
     .map((names, index) => ({
       index,
       label:
-        state.categoryNames?.[String(index)] || names[language] || names[0],
+        inLanguage(state.categoryNames?.[String(index)], language) ||
+        names[language] ||
+        names[0],
     }))
     .filter(category => !hidden.includes(category.index));
   const custom = (state.Categories ?? []).map(category => ({
@@ -63,14 +72,40 @@ export function categoryTypes(
           .map(type => ({
             value: type.value,
             label:
-              state.typeNames?.[typeKey(category, type.value)] || type.label,
+              inLanguage(
+                state.typeNames?.[typeKey(category, type.value)],
+                language,
+              ) || type.label,
           }))
       : [];
   const custom = (state.CategoryCustomTypes?.[category]?.customTypes ?? [])
     .filter(type => !builtIn.some(b => b.value === type.value))
-    .map(type => ({ value: type.value, label: type.label }));
+    .map(type => ({
+      value: type.value,
+      label: inLanguage(type.labels, language) || type.label,
+    }));
   return [...builtIn, ...custom];
 }
+
+/** Both names of a category, [English, Spanish], as shown in each language. */
+export const categoryNamesOf = (state: CategoryList, index: number) =>
+  [0, 1].map(
+    language =>
+      visibleCategories(state, language).find(c => c.index === index)?.label ??
+      "",
+  );
+
+/** Both names of a subcategory, [English, Spanish]. */
+export const typeNamesOf = (
+  state: CategoryList,
+  category: number,
+  value: string,
+) =>
+  [0, 1].map(
+    language =>
+      categoryTypes(state, category, language).find(t => t.value === value)
+        ?.label ?? "",
+  );
 
 /** Lowest category number no category or garment uses. */
 export function nextCategoryIndex(state: CategoryList, garments: item[]) {

@@ -123,6 +123,8 @@ dependencies {
     implementation("androidx.activity:activity:1.9.+")
 
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.0.0")
+    // On-device translation of category names
+    implementation("com.google.mlkit:translate:17.0.3")
     
 
     if (hermesEnabled.toBoolean()) {

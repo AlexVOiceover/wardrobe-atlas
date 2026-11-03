@@ -33,7 +33,7 @@ import {
 } from "../utils/wardrobeData";
 import { QuickLogSheet, usageSummary } from "../components/QuickLogSheet";
 import { ClosetSections } from "../components/ClosetSections";
-import { EditCategory } from "../screens/stackNav/EditCategory";
+import { ManageCategories } from "../screens/stackNav/ManageCategories";
 
 const mockDispatch = jest.fn();
 const mockState: any = {
@@ -50,6 +50,10 @@ jest.mock("react-native-get-random-values", () => ({}));
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 jest.mock("react-native-paper", () => ({ Button: "Button", Switch: "Switch" }));
 jest.mock("react-native-modal-datetime-picker", () => "DateModal");
+const mockTranslate = jest.fn();
+jest.mock("../utils/translate", () => ({
+  translateText: (...args: unknown[]) => mockTranslate(...args),
+}));
 jest.mock("../components/BottomSheet", () => ({ BottomSheet: "BottomSheet" }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
@@ -217,9 +221,9 @@ describe("categories", () => {
     expect(restored.settings.collapsedSections).toEqual(["c:0"]);
     expect(restored.CategoryList).toMatchObject({
       hiddenCategories: [3],
-      categoryNames: { 0: "Upper" },
+      categoryNames: { 0: ["Upper", "Upper"] },
       hiddenTypes: ["0|Blouse"],
-      typeNames: { "0|Shirt": "Button-up" },
+      typeNames: { "0|Shirt": ["Button-up", "Button-up"] },
     });
   });
 });
@@ -425,54 +429,182 @@ describe("quick use log", () => {
   });
 });
 
-test("types are renamed in place and deleted after confirmation, counting garments", () => {
-  mockState.itemsList.items = [
-    garment("a", 0, "Shirt"),
-    garment("b", 0, "Shirt"),
-    garment("c", 1, "Shirt"),
-  ];
-  const tree = render(
-    <EditCategory navigation={{}} route={{ params: { categoryIndex: 0 } }} />,
-  );
-  const press = (label: string) =>
+describe("Categories page and names in both languages", () => {
+  const press = (tree: ReactTestRenderer, label: string) =>
     act(() =>
       tree.root
         .find(n => n.props.accessibilityLabel === label && n.props.onPress)
         .props.onPress(),
     );
-  press("Rename: Shirt");
-  const input = tree.root.find(
-    n => n.props.accessibilityLabel === "Rename: Shirt" && n.props.onChangeText,
-  );
-  act(() => input.props.onChangeText("T-Shirt"));
-  press("Save");
-  // Already used by another type
-  expect(mockDispatch).not.toHaveBeenCalled();
-  expect(JSON.stringify(tree.toJSON())).toContain(
-    "Please enter a different name",
-  );
-  act(() => input.props.onChangeText("Button-up"));
-  press("Save");
-  expect(mockDispatch).toHaveBeenCalledWith({
-    type: "CategoryList/renameType",
-    payload: { category: 0, value: "Shirt", name: "Button-up" },
+  const button = (tree: ReactTestRenderer, text: string) =>
+    act(() =>
+      tree.root
+        .findAllByType("Button" as any)
+        .find(b => b.props.children === text)!
+        .props.onPress(),
+    );
+  const field = (tree: ReactTestRenderer, label: string) =>
+    tree.root.find(
+      n => n.props.accessibilityLabel === label && n.props.onChangeText,
+    );
+  // Types into a field, then lets the translation delay pass and resolve.
+  const type = async (tree: ReactTestRenderer, label: string, text: string) => {
+    act(() => field(tree, label).props.onChangeText(text));
+    await act(async () => {
+      jest.advanceTimersByTime(500);
+    });
+  };
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mockTranslate.mockReset();
   });
-  mockDispatch.mockClear();
-  press("Delete: Shirt");
-  const dialog = tree.root.findByType("ConfirmationDialog" as any);
-  expect(dialog.props.message).toContain("2 garments will move to Other.");
-  act(() => dialog.props.onConfirm());
-  expect(mockDispatch.mock.calls.map(call => call[0])).toEqual([
-    {
-      type: "CategoryList/deleteType",
-      payload: { category: 0, value: "Shirt" },
-    },
-    {
-      type: "itemsList/clearGarmentType",
-      payload: { category: 0, value: "Shirt" },
-    },
-  ]);
-  act(() => tree.unmount());
+  afterEach(() => jest.useRealTimers());
+
+  test("subcategories are nested, renamed in both languages and deleted with a garment count", async () => {
+    mockState.itemsList.items = [
+      garment("a", 0, "Shirt"),
+      garment("b", 0, "Shirt"),
+      garment("c", 1, "Shirt"),
+    ];
+    const tree = render(<ManageCategories />);
+    expect(
+      tree.root.findAll(n => n.props.accessibilityLabel === "Rename: Shirt"),
+    ).toHaveLength(0);
+    press(tree, "Tops");
+    press(tree, "Rename: Shirt");
+    expect(field(tree, "English").props.value).toBe("Shirt");
+    expect(field(tree, "Español").props.value).toBe("Camisa");
+    mockTranslate.mockResolvedValue("Camiseta");
+    await type(tree, "English", "T-Shirt");
+    expect(mockTranslate).toHaveBeenCalledWith("T-Shirt", 0, 1);
+    button(tree, "Save");
+    // Both names are already used by another subcategory
+    expect(mockDispatch).not.toHaveBeenCalled();
+    expect(JSON.stringify(tree.toJSON())).toContain(
+      "Please enter a different name",
+    );
+    mockTranslate.mockResolvedValue("Camisa de botones");
+    await type(tree, "English", "Button-up");
+    expect(field(tree, "Español").props.value).toBe("Camisa de botones");
+    button(tree, "Save");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: "CategoryList/renameType",
+      payload: {
+        category: 0,
+        value: "Shirt",
+        name: ["Button-up", "Camisa de botones"],
+      },
+    });
+    mockDispatch.mockClear();
+    press(tree, "Delete: Shirt");
+    const dialog = tree.root.findByType("ConfirmationDialog" as any);
+    expect(dialog.props.message).toContain("2 garments will move to Other.");
+    act(() => dialog.props.onConfirm());
+    expect(mockDispatch.mock.calls.map(call => call[0])).toEqual([
+      {
+        type: "CategoryList/deleteType",
+        payload: { category: 0, value: "Shirt" },
+      },
+      {
+        type: "itemsList/clearGarmentType",
+        payload: { category: 0, value: "Shirt" },
+      },
+    ]);
+    act(() => tree.unmount());
+  });
+
+  test("adding copies the name when translation isn't available, and never overwrites a typed field", async () => {
+    mockState.itemsList.items = [];
+    const tree = render(<ManageCategories />);
+    button(tree, "Add New Category");
+    mockTranslate.mockResolvedValue(undefined);
+    await type(tree, "English", "Hats");
+    expect(field(tree, "Español").props.value).toBe("Hats");
+    expect(JSON.stringify(tree.toJSON())).toContain(
+      "Translation not available",
+    );
+    await type(tree, "Español", "Sombreros");
+    mockTranslate.mockResolvedValue("Gorros");
+    await type(tree, "English", "Caps");
+    expect(field(tree, "Español").props.value).toBe("Sombreros");
+    button(tree, "Save");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: "CategoryList/addCategory",
+      payload: { name: ["Caps", "Sombreros"], index: 4 },
+    });
+    mockDispatch.mockClear();
+    press(tree, "Tops");
+    press(tree, "Add subcategory: Tops");
+    mockTranslate.mockResolvedValue("Chubasquero");
+    await type(tree, "English", "Raincoat");
+    button(tree, "Save");
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: "CategoryList/addTypeToCategory",
+      payload: { index: 0, labels: ["Raincoat", "Chubasquero"] },
+    });
+    act(() => tree.unmount());
+  });
+
+  test("each language shows its own name; older single names show in both", () => {
+    let state = categoriesReducer(
+      custom([{ index: 4, name: "Hats" }], { 4: ["Cap"] }),
+      renameCategory({ index: 0, name: ["Upper", "Arriba"] }),
+    );
+    state = categoriesReducer(
+      state,
+      addTypeToCategory({ index: 4, labels: ["Beanie", "Gorro"] }),
+    );
+    state = categoriesReducer(
+      state,
+      renameType({
+        category: 0,
+        value: "Shirt",
+        name: ["Button-up", "Camisa"],
+      }),
+    );
+    expect(visibleCategories(state, 1).map(c => c.label)).toEqual([
+      "Arriba",
+      "Parte inferior",
+      "Zapatos",
+      "Accesorios",
+      "Hats",
+    ]);
+    expect(categoryTypes(state, 4, 1).map(t => t.label)).toEqual([
+      "Cap",
+      "Gorro",
+    ]);
+    expect(
+      categoryTypes(state, 0, 0).find(t => t.value === "Shirt")?.label,
+    ).toBe("Button-up");
+    const restored = readWardrobeBackup(
+      JSON.parse(
+        JSON.stringify(
+          createWardrobeBackup({
+            settings: {},
+            itemsList: { items: [], logs: [] },
+            CategoryList: {
+              ...state,
+              categoryNames: { ...state.categoryNames, 1: "Lower" },
+            },
+          }),
+        ),
+      ),
+    );
+    expect(restored.CategoryList.categoryNames).toEqual({
+      0: ["Upper", "Arriba"],
+      1: ["Lower", "Lower"],
+    });
+    expect(restored.CategoryList.CategoryCustomTypes[4].customTypes).toEqual([
+      // Older subcategories keep their one label for both languages
+      { label: "Cap", value: "Cap", icon: 0 },
+      {
+        label: "Beanie",
+        value: "Beanie",
+        icon: 0,
+        labels: ["Beanie", "Gorro"],
+      },
+    ]);
+  });
 });
 
 test("old garments keep their one season, or get all four, after load and import", () => {

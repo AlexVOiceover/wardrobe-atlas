@@ -21,3 +21,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Steady update messages](steady-update-messages/PLAN.md)
 - [Seasons on garments and sort arrows](seasons-and-sort-arrows/PLAN.md)
 - [Storage and selecting several garments](storage-and-multi-select/PLAN.md)
+- [Bilingual categories and subcategories](bilingual-categories/PLAN.md)
