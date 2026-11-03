@@ -44,6 +44,13 @@ import {
   removeBackground,
   type BackgroundError,
 } from "../../utils/backgroundRemoval";
+import {
+  GARMENT_MODEL,
+  downloadGarmentModel,
+  garmentPart,
+  hasGarmentModel,
+  isolateGarment,
+} from "../../utils/garmentIsolation";
 import { OptionalDateField } from "../../components/OptionalDateField";
 import { FormErrors } from "../../components/FormErrors";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
@@ -138,23 +145,21 @@ export const ItemForm = ({
   // The photo before its background was removed, for Undo until Save.
   const [photoBeforeCutout, setPhotoBeforeCutout] = useState<string>();
   const [cutoutStatus, setCutoutStatus] = useState<
-    "" | "working" | BackgroundError
+    "" | "working" | BackgroundError | "noModel" | "downloadFailed"
   >("");
-  const cutoutMessages: Record<BackgroundError, readonly string[]> = {
+  // Download progress of the garment model, while it downloads.
+  const [modelProgress, setModelProgress] = useState<number>();
+  const [modelPromptVisible, setModelPromptVisible] = useState(false);
+  const cutoutMessages: Record<
+    BackgroundError | "noModel" | "downloadFailed",
+    readonly string[]
+  > = {
     preparing: localization.BackgroundPreparing,
     noSubject: localization.BackgroundNoSubject,
     unsupported: localization.BackgroundUnsupported,
     failed: localization.BackgroundFailed,
-  };
-  const cutOut = async () => {
-    const original = imageUrl;
-    setCutoutStatus("working");
-    const result = await removeBackground(original);
-    if ("image" in result) {
-      setPhotoBeforeCutout(original);
-      setImageUrl(result.image);
-      setCutoutStatus("");
-    } else setCutoutStatus(result.error);
+    noModel: localization.GarmentModelMissing,
+    downloadFailed: localization.GarmentModelDownloadFailed,
   };
   const [colors, setColors] = useState([
     storedItems?.primaryColor || "",
@@ -188,6 +193,33 @@ export const ItemForm = ({
   const dispatch = useDispatch();
   const [visible, setVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  // Tops and bottoms keep only the garment; shoes and accessories only lose
+  // the background.
+  const part = garmentPart(category);
+  const cutOut = async () => {
+    const original = imageUrl;
+    if (part && !(await hasGarmentModel())) {
+      setModelPromptVisible(true);
+      return;
+    }
+    setCutoutStatus("working");
+    const result = part
+      ? await isolateGarment(original, part)
+      : await removeBackground(original);
+    if ("image" in result) {
+      setPhotoBeforeCutout(original);
+      setImageUrl(result.image);
+      setCutoutStatus("");
+    } else setCutoutStatus(result.error);
+  };
+  const downloadModel = async () => {
+    setCutoutStatus("");
+    setModelProgress(0);
+    const downloaded = await downloadGarmentModel(setModelProgress);
+    setModelProgress(undefined);
+    if (downloaded) await cutOut();
+    else setCutoutStatus("downloadFailed");
+  };
   const categoryOptions = visibleCategories(
     categoryState,
     storedSettings.language,
@@ -425,6 +457,15 @@ export const ItemForm = ({
         message={localization.ConfirmDeleteGarment[storedSettings.language]}
         onConfirm={deleteItemHandler}
       />
+      <ConfirmationDialog
+        visible={modelPromptVisible}
+        setVisible={setModelPromptVisible}
+        title={localization.DownloadGarmentModel[storedSettings.language]}
+        message={localization.ConfirmGarmentModelDownload[
+          storedSettings.language
+        ].replace("{mb}", String(GARMENT_MODEL.megabytes))}
+        onConfirm={downloadModel}
+      />
       <ColorModal
         colors={colors}
         setColors={setColors}
@@ -492,43 +533,58 @@ export const ItemForm = ({
               />
             </View>
           </View>
-          {!!imageUrl && (!isCutout(imageUrl) || photoBeforeCutout) && (
-            <View style={styles.cutout}>
-              <View style={styles.cutoutActions}>
-                {photoBeforeCutout ? (
-                  <Button
-                    icon="undo"
-                    compact
-                    onPress={() => {
-                      setImageUrl(photoBeforeCutout);
-                      setPhotoBeforeCutout(undefined);
-                    }}
+          {/* Earlier cutouts of tops and bottoms may still show the person. */}
+          {!!imageUrl &&
+            (!!part || !isCutout(imageUrl) || photoBeforeCutout) && (
+              <View style={styles.cutout}>
+                <View style={styles.cutoutActions}>
+                  {photoBeforeCutout ? (
+                    <Button
+                      icon="undo"
+                      compact
+                      onPress={() => {
+                        setImageUrl(photoBeforeCutout);
+                        setPhotoBeforeCutout(undefined);
+                      }}
+                    >
+                      {localization.Undo[storedSettings.language]}
+                    </Button>
+                  ) : (
+                    <Button
+                      icon="content-cut"
+                      compact
+                      disabled={
+                        cutoutStatus === "working" ||
+                        modelProgress !== undefined
+                      }
+                      onPress={cutOut}
+                    >
+                      {modelProgress !== undefined
+                        ? localization.DownloadingGarmentModel[
+                            storedSettings.language
+                          ].replace("{percent}", String(modelProgress))
+                        : (part
+                            ? cutoutStatus === "working"
+                              ? localization.IsolatingGarment
+                              : localization.IsolateGarment
+                            : cutoutStatus === "working"
+                            ? localization.RemovingBackground
+                            : localization.RemoveBackground)[
+                            storedSettings.language
+                          ]}
+                    </Button>
+                  )}
+                </View>
+                {cutoutStatus !== "" && cutoutStatus !== "working" && (
+                  <ThemeText
+                    accessibilityLiveRegion="polite"
+                    customStyle={captionText}
                   >
-                    {localization.Undo[storedSettings.language]}
-                  </Button>
-                ) : (
-                  <Button
-                    icon="content-cut"
-                    compact
-                    disabled={cutoutStatus === "working"}
-                    onPress={cutOut}
-                  >
-                    {cutoutStatus === "working"
-                      ? localization.RemovingBackground[storedSettings.language]
-                      : localization.RemoveBackground[storedSettings.language]}
-                  </Button>
+                    {cutoutMessages[cutoutStatus][storedSettings.language]}
+                  </ThemeText>
                 )}
               </View>
-              {cutoutStatus !== "" && cutoutStatus !== "working" && (
-                <ThemeText
-                  accessibilityLiveRegion="polite"
-                  customStyle={captionText}
-                >
-                  {cutoutMessages[cutoutStatus][storedSettings.language]}
-                </ThemeText>
-              )}
-            </View>
-          )}
+            )}
           <View style={styles.pairRow}>
             <View style={styles.pairField}>
               <DropDownPicker
