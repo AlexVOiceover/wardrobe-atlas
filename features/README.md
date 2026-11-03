@@ -22,3 +22,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Seasons on garments and sort arrows](seasons-and-sort-arrows/PLAN.md)
 - [Storage and selecting several garments](storage-and-multi-select/PLAN.md)
 - [Bilingual categories and subcategories](bilingual-categories/PLAN.md)
+- [Remove photo backgrounds](remove-photo-background/PLAN.md)
