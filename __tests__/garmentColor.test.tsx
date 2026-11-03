@@ -8,6 +8,21 @@ jest.mock("../components/CustomModal", () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
 }));
 jest.mock("react-native-wheel-color-picker", () => "ColorPicker");
+const mockAverage = jest.fn();
+jest.mock("@somesoap/react-native-image-palette", () => ({
+  getSegmentsAverageColor: (...args: unknown[]) => mockAverage(...args),
+}));
+jest.mock("react-native-blob-util", () => ({
+  __esModule: true,
+  default: {
+    fs: {
+      dirs: { CacheDir: "/cache" },
+      writeFile: jest.fn(() => Promise.resolve()),
+      unlink: jest.fn(() => Promise.resolve()),
+    },
+  },
+}));
+const mockFs = require("react-native-blob-util").default.fs;
 jest.mock("react-native-paper", () => {
   const ReactForMock = require("react");
   const Input = Object.assign(
@@ -51,4 +66,60 @@ test("garment color picker starts with the saved color and saves a new selection
   await act(async () => {
     view!.unmount();
   });
+});
+
+test("with a photo, the picker opens on the photo and saves the tapped color", async () => {
+  mockAverage.mockResolvedValue(["#FF1F2A44"]);
+  const setColors = jest.fn();
+  let view!: ReactTestRenderer;
+  await act(async () => {
+    view = create(
+      <ColorModal
+        colors={["#123456", ""]}
+        setColors={setColors}
+        colorSelection={1}
+        visible={true}
+        setVisible={jest.fn()}
+        image="photo-data"
+      />,
+    );
+  });
+  expect(view.root.findAllByType("ColorPicker" as any)).toHaveLength(0);
+  const container = view.root.find(
+    n => typeof n.props.onLayout === "function" && n.props.style?.gap,
+  );
+  await act(async () => {
+    container.props.onLayout({ nativeEvent: { layout: { width: 200 } } });
+  });
+  const photo = view.root.find(
+    n => n.props.accessibilityRole === "imagebutton" && n.props.onPress,
+  );
+  await act(async () => {
+    await photo.props.onPress({
+      nativeEvent: { locationX: 100, locationY: 50 },
+    });
+  });
+  expect(mockFs.writeFile).toHaveBeenCalledWith(
+    expect.stringMatching(/^\/cache\/picker_/),
+    "photo-data",
+    "base64",
+  );
+  // Jest's Image.getSize reports a 4:3 photo, so the 200-wide box is 150 tall
+  // and the tap sits at 50% across and 33% down.
+  expect(mockAverage).toHaveBeenCalledWith(
+    expect.stringMatching(/^file:\/\//),
+    [{ fromX: 49, toX: 52, fromY: 32, toY: 35 }],
+  );
+  const use = view.root
+    .findAllByType("Button" as any)
+    .find(b => b.props.children === "Use color")!;
+  expect(use.props.disabled).toBe(false);
+  await act(async () => {
+    use.props.onPress();
+  });
+  expect(setColors).toHaveBeenCalledWith(["#123456", "#1F2A44"]);
+  await act(async () => {
+    view.unmount();
+  });
+  expect(mockFs.unlink).toHaveBeenCalled();
 });

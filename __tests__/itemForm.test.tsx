@@ -83,9 +83,13 @@ test("simplified form keeps colors and Save inside a bounded scroll area with us
   scroll
     .findAllByType("Dropdown" as any)
     .forEach(d => expect(d.props.listMode).toBe("MODAL"));
+  // New garments ask for the primary color only
   expect(
-    scroll.findAll(node => node.props.children === "Tertiary color").length,
+    scroll.findAll(node => node.props.children === "Primary color").length,
   ).toBeGreaterThan(0);
+  expect(
+    scroll.findAll(node => node.props.children === "Secondary color"),
+  ).toHaveLength(0);
 });
 
 test("new item saves typed name, chosen type and wardrobe without generated names or fit/season selection", () => {
@@ -210,6 +214,71 @@ test("garment delete only happens after confirming the dialog", () => {
     expect.objectContaining({
       type: "itemsList/deleteItem",
       payload: { selectedId: "a" },
+    }),
+  );
+});
+
+const colorRows = (tree: ReactTestRenderer) =>
+  ["Primary color", "Secondary color", "Tertiary color"].filter(
+    label => tree.root.findAll(n => n.props.children === label).length > 0,
+  );
+const button = (tree: ReactTestRenderer, label: string) =>
+  tree.root
+    .findAllByType("Button" as any)
+    .find(b => b.props.children === label);
+
+test("secondary and tertiary colors are optional and only added on request", () => {
+  const tree = render();
+  expect(colorRows(tree)).toEqual(["Primary color"]);
+  // Secondary can only be added once primary is set
+  expect(button(tree, "Add secondary color")!.props.disabled).toBe(true);
+  const modal = () => tree.root.findByType("ColorModal" as any);
+  act(() => modal().props.setColors(["#1F2A44", "", ""]));
+  act(() => button(tree, "Add secondary color")!.props.onPress());
+  expect(colorRows(tree)).toEqual(["Primary color", "Secondary color"]);
+  expect(button(tree, "Add tertiary color")!.props.disabled).toBe(true);
+  act(() => modal().props.setColors(["#1F2A44", "#D9C7A7", ""]));
+  act(() => button(tree, "Add tertiary color")!.props.onPress());
+  expect(colorRows(tree)).toHaveLength(3);
+  expect(button(tree, "Add tertiary color")).toBeUndefined();
+});
+
+test("editing shows existing colors, and removing secondary moves tertiary up", () => {
+  mockState.itemsList.items = [
+    {
+      id: "coat",
+      name: "Coat",
+      type: "T-Shirt",
+      image: "photo",
+      collection: [],
+      wardrobeId: "home",
+      primaryColor: "#1F2A44",
+      secondaryColor: "#D9C7A7",
+      tertiaryColor: "#B22222",
+    },
+  ];
+  const tree = render("coat");
+  expect(colorRows(tree)).toHaveLength(3);
+  expect(tree.root.findByType("ColorModal" as any).props.image).toBe("photo");
+  act(() =>
+    tree.root
+      .findAll(
+        n =>
+          n.props.accessibilityLabel === "Remove color: Secondary color" &&
+          n.props.onPress,
+      )[0]
+      .props.onPress(),
+  );
+  expect(colorRows(tree)).toEqual(["Primary color", "Secondary color"]);
+  act(() => button(tree, "Save")!.props.onPress());
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/updateItem",
+      payload: expect.objectContaining({
+        primaryColor: "#1F2A44",
+        secondaryColor: "#B22222",
+        tertiaryColor: "",
+      }),
     }),
   );
 });
