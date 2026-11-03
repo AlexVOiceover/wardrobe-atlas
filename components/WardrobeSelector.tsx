@@ -54,6 +54,7 @@ export function WardrobeSelector({
       )}
       <Button
         mode={compact ? "text" : "outlined"}
+        textColor={compact ? theme.colors.onBar : undefined}
         icon="chevron-down"
         contentStyle={{ flexDirection: "row-reverse" }}
         onPress={() => setExpanded(!expanded)}

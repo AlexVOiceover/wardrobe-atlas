@@ -58,14 +58,16 @@ function App(): ReactElement {
               },
             }}
           >
-            <SafeAreaView
-              style={[{ flex: 1, backgroundColor: theme.colors.background }]}
-            >
+            {/* The safe-area padding behind the status bar and system navigation
+                buttons takes the bar color, so the header and tab bar run to the edges. */}
+            <SafeAreaView style={[{ flex: 1, backgroundColor: theme.colors.bar }]}>
               <StatusBar
-                barStyle="dark-content"
-                backgroundColor={theme.colors.background}
+                barStyle="light-content"
+                backgroundColor={theme.colors.bar}
               />
-              <GestureHandlerRootView style={{ flex: 1 }}>
+              <GestureHandlerRootView
+                style={{ flex: 1, backgroundColor: theme.colors.background }}
+              >
                 <UpdateControls />
                 <Navigator />
               </GestureHandlerRootView>

@@ -22,11 +22,11 @@ export default function MyTabs() {
       screenOptions={{
         headerShown: false,
         animation: "none",
-        tabBarActiveTintColor: theme.colors.text,
-        tabBarInactiveTintColor: theme.colors.muted,
+        tabBarActiveTintColor: theme.colors.onBar,
+        tabBarInactiveTintColor: theme.colors.onBarMuted,
         tabBarStyle: {
-          backgroundColor: theme.colors.background,
-          borderTopColor: theme.colors.border,
+          backgroundColor: theme.colors.bar,
+          borderTopColor: theme.colors.bar,
           elevation: 0,
         },
       }}
