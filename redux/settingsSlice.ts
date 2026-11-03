@@ -17,6 +17,8 @@ export type SettingsType = {
   appVer: string;
   collectionSortValue: CollectionSortValue;
   gridColumns: number;
+  // Wardrobe of the last garment saved; new garments start there.
+  lastWardrobeId: string;
 };
 const initialState: SettingsType = {
   language: 0,
@@ -25,6 +27,7 @@ const initialState: SettingsType = {
   appVer: "1.0.1",
   collectionSortValue: COLLECTION_SORT_VALUES.CUSTOM,
   gridColumns: DEFAULT_GRID_COLUMNS,
+  lastWardrobeId: "",
 };
 const settingsSlice = createSlice({
   name: "settings",
@@ -46,6 +49,9 @@ const settingsSlice = createSlice({
     setGridColumns: (state, action) => {
       state.gridColumns = normalizeGridColumns(action.payload.gridColumns);
     },
+    setLastWardrobe: (state, action) => {
+      state.lastWardrobeId = action.payload.wardrobeId || "";
+    },
     importSettings: (state, action) => {
       state.language = action.payload.language === 1 ? 1 : 0;
       state.name = action.payload.name;
@@ -54,6 +60,10 @@ const settingsSlice = createSlice({
       state.collectionSortValue =
         action.payload.collectionSortValue ?? COLLECTION_SORT_VALUES.CUSTOM;
       state.gridColumns = normalizeGridColumns(action.payload.gridColumns);
+      state.lastWardrobeId =
+        typeof action.payload.lastWardrobeId === "string"
+          ? action.payload.lastWardrobeId
+          : "";
     },
     setAppVer: (state, action) => {
       state.appVer = action.payload.appVer;
@@ -66,6 +76,7 @@ export const {
   setHeatMap,
   setCollectionSortValue,
   setGridColumns,
+  setLastWardrobe,
   importSettings,
   setAppVer,
 } = settingsSlice.actions;

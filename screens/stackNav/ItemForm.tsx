@@ -16,6 +16,8 @@ import {
   itemRefresher,
   deleteItem,
 } from "../../redux/itemsSlice";
+import { setLastWardrobe } from "../../redux/settingsSlice";
+import { garmentName } from "../../utils/garmentName";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import ColorModal from "../../components/ColorModal";
 import { CustomInput } from "../../components/CustomInput";
@@ -66,11 +68,17 @@ export const ItemForm = ({
   );
   const { selected } = useWardrobeView();
   const wardrobes = useSelector((s: RootState) => s.itemsList.wardrobes);
+  // New garments start in the wardrobe of the last garment saved.
   const [wardrobeId, setWardrobeId] = useState<string | undefined>(
-    storedItems ? storedItems.wardrobeId : selected,
+    storedItems
+      ? storedItems.wardrobeId
+      : validWardrobeId(wardrobes, storedSettings.lastWardrobeId) ?? selected,
   );
   const [deleteVisible, setDeleteVisible] = useState(false);
   const [name, setName] = useState(storedItems ? storedItems.name : "");
+  // Until the user types a name, it follows color, brand and type.
+  const [nameEdited, setNameEdited] = useState(Boolean(storedItems?.name));
+  const [brand, setBrand] = useState(storedItems?.brand ?? "");
   const [collection, setCollection] = useState(storedItems?.collection ?? []);
   const [type, setType] = useState(storedItems ? storedItems.type : "");
   const [quantity, setQuantity] = useState(
@@ -80,6 +88,10 @@ export const ItemForm = ({
     storedItems ? storedItems.sizeUnit : "",
   );
   const [size, setSize] = useState(storedItems ? storedItems.size : "");
+  // No purchase date unless the user sets one; a default date would be wrong data.
+  const [hasPurchaseDate, setHasPurchaseDate] = useState(
+    Boolean(storedItems?.purchaseDate),
+  );
   const [purchaseDate, setPurchaseDate] = useState(
     storedItems && storedItems.purchaseDate
       ? new Date(JSON.parse(storedItems.purchaseDate))
@@ -114,7 +126,7 @@ export const ItemForm = ({
   const [openSizeUnit, setOpenSizeUnit] = useState(false);
   const [openCollection, setOpenCollection] = useState(false);
   const [isAutoOn, setIsAutoOn] = useState(
-    storedItems ? storedItems.automaticColor : false,
+    storedItems ? storedItems.automaticColor === true : true,
   );
   const colorScheme = String("LIGHT") as ThemeNameType;
   const dispatch = useDispatch();
@@ -141,6 +153,14 @@ export const ItemForm = ({
           label: item.label,
           value: item.value,
         }));
+  const generatedName = garmentName({
+    primaryColor: colors[0],
+    brand,
+    typeLabel:
+      combiningTypesData.find(option => option.value === type)?.label ?? type,
+    language: storedSettings.language,
+  });
+  const displayedName = nameEdited ? name : generatedName;
   function deleteItemHandler() {
     dispatch(deleteItem({ selectedId: storedItems.id }));
     dispatch(itemRefresher());
@@ -154,7 +174,9 @@ export const ItemForm = ({
       ]);
       return;
     }
-    if (name.length <= 0) {
+    // An empty name is filled in as "Color Brand Type" on Save.
+    const finalName = displayedName.trim() || generatedName;
+    if (finalName.length <= 0) {
       errors.push(localization.NameRequired[storedSettings.language]);
     }
     if (!type && combiningTypesData.length > 0) {
@@ -170,7 +192,8 @@ export const ItemForm = ({
         updateItem({
           id: editingIndex,
           wardrobeId: validWardrobeId(wardrobes, wardrobeId),
-          name: name,
+          name: finalName,
+          brand: brand.trim(),
           collection: collection,
           category: selectedCategory,
           type: type,
@@ -179,7 +202,7 @@ export const ItemForm = ({
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
-          purchaseDate: JSON.stringify(purchaseDate),
+          purchaseDate: hasPurchaseDate ? JSON.stringify(purchaseDate) : "",
           image: imageUrl,
           automaticColor: isAutoOn,
           primaryColor: savedColors[0],
@@ -191,7 +214,8 @@ export const ItemForm = ({
       dispatch(
         addItem({
           wardrobeId: validWardrobeId(wardrobes, wardrobeId),
-          name: name,
+          name: finalName,
+          brand: brand.trim(),
           collection: collection,
           category: selectedCategory,
           type: type,
@@ -200,7 +224,7 @@ export const ItemForm = ({
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
-          purchaseDate: JSON.stringify(purchaseDate),
+          purchaseDate: hasPurchaseDate ? JSON.stringify(purchaseDate) : "",
           image: imageUrl,
           automaticColor: isAutoOn,
           primaryColor: savedColors[0],
@@ -209,6 +233,9 @@ export const ItemForm = ({
         }),
       );
     }
+    dispatch(
+      setLastWardrobe({ wardrobeId: validWardrobeId(wardrobes, wardrobeId) }),
+    );
     navigation.popToTop();
     if (editingIndex) {
       dispatch(itemRefresher());
@@ -275,6 +302,9 @@ export const ItemForm = ({
                 );
                 console.log("imageSize", resized.size);
                 setImageUrl(base64 || "");
+                if (isAutoOn && base64) {
+                  colorsExtractor(base64);
+                }
                 setImageModalVisible(false);
               })
               .catch(err => {
@@ -311,6 +341,9 @@ export const ItemForm = ({
                   );
                   console.log("imageSize", resized.size);
                   setImageUrl(base64 || "");
+                  if (isAutoOn && base64) {
+                    colorsExtractor(base64);
+                  }
                   setImageModalVisible(false);
                 })
                 .catch(err => {
@@ -380,13 +413,6 @@ export const ItemForm = ({
             />
           </View>
           <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            label={localization.Name[storedSettings.language]}
-            value={name}
-            onChange={text => setName(text.nativeEvent.text)}
-          />
           {combiningTypesData?.length > 0 && (
             <View style={{ zIndex: 2 }}>
               <DropDownPicker
@@ -404,69 +430,12 @@ export const ItemForm = ({
               />
             </View>
           )}
-          <View style={styles.sizeRow}>
-            <CustomInput
-              mode="outlined"
-              style={styles.sizeField}
-              label={localization.Quantity[storedSettings.language]}
-              value={String(quantity)}
-              onChange={text => setQuantity(Number(text.nativeEvent.text))}
-              keyboardType="numeric"
-              maxLength={2}
-            />
-            <View style={styles.sizeField}>
-              <DropDownPicker
-                open={openSizeUnit}
-                value={sizeUnit}
-                items={sizeList}
-                setOpen={setOpenSizeUnit}
-                setValue={setSizeUnit}
-                mode="SIMPLE"
-                listMode="MODAL"
-                placeholder={localization.Unit[storedSettings.language]}
-                style={[pickerStyle, { marginTop: 5 }]}
-                dropDownContainerStyle={pickerStyle}
-                theme={colorScheme}
-              />
-            </View>
-            <CustomInput
-              mode="outlined"
-              style={styles.sizeField}
-              label={localization.Size[storedSettings.language]}
-              value={String(size)}
-              onChange={text => setSize(text.nativeEvent.text)}
-              maxLength={6}
-            />
-          </View>
-          <DatePicker
-            title={localization.Purchase_Date[storedSettings.language]}
-            date={purchaseDate}
-            isDatePickerVisible={isDatePickerVisible}
-            setDate={setPurchaseDate}
-            setDatePickerVisibility={setDatePickerVisibility}
+          <CustomInput
+            mode="outlined"
+            label={localization.Brand[storedSettings.language]}
+            value={brand}
+            onChange={text => setBrand(text.nativeEvent.text)}
           />
-          <View style={{ zIndex: 1, gap: theme.spacing.xs }}>
-            <DropDownPicker
-              open={openCollection}
-              value={collection}
-              items={collectionOptions}
-              setOpen={setOpenCollection}
-              setValue={setCollection}
-              multiple={true}
-              theme={colorScheme}
-              showBadgeDot={false}
-              badgeTextStyle={{ color: theme.colors.text }}
-              mode="BADGE"
-              listMode="MODAL"
-              placeholder={localization.Collection[storedSettings.language]}
-              style={pickerStyle}
-              dropDownContainerStyle={pickerStyle}
-            />
-            <ThemeText customStyle={captionText}>
-              {localization.You_can_add[storedSettings.language]}
-            </ThemeText>
-          </View>
-
           <ListRow
             title={
               localization.Automatic_color_selection[storedSettings.language]
@@ -532,6 +501,91 @@ export const ItemForm = ({
                 : localization.AddTertiaryColor[storedSettings.language]}
             </Button>
           )}
+
+          <CustomInput
+            mode="outlined"
+            textContentType="name"
+            label={localization.Name[storedSettings.language]}
+            value={displayedName}
+            onChange={text => {
+              // Clearing the name lets it follow color, brand and type again.
+              setName(text.nativeEvent.text);
+              setNameEdited(text.nativeEvent.text.length > 0);
+            }}
+          />
+          <View style={styles.sizeRow}>
+            <CustomInput
+              mode="outlined"
+              style={styles.sizeField}
+              label={localization.Quantity[storedSettings.language]}
+              value={String(quantity)}
+              onChange={text => setQuantity(Number(text.nativeEvent.text))}
+              keyboardType="numeric"
+              maxLength={2}
+            />
+            <View style={styles.sizeField}>
+              <DropDownPicker
+                open={openSizeUnit}
+                value={sizeUnit}
+                items={sizeList}
+                setOpen={setOpenSizeUnit}
+                setValue={setSizeUnit}
+                mode="SIMPLE"
+                listMode="MODAL"
+                placeholder={localization.Unit[storedSettings.language]}
+                style={[pickerStyle, { marginTop: 5 }]}
+                dropDownContainerStyle={pickerStyle}
+                theme={colorScheme}
+              />
+            </View>
+            <CustomInput
+              mode="outlined"
+              style={styles.sizeField}
+              label={localization.Size[storedSettings.language]}
+              value={String(size)}
+              onChange={text => setSize(text.nativeEvent.text)}
+              maxLength={6}
+            />
+          </View>
+          <ListRow
+            title={localization.Purchase_Date[storedSettings.language]}
+            right={
+              <Switch
+                value={hasPurchaseDate}
+                onValueChange={setHasPurchaseDate}
+              />
+            }
+          />
+          {hasPurchaseDate && (
+            <DatePicker
+              title={localization.Purchase_Date[storedSettings.language]}
+              date={purchaseDate}
+              isDatePickerVisible={isDatePickerVisible}
+              setDate={setPurchaseDate}
+              setDatePickerVisibility={setDatePickerVisibility}
+            />
+          )}
+          <View style={{ zIndex: 1, gap: theme.spacing.xs }}>
+            <DropDownPicker
+              open={openCollection}
+              value={collection}
+              items={collectionOptions}
+              setOpen={setOpenCollection}
+              setValue={setCollection}
+              multiple={true}
+              theme={colorScheme}
+              showBadgeDot={false}
+              badgeTextStyle={{ color: theme.colors.text }}
+              mode="BADGE"
+              listMode="MODAL"
+              placeholder={localization.Collection[storedSettings.language]}
+              style={pickerStyle}
+              dropDownContainerStyle={pickerStyle}
+            />
+            <ThemeText customStyle={captionText}>
+              {localization.You_can_add[storedSettings.language]}
+            </ThemeText>
+          </View>
 
           <FormErrors errors={errorsList} />
           <Button mode="contained" onPress={addItemHandler}>

@@ -46,6 +46,13 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
           ? settings.collectionSortValue
           : COLLECTION_SORT_VALUES.CUSTOM,
       gridColumns: normalizeGridColumns(settings.gridColumns),
+      lastWardrobeId:
+        validWardrobeId(
+          wardrobes,
+          typeof settings.lastWardrobeId === "string"
+            ? settings.lastWardrobeId
+            : undefined,
+        ) ?? "",
     },
     itemsList: {
       wardrobes,
@@ -60,6 +67,7 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
           "id",
           "name",
           "type",
+          "brand",
           "fit",
           "season",
           "quantity",

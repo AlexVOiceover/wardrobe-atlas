@@ -104,7 +104,7 @@ export const BulkModeForm = ({
             size: "",
             sizeUnit: "",
             quantity: 1,
-            purchaseDate: JSON.stringify(new Date()),
+            purchaseDate: "",
             image: imgBase64,
             automaticColor: false,
             primaryColor: "",

@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
   list: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
     paddingBottom: ADD_BUTTON_CLEARANCE,
   },
 });

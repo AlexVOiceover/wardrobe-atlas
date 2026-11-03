@@ -53,6 +53,19 @@ function nameDesc(array: any[], sub: string) {
   });
 }
 
+// Garments without a purchase date go last in both directions.
+function byPurchaseDate(array: item[], direction: 1 | -1) {
+  array.sort((a, b) => {
+    if (!a.purchaseDate || !b.purchaseDate) {
+      return (a.purchaseDate ? 0 : 1) - (b.purchaseDate ? 0 : 1);
+    }
+    if (a.purchaseDate === b.purchaseDate) {
+      return 0;
+    }
+    return (a.purchaseDate < b.purchaseDate ? -1 : 1) * direction;
+  });
+}
+
 export function LogFilter(
   sortValue: string,
   array: logsType[],
@@ -134,10 +147,10 @@ export function HomeFilter(
           nameDesc(newArray[i], "name");
           break;
         case "PDA":
-          asc(newArray[i], "purchaseDate");
+          byPurchaseDate(newArray[i], 1);
           break;
         case "PDD":
-          desc(newArray[i], "purchaseDate");
+          byPurchaseDate(newArray[i], -1);
           break;
       }
 
@@ -176,10 +189,10 @@ export function HomeFilter(
         nameDesc(newArray, "name");
         break;
       case "PDA":
-        asc(newArray, "purchaseDate");
+        byPurchaseDate(newArray, 1);
         break;
       case "PDD":
-        desc(newArray, "purchaseDate");
+        byPurchaseDate(newArray, -1);
         break;
     }
 

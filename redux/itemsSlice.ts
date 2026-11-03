@@ -19,6 +19,7 @@ export type item = {
   id: string;
   name: string;
   type: string;
+  brand?: string;
   fit: string;
   season?: string;
   quantity: number;
@@ -87,6 +88,7 @@ const itemsSlice = createSlice({
         name: action.payload.name,
         image: action.payload.image,
         type: action.payload.type,
+        brand: action.payload.brand || "",
         fit: action.payload.fit,
         sizeUnit: action.payload.sizeUnit,
         size: action.payload.size,
@@ -118,6 +120,8 @@ const itemsSlice = createSlice({
       state.items[itemIndex].name = action.payload.name;
       state.items[itemIndex].image = action.payload.image;
       state.items[itemIndex].type = action.payload.type;
+      if ("brand" in action.payload)
+        state.items[itemIndex].brand = action.payload.brand;
       state.items[itemIndex].fit = action.payload.fit;
       state.items[itemIndex].size = action.payload.size;
       state.items[itemIndex].sizeUnit = action.payload.sizeUnit;
