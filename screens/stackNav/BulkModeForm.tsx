@@ -19,6 +19,7 @@ import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
 import { localization } from "../../utils/localization";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
 import { categoryTypes } from "../../utils/categories";
+import { SEASONS } from "../../utils/data";
 import { launchImageLibrary, launchCamera } from "react-native-image-picker";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
@@ -83,7 +84,7 @@ export const BulkModeForm = ({
             category: selectedCategory,
             type: type,
             fit: "",
-            season: "",
+            seasons: [...SEASONS],
             size: "",
             sizeUnit: "",
             quantity: 1,

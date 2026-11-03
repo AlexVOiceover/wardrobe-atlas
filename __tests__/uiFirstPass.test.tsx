@@ -116,7 +116,7 @@ test("Reset clears sort, category, type, season and color together", () => {
   };
   resetHomeFilters(actions);
   expect(actions.setSortValue).toHaveBeenCalledWith("LA");
-  expect(actions.setSeasonFilter).toHaveBeenCalledWith("");
+  expect(actions.setSeasonFilter).toHaveBeenCalledWith([]);
   expect(actions.setCategoriesFilter).toHaveBeenCalledWith([]);
   expect(actions.setTypeFilter).toHaveBeenCalledWith([]);
   expect(actions.setColorFilter).toHaveBeenCalledWith([]);
@@ -129,7 +129,7 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
     <HomeFilterPanel
       filterState={{
         sortValue: "LA",
-        seasonFilter: "",
+        seasonFilter: [],
         categoriesFilter: [0],
         TypeFilter: [],
         colorFilter: [],
@@ -168,7 +168,7 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
 test("the filter badge counts active filters but not the sort order", () => {
   expect(
     activeFilterCount({
-      seasonFilter: "",
+      seasonFilter: [],
       categoriesFilter: [],
       TypeFilter: [],
       colorFilter: [],
@@ -176,7 +176,7 @@ test("the filter badge counts active filters but not the sort order", () => {
   ).toBe(0);
   expect(
     activeFilterCount({
-      seasonFilter: "Winter",
+      seasonFilter: ["Winter"],
       categoriesFilter: [0],
       TypeFilter: ["Shirt"],
       colorFilter: ["red", "blue"],

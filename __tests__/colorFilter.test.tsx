@@ -70,7 +70,7 @@ test("the filter matches any of a garment's colors, and No color finds uncolored
   const bare = garment("bare");
   const filter = (colors: string[]) =>
     HomeFilter(
-      { sortValue: "LA", categories: [], types: [], season: "", colors },
+      { sortValue: "LA", categories: [], types: [], seasons: [], colors },
       [coat, tee, bare],
       false,
     ).map(g => g.id);

@@ -103,7 +103,7 @@ test("location filter combines with search and existing filters without changing
   const filters = {
     categories: [0],
     types: ["Top"],
-    season: "",
+    seasons: [],
     colors: [],
     sortValue: "NA",
   };

@@ -13,7 +13,7 @@ type SetString = React.Dispatch<React.SetStateAction<string>>;
 type SetArray<T> = React.Dispatch<React.SetStateAction<T[]>>;
 export type HomeFilterState = {
   sortValue: string;
-  seasonFilter: string;
+  seasonFilter: string[];
   categoriesFilter: any[];
   TypeFilter: string[];
   colorFilter: string[];
@@ -21,7 +21,7 @@ export type HomeFilterState = {
 };
 export type HomeFilterActions = {
   setSortValue: SetString;
-  setSeasonFilter: SetString;
+  setSeasonFilter: SetArray<string>;
   setCategoriesFilter: SetArray<any>;
   setTypeFilter: SetArray<string>;
   setColorFilter: SetArray<string>;
@@ -37,7 +37,7 @@ type Props = {
 };
 export const resetHomeFilters = (actions: HomeFilterActions) => {
   actions.setSortValue("LA");
-  actions.setSeasonFilter("");
+  actions.setSeasonFilter([]);
   actions.setCategoriesFilter([]);
   actions.setTypeFilter([]);
   actions.setColorFilter([]);
@@ -131,10 +131,8 @@ const HomeFilterPanel = ({
           <FilterChip
             key={option.value}
             label={option.label}
-            selected={seasonFilter === option.value}
-            onPress={() =>
-              setSeasonFilter(seasonFilter === option.value ? "" : option.value)
-            }
+            selected={seasonFilter.includes(option.value)}
+            onPress={() => setSeasonFilter(toggled(seasonFilter, option.value))}
           />
         ))}
       </View>

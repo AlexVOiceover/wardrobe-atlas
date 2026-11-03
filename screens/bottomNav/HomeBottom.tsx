@@ -62,7 +62,7 @@ export function HomeBottom() {
   const [sortValue, setSortValue] = useState("LA");
   const [categoriesFilter, setCategoriesFilter] = useState<any[]>([]);
   const [TypeFilter, setTypeFilter] = useState<string[]>([]);
-  const [seasonFilter, setSeasonFilter] = useState("");
+  const [seasonFilter, setSeasonFilter] = useState<string[]>([]);
   const [colorFilter, setColorFilter] = useState<string[]>([]);
   const [collectionFilter, setCollectionFilter] = useState<string[]>([]);
   const filterState: HomeFilterState = {
@@ -124,7 +124,7 @@ export function HomeBottom() {
         categories: categoriesFilter,
         sortValue,
         types: TypeFilter,
-        season: seasonFilter,
+        seasons: seasonFilter,
         colors: colorFilter,
         collections: collectionFilter,
         lastUsed,
