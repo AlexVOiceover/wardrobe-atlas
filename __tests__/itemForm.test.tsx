@@ -43,7 +43,9 @@ jest.mock("../components/CustomModal", () => "CustomModal");
 jest.mock("../components/ConfirmationDialog", () => ({
   ConfirmationDialog: "ConfirmationDialog",
 }));
-jest.mock("../components/DatePicker", () => ({ DatePicker: "DatePicker" }));
+jest.mock("../components/OptionalDateField", () => ({
+  OptionalDateField: "OptionalDateField",
+}));
 jest.mock("../components/ImageViewer", () => ({ ImageViewer: "ImageViewer" }));
 jest.mock("../screens/stackNav/Category", () => ({
   defaultCategories: [{ index: 0 }],
@@ -58,13 +60,21 @@ beforeEach(() => {
 });
 
 const navigation = { popToTop: jest.fn(), dispatch: jest.fn() };
-// Switch rows expose their Switch element as the ListRow's `right` prop.
-const toggleRow = (tree: ReactTestRenderer, title: string, on: boolean) =>
-  act(() =>
-    tree.root
-      .findAll(n => n.props.title === title && n.props.right)[0]
-      .props.right.props.onValueChange(on),
+// The outermost element carrying an accessibility label (not its host copies)
+const labelled = (tree: ReactTestRenderer, label: string) =>
+  tree.root.findAll(
+    n =>
+      n.props.accessibilityLabel === label &&
+      n.parent?.props.accessibilityLabel !== label,
   );
+const autoColors = (tree: ReactTestRenderer) =>
+  tree.root
+    .findAllByType("Switch" as any)
+    .find(s => s.props.accessibilityLabel === "Automatic color selection")!;
+const setAutoColors = (tree: ReactTestRenderer, on: boolean) =>
+  act(() => autoColors(tree).props.onValueChange(on));
+const purchaseDate = (tree: ReactTestRenderer) =>
+  tree.root.findByType("OptionalDateField" as any);
 function render(editingIndex?: string) {
   let tree: ReactTestRenderer;
   act(() => {
@@ -99,13 +109,9 @@ test("simplified form keeps colors and Save inside a bounded scroll area with us
     .findAllByType("Dropdown" as any)
     .forEach(d => expect(d.props.listMode).toBe("MODAL"));
   // New garments start with automatic colors, and ask for the primary color only
-  toggleRow(tree, "Automatic color selection", false);
-  expect(
-    scroll.findAll(node => node.props.children === "Primary color").length,
-  ).toBeGreaterThan(0);
-  expect(
-    scroll.findAll(node => node.props.children === "Secondary color"),
-  ).toHaveLength(0);
+  setAutoColors(tree, false);
+  expect(labelled(tree, "Primary color")).toHaveLength(1);
+  expect(labelled(tree, "Secondary color")).toHaveLength(0);
 });
 
 test("new item saves typed name, chosen type and wardrobe without generated names or fit/season selection", () => {
@@ -236,8 +242,10 @@ test("garment delete only happens after confirming the dialog", () => {
 
 const colorRows = (tree: ReactTestRenderer) =>
   ["Primary color", "Secondary color", "Tertiary color"].filter(
-    label => tree.root.findAll(n => n.props.children === label).length > 0,
+    label => labelled(tree, label).length > 0,
   );
+const addColor = (tree: ReactTestRenderer, label: string) =>
+  labelled(tree, label)[0];
 const button = (tree: ReactTestRenderer, label: string) =>
   tree.root
     .findAllByType("Button" as any)
@@ -245,19 +253,19 @@ const button = (tree: ReactTestRenderer, label: string) =>
 
 test("secondary and tertiary colors are optional and only added on request", () => {
   const tree = render();
-  toggleRow(tree, "Automatic color selection", false);
+  setAutoColors(tree, false);
   expect(colorRows(tree)).toEqual(["Primary color"]);
   // Secondary can only be added once primary is set
-  expect(button(tree, "Add secondary color")!.props.disabled).toBe(true);
+  expect(addColor(tree, "Add secondary color")!.props.disabled).toBe(true);
   const modal = () => tree.root.findByType("ColorModal" as any);
   act(() => modal().props.setColors(["#1F2A44", "", ""]));
-  act(() => button(tree, "Add secondary color")!.props.onPress());
+  act(() => addColor(tree, "Add secondary color")!.props.onPress());
   expect(colorRows(tree)).toEqual(["Primary color", "Secondary color"]);
-  expect(button(tree, "Add tertiary color")!.props.disabled).toBe(true);
+  expect(addColor(tree, "Add tertiary color")!.props.disabled).toBe(true);
   act(() => modal().props.setColors(["#1F2A44", "#D9C7A7", ""]));
-  act(() => button(tree, "Add tertiary color")!.props.onPress());
+  act(() => addColor(tree, "Add tertiary color")!.props.onPress());
   expect(colorRows(tree)).toHaveLength(3);
-  expect(button(tree, "Add tertiary color")).toBeUndefined();
+  expect(addColor(tree, "Add tertiary color")).toBeUndefined();
 });
 
 test("editing shows existing colors, and removing secondary moves tertiary up", () => {
@@ -324,12 +332,8 @@ test("new garments start in the last used wardrobe, with automatic colors and no
   expect(tree.root.findByType("WardrobeSelector" as any).props.value).toBe(
     "work",
   );
-  const rowSwitch = (title: string) =>
-    tree.root.findAll(n => n.props.title === title && n.props.right)[0].props
-      .right.props.value;
-  expect(rowSwitch("Automatic color selection")).toBe(true);
-  expect(rowSwitch("Purchase Date")).toBe(false);
-  expect(tree.root.findAllByType("DatePicker" as any)).toHaveLength(0);
+  expect(autoColors(tree).props.value).toBe(true);
+  expect(purchaseDate(tree).props.date).toBeUndefined();
   chooseFirstType(tree);
   save(tree);
   expect(savedPayload()).toEqual(
@@ -383,16 +387,30 @@ test("the name follows color, brand and type until edited, and is generated on S
   );
 });
 
-test("turning the purchase date on saves the chosen date", () => {
+test("picking a purchase date saves it, and clearing it saves none", () => {
   const tree = render();
   chooseFirstType(tree);
-  toggleRow(tree, "Purchase Date", true);
-  const picker = tree.root.findByType("DatePicker" as any);
-  act(() => picker.props.setDate(new Date("2026-10-01T00:00:00.000Z")));
+  const picked = new Date("2026-10-01T00:00:00.000Z");
+  act(() => purchaseDate(tree).props.onChange(picked));
+  expect(purchaseDate(tree).props.date).toEqual(picked);
   save(tree);
-  expect(savedPayload().purchaseDate).toBe(
-    JSON.stringify(new Date("2026-10-01T00:00:00.000Z")),
-  );
+  expect(savedPayload().purchaseDate).toBe(JSON.stringify(picked));
+  mockDispatch.mockClear();
+  act(() => purchaseDate(tree).props.onChange(undefined));
+  expect(purchaseDate(tree).props.date).toBeUndefined();
+  save(tree);
+  expect(savedPayload().purchaseDate).toBe("");
+});
+
+test("tapping a color swatch with automatic colors on switches to manual and opens the sheet", () => {
+  const tree = render();
+  expect(autoColors(tree).props.value).toBe(true);
+  expect(tree.root.findByType("ColorModal" as any).props.visible).toBe(false);
+  act(() => labelled(tree, "Primary color")[0].props.onPress());
+  expect(autoColors(tree).props.value).toBe(false);
+  const modal = tree.root.findByType("ColorModal" as any);
+  expect(modal.props.visible).toBe(true);
+  expect(modal.props.colorSelection).toBe(0);
 });
 
 test("editing keeps the name, brand, color setting and purchase date", () => {

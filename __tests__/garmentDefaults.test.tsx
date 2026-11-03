@@ -2,10 +2,15 @@ import React from "react";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
 import { ActiveFilters } from "../components/ActiveFilters";
 import { garmentName } from "../utils/garmentName";
+import { OptionalDateField } from "../components/OptionalDateField";
 import { HomeFilter } from "../utils/filters";
 import type { item } from "../redux/itemsSlice";
 
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
+jest.mock("react-native-modal-datetime-picker", () => "DateTimePickerModal");
+jest.mock("react-redux", () => ({
+  useSelector: (select: Function) => select({ settings: { language: 0 } }),
+}));
 
 test("garment names read Color Brand Type and skip missing parts", () => {
   expect(
@@ -121,4 +126,44 @@ test("no chips when no filter is active", () => {
     );
   });
   expect(tree.toJSON()).toBeNull();
+});
+
+test("the optional date shows a dash until picked, and can be cleared", () => {
+  const onChange = jest.fn();
+  const field = (date?: Date) => {
+    let tree!: ReactTestRenderer;
+    act(() => {
+      tree = create(
+        <OptionalDateField
+          label="Purchase Date"
+          date={date}
+          onChange={onChange}
+        />,
+      );
+    });
+    return tree;
+  };
+  const labels = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAll(
+        n =>
+          n.props.accessibilityRole === "button" &&
+          n.parent?.props.accessibilityRole !== "button",
+      )
+      .map(n => n.props.accessibilityLabel);
+  const empty = field();
+  expect(labels(empty)).toEqual(["Purchase Date: Not set"]);
+  const picker = empty.root.findByType("DateTimePickerModal" as any);
+  act(() => picker.props.onConfirm(new Date(2026, 9, 1)));
+  expect(onChange).toHaveBeenCalledWith(new Date(2026, 9, 1));
+  const set = field(new Date(2026, 9, 1));
+  expect(labels(set)).toEqual(["Purchase Date: 01/10/2026", "Clear date"]);
+  act(() =>
+    set.root
+      .findAll(
+        n => n.props.accessibilityLabel === "Clear date" && n.props.onPress,
+      )[0]
+      .props.onPress(),
+  );
+  expect(onChange).toHaveBeenLastCalledWith(undefined);
 });

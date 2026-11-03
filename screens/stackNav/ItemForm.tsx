@@ -27,7 +27,6 @@ import CustomModal from "../../components/CustomModal";
 import { getPalette } from "@somesoap/react-native-image-palette";
 import { ThemeView } from "../../components/ThemeView";
 import { ThemeText } from "../../components/ThemeText";
-import { DatePicker } from "../../components/DatePicker";
 import { sizeList } from "../../utils/data";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
@@ -38,8 +37,8 @@ import {
 import { clothesList, localization } from "../../utils/localization";
 import { defaultCategories } from "./Category";
 import { ImageViewer } from "../../components/ImageViewer";
+import { OptionalDateField } from "../../components/OptionalDateField";
 import { FormErrors } from "../../components/FormErrors";
-import { ListRow } from "../../components/ListRow";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
 export const ItemForm = ({
   navigation,
@@ -357,7 +356,6 @@ export const ItemForm = ({
       }
     }
   };
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   return (
     <>
       <ConfirmationDialog
@@ -406,104 +404,152 @@ export const ItemForm = ({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <View style={styles.photo}>
+          <View style={styles.topRow}>
             <ImageViewer
+              size={112}
               imageUrl={imageUrl}
               setImageModalVisible={setImageModalVisible}
             />
-          </View>
-          <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
-          {combiningTypesData?.length > 0 && (
-            <View style={{ zIndex: 2 }}>
-              <DropDownPicker
-                open={openType}
-                value={type}
-                items={combiningTypesData}
-                setOpen={setOpenType}
-                setValue={setType}
-                mode="SIMPLE"
-                listMode="MODAL"
-                placeholder={localization.Type[storedSettings.language]}
-                style={pickerStyle}
-                dropDownContainerStyle={pickerStyle}
-                theme={colorScheme}
+            <View style={styles.topFields}>
+              <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
+              <CustomInput
+                mode="outlined"
+                dense
+                label={localization.Brand[storedSettings.language]}
+                value={brand}
+                onChange={text => setBrand(text.nativeEvent.text)}
               />
             </View>
-          )}
-          <CustomInput
-            mode="outlined"
-            label={localization.Brand[storedSettings.language]}
-            value={brand}
-            onChange={text => setBrand(text.nativeEvent.text)}
-          />
-          <ListRow
-            title={
-              localization.Automatic_color_selection[storedSettings.language]
-            }
-            right={<Switch value={isAutoOn} onValueChange={onToggleSwitch} />}
-          />
-
-          {!isAutoOn &&
-            [
-              localization.Primary_color,
-              localization.Secondary_color,
-              localization.Tertiary_color,
-            ]
-              .slice(0, colorSlots)
-              .map((label, index) => (
-                <ListRow
-                  key={index}
-                  title={label[storedSettings.language]}
-                  onPress={() => {
-                    setVisible(true);
-                    setColorSelection(index);
-                  }}
-                  right={
-                    <View style={styles.colorActions}>
-                      <View
-                        style={[
-                          styles.colorSwatch,
-                          {
-                            backgroundColor:
-                              colors[index] || theme.colors.surface,
-                          },
-                        ]}
-                      />
-                      {index > 0 && (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`${
-                            localization.RemoveColor[storedSettings.language]
-                          }: ${label[storedSettings.language]}`}
-                          onPress={() => removeColor(index)}
-                          style={styles.removeColor}
-                        >
-                          <Icon
-                            name="close"
-                            size={20}
-                            color={theme.colors.muted}
-                          />
-                        </Pressable>
-                      )}
-                    </View>
-                  }
+          </View>
+          <View style={styles.pairRow}>
+            {combiningTypesData?.length > 0 && (
+              <View style={styles.pairField}>
+                <DropDownPicker
+                  open={openType}
+                  value={type}
+                  items={combiningTypesData}
+                  setOpen={setOpenType}
+                  setValue={setType}
+                  mode="SIMPLE"
+                  listMode="MODAL"
+                  placeholder={localization.Type[storedSettings.language]}
+                  style={[pickerStyle, styles.picker]}
+                  dropDownContainerStyle={pickerStyle}
+                  theme={colorScheme}
                 />
-              ))}
-          {!isAutoOn && colorSlots < 3 && (
-            <Button
-              mode="text"
-              icon="plus"
-              disabled={!colors[colorSlots - 1]}
-              onPress={() => setColorSlots(colorSlots + 1)}
-            >
-              {colorSlots === 1
-                ? localization.AddSecondaryColor[storedSettings.language]
-                : localization.AddTertiaryColor[storedSettings.language]}
-            </Button>
-          )}
+              </View>
+            )}
+            <View style={styles.pairField}>
+              <OptionalDateField
+                label={localization.Purchase_Date[storedSettings.language]}
+                date={hasPurchaseDate ? purchaseDate : undefined}
+                onChange={date => {
+                  setHasPurchaseDate(Boolean(date));
+                  if (date) {
+                    setPurchaseDate(date);
+                  }
+                }}
+              />
+            </View>
+          </View>
+
+          <View style={styles.colors}>
+            <View style={styles.colorsHeader}>
+              <ThemeText customStyle={styles.sectionLabel}>
+                {localization.Colors[storedSettings.language]}
+              </ThemeText>
+              <ThemeText customStyle={captionText}>
+                {localization.Auto[storedSettings.language]}
+              </ThemeText>
+              <Switch
+                accessibilityLabel={
+                  localization.Automatic_color_selection[
+                    storedSettings.language
+                  ]
+                }
+                value={isAutoOn}
+                onValueChange={onToggleSwitch}
+              />
+            </View>
+            <View style={styles.swatches}>
+              {[
+                localization.Primary_color,
+                localization.Secondary_color,
+                localization.Tertiary_color,
+              ]
+                .slice(0, colorSlots)
+                .map((label, index) => (
+                  <View key={index}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={label[storedSettings.language]}
+                      onPress={() => {
+                        // Choosing a color by hand turns automatic colors off.
+                        setIsAutoOn(false);
+                        setColorSelection(index);
+                        setVisible(true);
+                      }}
+                      style={[
+                        styles.colorSwatch,
+                        {
+                          backgroundColor:
+                            colors[index] || theme.colors.surface,
+                        },
+                      ]}
+                    >
+                      {!colors[index] && (
+                        <Icon
+                          name="color-palette-outline"
+                          size={20}
+                          color={theme.colors.muted}
+                        />
+                      )}
+                    </Pressable>
+                    {index > 0 && !isAutoOn && (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`${
+                          localization.RemoveColor[storedSettings.language]
+                        }: ${label[storedSettings.language]}`}
+                        onPress={() => removeColor(index)}
+                        hitSlop={8}
+                        style={styles.removeColor}
+                      >
+                        <Icon
+                          name="close"
+                          size={14}
+                          color={theme.colors.background}
+                        />
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+              {!isAutoOn && colorSlots < 3 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    colorSlots === 1
+                      ? localization.AddSecondaryColor[storedSettings.language]
+                      : localization.AddTertiaryColor[storedSettings.language]
+                  }
+                  accessibilityState={{ disabled: !colors[colorSlots - 1] }}
+                  disabled={!colors[colorSlots - 1]}
+                  onPress={() => setColorSlots(colorSlots + 1)}
+                  style={[
+                    styles.colorSwatch,
+                    styles.addColor,
+                    !colors[colorSlots - 1] && styles.disabled,
+                  ]}
+                >
+                  <Icon name="add" size={22} color={theme.colors.text} />
+                </Pressable>
+              )}
+            </View>
+          </View>
 
           <CustomInput
             mode="outlined"
+            dense
             textContentType="name"
             label={localization.Name[storedSettings.language]}
             value={displayedName}
@@ -516,6 +562,7 @@ export const ItemForm = ({
           <View style={styles.sizeRow}>
             <CustomInput
               mode="outlined"
+              dense
               style={styles.sizeField}
               label={localization.Quantity[storedSettings.language]}
               value={String(quantity)}
@@ -533,13 +580,14 @@ export const ItemForm = ({
                 mode="SIMPLE"
                 listMode="MODAL"
                 placeholder={localization.Unit[storedSettings.language]}
-                style={[pickerStyle, { marginTop: 5 }]}
+                style={[pickerStyle, styles.picker, { marginTop: 6 }]}
                 dropDownContainerStyle={pickerStyle}
                 theme={colorScheme}
               />
             </View>
             <CustomInput
               mode="outlined"
+              dense
               style={styles.sizeField}
               label={localization.Size[storedSettings.language]}
               value={String(size)}
@@ -547,24 +595,6 @@ export const ItemForm = ({
               maxLength={6}
             />
           </View>
-          <ListRow
-            title={localization.Purchase_Date[storedSettings.language]}
-            right={
-              <Switch
-                value={hasPurchaseDate}
-                onValueChange={setHasPurchaseDate}
-              />
-            }
-          />
-          {hasPurchaseDate && (
-            <DatePicker
-              title={localization.Purchase_Date[storedSettings.language]}
-              date={purchaseDate}
-              isDatePickerVisible={isDatePickerVisible}
-              setDate={setPurchaseDate}
-              setDatePickerVisibility={setDatePickerVisibility}
-            />
-          )}
           <View style={{ zIndex: 1, gap: theme.spacing.xs }}>
             <DropDownPicker
               open={openCollection}
@@ -588,17 +618,25 @@ export const ItemForm = ({
           </View>
 
           <FormErrors errors={errorsList} />
-          <Button mode="contained" onPress={addItemHandler}>
-            {localization.Save[storedSettings.language]}
-          </Button>
-          {editingIndex && (
+          <View style={styles.actions}>
+            {editingIndex && (
+              <Button
+                mode="outlined"
+                style={styles.action}
+                textColor={theme.colors.danger}
+                onPress={() => setDeleteVisible(true)}
+              >
+                {localization.Delete[storedSettings.language]}
+              </Button>
+            )}
             <Button
-              textColor={theme.colors.danger}
-              onPress={() => setDeleteVisible(true)}
+              mode="contained"
+              style={styles.action}
+              onPress={addItemHandler}
             >
-              {localization.Delete[storedSettings.language]}
+              {localization.Save[storedSettings.language]}
             </Button>
-          )}
+          </View>
         </ScrollView>
       </ThemeView>
     </>
@@ -610,7 +648,67 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: theme.spacing.md,
   },
-  photo: {
+  topRow: {
+    flexDirection: "row",
+    gap: theme.spacing.md,
+  },
+  topFields: {
+    flex: 1,
+    justifyContent: "space-between",
+    gap: theme.spacing.sm,
+  },
+  pairRow: {
+    flexDirection: "row",
+    gap: theme.spacing.sm,
+    zIndex: 2,
+  },
+  pairField: {
+    flex: 1,
+  },
+  picker: {
+    minHeight: 48,
+  },
+  colors: {
+    gap: theme.spacing.sm,
+  },
+  colorsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+  },
+  sectionLabel: {
+    flex: 1,
+    fontWeight: "600",
+  },
+  swatches: {
+    flexDirection: "row",
+    gap: theme.spacing.md,
+  },
+  colorSwatch: {
+    width: theme.touch,
+    height: theme.touch,
+    borderRadius: theme.radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.muted,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  addColor: {
+    borderStyle: "dashed",
+    borderWidth: 1,
+  },
+  disabled: {
+    opacity: 0.4,
+  },
+  removeColor: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: theme.colors.muted,
+    justifyContent: "center",
     alignItems: "center",
   },
   sizeRow: {
@@ -622,21 +720,11 @@ const styles = StyleSheet.create({
   sizeField: {
     flex: 1,
   },
-  colorActions: {
+  actions: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
-  removeColor: {
-    width: theme.touch,
-    height: theme.touch,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  colorSwatch: {
-    width: 24,
-    height: 24,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.muted,
+  action: {
+    flex: 1,
   },
 });

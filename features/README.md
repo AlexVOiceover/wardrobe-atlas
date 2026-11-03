@@ -16,3 +16,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [UI polish: colors, bars, names](ui-polish-colors/PLAN.md)
 - [Grid size and picking colors from the photo](grid-size-color-picker/PLAN.md)
 - [Garment form defaults, auto names and visible filters](garment-form-defaults/PLAN.md)
+- [Compact garment form](compact-item-form/PLAN.md)
