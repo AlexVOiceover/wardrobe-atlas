@@ -17,3 +17,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Grid size and picking colors from the photo](grid-size-color-picker/PLAN.md)
 - [Garment form defaults, auto names and visible filters](garment-form-defaults/PLAN.md)
 - [Compact garment form](compact-item-form/PLAN.md)
+- [Quick use log, Closet by category, editable categories](quick-log-and-categories/PLAN.md)

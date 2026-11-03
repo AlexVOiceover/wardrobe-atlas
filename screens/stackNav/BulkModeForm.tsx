@@ -16,9 +16,9 @@ import { FormErrors } from "../../components/FormErrors";
 import { handleNumberChange } from "../../utils/validators";
 import { addItem } from "../../redux/itemsSlice";
 import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
-import { clothesList, localization } from "../../utils/localization";
+import { localization } from "../../utils/localization";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
-import { defaultCategories } from "./Category";
+import { categoryTypes } from "../../utils/categories";
 import { launchImageLibrary, launchCamera } from "react-native-image-picker";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
@@ -50,33 +50,16 @@ export const BulkModeForm = ({
   const collectionState = useSelector(
     (state: RootState) => state.itemsList.collectionTags,
   );
-  const storedCatTypes = useSelector(
-    (state: RootState) => state.CategoryList.CategoryCustomTypes,
-  );
+  const categoryState = useSelector((state: RootState) => state.CategoryList);
   const collectionOptions = getOrderedCollectionTags(
     collectionState,
     getCollectionSortValue(storedSettings.collectionSortValue),
   );
   const language = storedSettings.language ?? 0;
-  const combiningTypesData = useMemo(() => {
-    if (selectedCategory < defaultCategories.length) {
-      return [
-        ...(clothesList[language]?.[selectedCategory] || []),
-        ...(storedCatTypes?.[selectedCategory]?.customTypes || []).map(
-          item => ({
-            label: item.label,
-            value: item.value,
-          }),
-        ),
-      ];
-    }
-    return (
-      storedCatTypes?.[selectedCategory]?.customTypes.map(item => ({
-        label: item.label,
-        value: item.value,
-      })) || []
-    );
-  }, [selectedCategory, language, storedCatTypes]);
+  const combiningTypesData = useMemo(
+    () => categoryTypes(categoryState, selectedCategory, language),
+    [categoryState, selectedCategory, language],
+  );
   const createItemsFromUris = async (uris: string[]) => {
     try {
       for (let i = 0; i < uris.length; i++) {

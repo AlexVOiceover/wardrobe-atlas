@@ -34,8 +34,8 @@ import {
   getCollectionSortValue,
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
-import { clothesList, localization } from "../../utils/localization";
-import { defaultCategories } from "./Category";
+import { localization } from "../../utils/localization";
+import { categoryTypes, visibleCategories } from "../../utils/categories";
 import { ImageViewer } from "../../components/ImageViewer";
 import { OptionalDateField } from "../../components/OptionalDateField";
 import { FormErrors } from "../../components/FormErrors";
@@ -58,9 +58,7 @@ export const ItemForm = ({
     (state: RootState) => state.itemsList.items[currentIndex],
   );
   const storedSettings = useSelector((state: RootState) => state.settings);
-  const storedCatTypes = useSelector(
-    (state: RootState) => state.CategoryList.CategoryCustomTypes,
-  );
+  const categoryState = useSelector((state: RootState) => state.CategoryList);
   const collectionOptions = getOrderedCollectionTags(
     collectionState,
     getCollectionSortValue(storedSettings.collectionSortValue),
@@ -79,6 +77,9 @@ export const ItemForm = ({
   const [nameEdited, setNameEdited] = useState(Boolean(storedItems?.name));
   const [brand, setBrand] = useState(storedItems?.brand ?? "");
   const [collection, setCollection] = useState(storedItems?.collection ?? []);
+  const [category, setCategory] = useState<number>(
+    selectedCategory ?? storedItems?.category ?? -1,
+  );
   const [type, setType] = useState(storedItems ? storedItems.type : "");
   const [quantity, setQuantity] = useState(
     storedItems ? storedItems.quantity : 1,
@@ -122,6 +123,7 @@ export const ItemForm = ({
     index < colorSlots ? color : "",
   );
   const [openType, setOpenType] = useState(false);
+  const [openCategory, setOpenCategory] = useState(false);
   const [openSizeUnit, setOpenSizeUnit] = useState(false);
   const [openCollection, setOpenCollection] = useState(false);
   const [isAutoOn, setIsAutoOn] = useState(
@@ -131,27 +133,23 @@ export const ItemForm = ({
   const dispatch = useDispatch();
   const [visible, setVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
-  const combiningTypesData =
-    (selectedCategory ?? storedItems?.category) < defaultCategories.length
-      ? [
-          ...(clothesList[storedSettings.language]?.[
-            selectedCategory ?? storedItems?.category
-          ] || []),
-          ...(
-            storedCatTypes?.[selectedCategory ?? storedItems?.category]
-              ?.customTypes || []
-          ).map(item => ({
-            label: item.label,
-            value: item.value,
-          })),
-        ]
-      : (
-          storedCatTypes?.[selectedCategory ?? storedItems?.category]
-            ?.customTypes || []
-        ).map(item => ({
-          label: item.label,
-          value: item.value,
-        }));
+  const categoryOptions = visibleCategories(
+    categoryState,
+    storedSettings.language,
+  ).map(option => ({ label: option.label, value: option.index }));
+  // Types belong to a category, so choosing another one clears the type.
+  const chooseCategory = (next: any) => {
+    const value = typeof next === "function" ? next(category) : next;
+    if (typeof value === "number" && value !== category) {
+      setCategory(value);
+      setType("");
+    }
+  };
+  const combiningTypesData = categoryTypes(
+    categoryState,
+    category,
+    storedSettings.language,
+  );
   const generatedName = garmentName({
     primaryColor: colors[0],
     brand,
@@ -194,7 +192,7 @@ export const ItemForm = ({
           name: finalName,
           brand: brand.trim(),
           collection: collection,
-          category: selectedCategory,
+          category: category,
           type: type,
           fit: storedItems?.fit ?? "",
           season: storedItems?.season,
@@ -216,7 +214,7 @@ export const ItemForm = ({
           name: finalName,
           brand: brand.trim(),
           collection: collection,
-          category: selectedCategory,
+          category: category,
           type: type,
           fit: storedItems?.fit ?? "",
           season: storedItems?.season,
@@ -406,7 +404,7 @@ export const ItemForm = ({
         >
           <View style={styles.topRow}>
             <ImageViewer
-              size={112}
+              size={152}
               imageUrl={imageUrl}
               setImageModalVisible={setImageModalVisible}
             />
@@ -419,9 +417,38 @@ export const ItemForm = ({
                 value={brand}
                 onChange={text => setBrand(text.nativeEvent.text)}
               />
+              <OptionalDateField
+                label={localization.Purchase_Date[storedSettings.language]}
+                date={hasPurchaseDate ? purchaseDate : undefined}
+                onChange={date => {
+                  setHasPurchaseDate(Boolean(date));
+                  if (date) {
+                    setPurchaseDate(date);
+                  }
+                }}
+              />
             </View>
           </View>
           <View style={styles.pairRow}>
+            <View style={styles.pairField}>
+              <DropDownPicker
+                open={openCategory}
+                value={
+                  categoryOptions.some(o => o.value === category)
+                    ? category
+                    : null
+                }
+                items={categoryOptions}
+                setOpen={setOpenCategory}
+                setValue={chooseCategory}
+                mode="SIMPLE"
+                listMode="MODAL"
+                placeholder={localization.Category[storedSettings.language]}
+                style={[pickerStyle, styles.picker]}
+                dropDownContainerStyle={pickerStyle}
+                theme={colorScheme}
+              />
+            </View>
             {combiningTypesData?.length > 0 && (
               <View style={styles.pairField}>
                 <DropDownPicker
@@ -439,18 +466,6 @@ export const ItemForm = ({
                 />
               </View>
             )}
-            <View style={styles.pairField}>
-              <OptionalDateField
-                label={localization.Purchase_Date[storedSettings.language]}
-                date={hasPurchaseDate ? purchaseDate : undefined}
-                onChange={date => {
-                  setHasPurchaseDate(Boolean(date));
-                  if (date) {
-                    setPurchaseDate(date);
-                  }
-                }}
-              />
-            </View>
           </View>
 
           <View style={styles.colors}>
@@ -595,7 +610,7 @@ export const ItemForm = ({
               maxLength={6}
             />
           </View>
-          <View style={{ zIndex: 1, gap: theme.spacing.xs }}>
+          <View style={{ zIndex: 1 }}>
             <DropDownPicker
               open={openCollection}
               value={collection}
@@ -612,9 +627,6 @@ export const ItemForm = ({
               style={pickerStyle}
               dropDownContainerStyle={pickerStyle}
             />
-            <ThemeText customStyle={captionText}>
-              {localization.You_can_add[storedSettings.language]}
-            </ThemeText>
           </View>
 
           <FormErrors errors={errorsList} />

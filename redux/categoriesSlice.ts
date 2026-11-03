@@ -1,5 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { customCategorySprite } from "../screens/stackNav/images";
+import { clothesList } from "../utils/localization";
+
+export const BUILT_IN_CATEGORY_COUNT = 4;
+export const typeKey = (category: number, value: string) =>
+  `${category}|${value}`;
 
 export type Category = {
   name: string[];
@@ -13,97 +18,127 @@ export type CategoryCustomType = {
 export type CategoryList = {
   Categories: Category[];
   CategoryCustomTypes: CategoryCustomType[];
+  // Built-in categories and types can't be removed from the code, so
+  // deletions and renames of them are stored here.
+  hiddenCategories: number[];
+  categoryNames: Record<string, string>;
+  hiddenTypes: string[];
+  typeNames: Record<string, string>;
 };
 const initialState: CategoryList = {
   Categories: [],
   CategoryCustomTypes: [],
+  hiddenCategories: [],
+  categoryNames: {},
+  hiddenTypes: [],
+  typeNames: {},
 };
 export { initialState as CurrentCategories };
+const isBuiltIn = (index: number) =>
+  index >= 0 && index < BUILT_IN_CATEGORY_COUNT;
+const customTypesOf = (state: CategoryList, index: number) => {
+  if (!state.CategoryCustomTypes) state.CategoryCustomTypes = [];
+  if (!state.CategoryCustomTypes[index])
+    state.CategoryCustomTypes[index] = { customTypes: [] };
+  return state.CategoryCustomTypes[index].customTypes;
+};
 const categoriesSlice = createSlice({
   name: "CategoryList",
   initialState: initialState,
   reducers: {
     addCategory: (state, action) => {
+      // The caller passes a number no garment uses, so a new category never
+      // picks up the garments of a deleted one.
+      const index = Math.max(
+        action.payload.index ?? 0,
+        BUILT_IN_CATEGORY_COUNT,
+        ...state.Categories.map(category => category.index + 1),
+      );
       state.Categories.push({
         name: [action.payload.name],
         screen: "ItemForm",
         spriteSheet: customCategorySprite,
-        index:
-          state.Categories.length === 0
-            ? 4
-            : state.Categories[state.Categories.length - 1].index + 1,
+        index,
       } as Category);
+      if (state.CategoryCustomTypes?.[index])
+        state.CategoryCustomTypes[index] = { customTypes: [] };
     },
     delCategory: (state, action) => {
-      const categoryIndex = state.Categories.findIndex(
-        (x) => x.index === action.payload.index,
-      );
-      if (categoryIndex < 0) return;
-      try {
-        state.Categories.splice(categoryIndex, 1);
-        state.CategoryCustomTypes.splice(categoryIndex, 1);
-      } catch (e) {
-        console.log("error while deleting Category and its types" + e);
+      const index = action.payload.index;
+      if (isBuiltIn(index)) {
+        if (!state.hiddenCategories.includes(index))
+          state.hiddenCategories.push(index);
+      } else {
+        const position = state.Categories.findIndex(x => x.index === index);
+        if (position < 0) return;
+        state.Categories.splice(position, 1);
       }
+      // Types are stored by category number; clear them in place so other
+      // categories keep theirs.
+      if (state.CategoryCustomTypes?.[index])
+        state.CategoryCustomTypes[index] = { customTypes: [] };
+    },
+    renameCategory: (state, action) => {
+      const { index, name } = action.payload;
+      if (isBuiltIn(index)) {
+        state.categoryNames[String(index)] = name;
+        return;
+      }
+      const category = state.Categories.find(x => x.index === index);
+      if (category) category.name = [name];
     },
     importCategory: (state, action) => {
       state.Categories = action.payload.Categories;
       state.CategoryCustomTypes = action.payload.CategoryCustomTypes;
+      state.hiddenCategories = action.payload.hiddenCategories ?? [];
+      state.categoryNames = action.payload.categoryNames ?? {};
+      state.hiddenTypes = action.payload.hiddenTypes ?? [];
+      state.typeNames = action.payload.typeNames ?? {};
     },
     addTypeToCategory: (state, action) => {
       const { index, typeName } = action.payload;
-      if (!state.CategoryCustomTypes) {
-        state.CategoryCustomTypes = [];
-      }
-      if (!state.CategoryCustomTypes[index]) {
-        state.CategoryCustomTypes[index] = { customTypes: [] };
-      }
-
-      const customT = state.CategoryCustomTypes[index];
-      customT.customTypes.push({
-        label: typeName,
-        value: typeName,
-        icon: 0,
-      });
+      const customTypes = customTypesOf(state, index);
+      // Renames keep the stored value, so a new type may need a fresh one.
+      const taken = new Set([
+        ...(isBuiltIn(index) ? clothesList[0][index] : []).map(x => x.value),
+        ...customTypes.map(x => x.value),
+      ]);
+      let value = typeName;
+      for (let n = 2; taken.has(value); n++) value = `${typeName} (${n})`;
+      customTypes.push({ label: typeName, value, icon: 0 });
     },
-    changeCategoryTypeByIndex: (state, action) => {
-      const customT = state.CategoryCustomTypes[action.payload.index];
-      customT.customTypes[action.payload.typeIndex] = {
-        label: action.payload.typeName,
-        value: action.payload.typeName,
-        icon: customT.customTypes[action.payload.typeIndex].icon ?? 0,
-      };
+    renameType: (state, action) => {
+      const { category, value, name } = action.payload;
+      const custom = state.CategoryCustomTypes?.[category]?.customTypes.find(
+        x => x.value === value,
+      );
+      if (custom) custom.label = name;
+      else state.typeNames[typeKey(category, value)] = name;
     },
-    changeCategoryTypesIcon: (state, action) => {
-      const customT = state.CategoryCustomTypes[action.payload.index];
-      customT.customTypes[action.payload.typeIndex] = {
-        label: customT.customTypes[action.payload.typeIndex]?.label,
-        value: customT.customTypes[action.payload.typeIndex]?.value,
-        icon: action.payload.iconIndex,
-      };
+    deleteType: (state, action) => {
+      const { category, value } = action.payload;
+      const customTypes = state.CategoryCustomTypes?.[category]?.customTypes;
+      const position = customTypes?.findIndex(x => x.value === value) ?? -1;
+      if (customTypes && position >= 0) customTypes.splice(position, 1);
+      else if (!state.hiddenTypes.includes(typeKey(category, value)))
+        state.hiddenTypes.push(typeKey(category, value));
     },
-    delCategoryTypeByIndex: (state, action) => {
-      const customT = state.CategoryCustomTypes[action.payload.index];
-      try {
-        customT.customTypes.splice(action.payload.typeIndex, 1);
-      } catch (e) {
-        console.log("issue at removing catType " + e);
-      }
-    },
-    changeCategoryName: (state, action) => {
-      const category = state.Categories[action.payload.index];
-      category.name = action.payload.newName;
+    restoreDefaultCategories: state => {
+      state.hiddenCategories = [];
+      state.categoryNames = {};
+      state.hiddenTypes = [];
+      state.typeNames = {};
     },
   },
 });
 export const {
   addCategory,
   delCategory,
+  renameCategory,
   importCategory,
   addTypeToCategory,
-  changeCategoryTypeByIndex,
-  changeCategoryTypesIcon,
-  delCategoryTypeByIndex,
-  changeCategoryName,
+  renameType,
+  deleteType,
+  restoreDefaultCategories,
 } = categoriesSlice.actions;
 export default categoriesSlice.reducer;

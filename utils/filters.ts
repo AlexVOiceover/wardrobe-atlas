@@ -117,7 +117,61 @@ export type SortValuesType = {
   types: string[];
   season: string;
   colors: string[];
+  collections?: string[];
+  // Latest use per garment id, needed for the "last used" sorts.
+  lastUsed?: Record<string, string>;
 };
+// Never-used garments go last in both directions.
+function byLastUsed(
+  array: item[],
+  lastUsed: Record<string, string>,
+  direction: 1 | -1,
+) {
+  array.sort((a, b) => {
+    const dateA = lastUsed[a.id];
+    const dateB = lastUsed[b.id];
+    if (!dateA || !dateB) {
+      return (dateA ? 0 : 1) - (dateB ? 0 : 1);
+    }
+    if (dateA === dateB) {
+      return 0;
+    }
+    return (dateA < dateB ? -1 : 1) * direction;
+  });
+}
+function sortAndFilter(filters: SortValuesType, array: item[]) {
+  switch (filters.sortValue) {
+    case "NA":
+      nameAsc(array, "name");
+      break;
+    case "ND":
+      nameDesc(array, "name");
+      break;
+    case "PDA":
+      byPurchaseDate(array, 1);
+      break;
+    case "PDD":
+      byPurchaseDate(array, -1);
+      break;
+    case "LUA":
+      byLastUsed(array, filters.lastUsed ?? {}, 1);
+      break;
+    case "LUD":
+      byLastUsed(array, filters.lastUsed ?? {}, -1);
+      break;
+  }
+  const collections = filters.collections ?? [];
+  return array.filter(
+    garment =>
+      (filters.categories.length === 0 ||
+        filters.categories.includes(garment.category)) &&
+      (filters.types.length === 0 || filters.types.includes(garment.type)) &&
+      (filters.season === "" || filters.season === garment.season) &&
+      (filters.colors.length === 0 || matchesColors(garment, filters.colors)) &&
+      (collections.length === 0 ||
+        collections.some(value => garment.collection?.includes(value))),
+  );
+}
 export function HomeFilter(
   filters: SortValuesType,
   array: item[][],
@@ -133,90 +187,9 @@ export function HomeFilter(
   array: item[] | item[][],
   is2D: boolean,
 ) {
-  if (is2D) {
-    let newArray = array as item[][];
-    for (let i in array) {
-      switch (filters.sortValue) {
-        case "LA":
-          newArray = array as item[][];
-          break;
-        case "NA":
-          nameAsc(newArray[i], "name");
-          break;
-        case "ND":
-          nameDesc(newArray[i], "name");
-          break;
-        case "PDA":
-          byPurchaseDate(newArray[i], 1);
-          break;
-        case "PDD":
-          byPurchaseDate(newArray[i], -1);
-          break;
-      }
-
-      if (filters.categories.length > 0) {
-        newArray[i] = newArray[i].filter(garment =>
-          filters.categories.includes(garment.category),
-        );
-      }
-
-      if (filters.types.length > 0) {
-        newArray[i] = newArray[i].filter(garment =>
-          filters.types.includes(garment.type),
-        );
-      }
-      if (filters.season !== "") {
-        newArray[i] = newArray[i].filter(
-          garment => filters.season === garment.season,
-        );
-      }
-      if (filters.colors.length > 0) {
-        newArray[i] = newArray[i].filter(garment =>
-          matchesColors(garment, filters.colors),
-        );
-      }
-    }
-    return newArray;
-  } else {
-    let newArray = array as item[];
-    switch (filters.sortValue) {
-      case "LA":
-        break;
-      case "NA":
-        nameAsc(newArray, "name");
-        break;
-      case "ND":
-        nameDesc(newArray, "name");
-        break;
-      case "PDA":
-        byPurchaseDate(newArray, 1);
-        break;
-      case "PDD":
-        byPurchaseDate(newArray, -1);
-        break;
-    }
-
-    if (filters.categories.length > 0) {
-      newArray = newArray.filter(garment =>
-        filters.categories.includes(garment.category),
-      );
-    }
-
-    if (filters.types.length > 0) {
-      newArray = newArray.filter(garment =>
-        filters.types.includes(garment.type),
-      );
-    }
-    if (filters.season !== "") {
-      newArray = newArray.filter(garment => filters.season === garment.season);
-    }
-    if (filters.colors.length > 0) {
-      newArray = newArray.filter(garment =>
-        matchesColors(garment, filters.colors),
-      );
-    }
-    return newArray;
-  }
+  return is2D
+    ? (array as item[][]).map(group => sortAndFilter(filters, group))
+    : sortAndFilter(filters, array as item[]);
 }
 
 export function activeFilterCount(filters: {
@@ -224,12 +197,14 @@ export function activeFilterCount(filters: {
   categoriesFilter: unknown[];
   TypeFilter: unknown[];
   colorFilter: unknown[];
+  collectionFilter?: unknown[];
 }) {
   return (
     (filters.seasonFilter ? 1 : 0) +
     filters.categoriesFilter.length +
     filters.TypeFilter.length +
-    filters.colorFilter.length
+    filters.colorFilter.length +
+    (filters.collectionFilter?.length ?? 0)
   );
 }
 export function filterCollectionsBySearch(array: item[][], search: string) {

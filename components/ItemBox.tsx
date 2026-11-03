@@ -24,15 +24,25 @@ export const garmentSummary = (garment: item): ItemSummaryProps => ({
   tertiary: garment.tertiaryColor || "",
   logs: garment.logIds || [],
 });
-export const ItemBox = (props: ItemSummaryProps) => {
+/** A garment card; without handlers a tap opens the garment form. */
+export const ItemBox = ({
+  onPress,
+  onLongPress,
+  ...props
+}: ItemSummaryProps & {
+  onPress?: () => void;
+  onLongPress?: () => void;
+}) => {
   const navigation = useNavigation<any>();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={props.name}
-      onPress={() =>
-        navigation.navigate("ItemForm", { editingIndex: props.id })
+      onPress={
+        onPress ??
+        (() => navigation.navigate("ItemForm", { editingIndex: props.id }))
       }
+      onLongPress={onLongPress}
     >
       <ItemSummary {...props} />
     </Pressable>

@@ -9,22 +9,13 @@ import { PageHeader } from "../../components/PageHeader";
 import { ListRow } from "../../components/ListRow";
 import { localization } from "../../utils/localization";
 import { theme } from "../../utils/theme";
-export const defaultCategories = [
-  localization.Tops,
-  localization.Bottoms,
-  localization.Shoes,
-  localization.Accessories,
-].map((name, index) => ({
-  name,
-  index,
-  screen: "ItemForm",
-  spriteSheet: null,
-}));
+import { visibleCategories } from "../../utils/categories";
 export function Category() {
   const navigation = useNavigation<any>();
-  const categories = useSelector((s: RootState) => s.CategoryList.Categories);
+  const categoryState = useSelector((s: RootState) => s.CategoryList);
   const { language } = useSelector((s: RootState) => s.settings);
   const [bulk, setBulk] = useState(false);
+  const categories = visibleCategories(categoryState, language);
   return (
     <ThemeView>
       <PageHeader title={localization.ChooseCategory[language]} />
@@ -35,12 +26,18 @@ export function Category() {
           title={localization.addMultiItems[language]}
           right={<Switch value={bulk} onValueChange={setBulk} />}
         />
-        {[...defaultCategories, ...categories].map(item => (
+        {categories.length === 0 && (
+          <ListRow
+            title={localization.NoCategories[language]}
+            onPress={() => navigation.navigate("ManageCategories")}
+          />
+        )}
+        {categories.map(item => (
           <ListRow
             key={item.index}
-            title={item.name[language] || item.name[0]}
+            title={item.label}
             onPress={() =>
-              navigation.navigate(bulk ? "BulkModeForm" : item.screen, {
+              navigation.navigate(bulk ? "BulkModeForm" : "ItemForm", {
                 selectedCategory: item.index,
               })
             }

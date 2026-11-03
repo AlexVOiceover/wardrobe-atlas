@@ -47,9 +47,6 @@ jest.mock("../components/OptionalDateField", () => ({
   OptionalDateField: "OptionalDateField",
 }));
 jest.mock("../components/ImageViewer", () => ({ ImageViewer: "ImageViewer" }));
-jest.mock("../screens/stackNav/Category", () => ({
-  defaultCategories: [{ index: 0 }],
-}));
 
 beforeEach(() => {
   mockDispatch.mockClear();
@@ -441,4 +438,39 @@ test("editing keeps the name, brand, color setting and purchase date", () => {
       purchaseDate: JSON.stringify(new Date("2025-01-02T00:00:00.000Z")),
     }),
   );
+});
+
+test("the category picker moves a garment and clears its type; no collection hint", () => {
+  mockState.itemsList.items = [
+    { id: "shirt", name: "Shirt", type: "Shirt", category: 0, collection: [] },
+  ];
+  const tree = render("shirt");
+  const dropdown = (placeholder: string) =>
+    tree.root
+      .findAllByType("Dropdown" as any)
+      .find(d => d.props.placeholder === placeholder)!;
+  expect(dropdown("Category").props.value).toBe(0);
+  expect(dropdown("Category").props.items.map((i: any) => i.label)).toEqual([
+    "Tops",
+    "Bottoms",
+    "Shoes",
+    "Accessories",
+  ]);
+  act(() => dropdown("Category").props.setValue(() => 2));
+  expect(dropdown("Category").props.value).toBe(2);
+  expect(dropdown("Type").props.value).toBe("");
+  act(() => dropdown("Type").props.setValue("Sneakers"));
+  act(() =>
+    tree.root
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === "Save")!
+      .props.onPress(),
+  );
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/updateItem",
+      payload: expect.objectContaining({ category: 2, type: "Sneakers" }),
+    }),
+  );
+  expect(JSON.stringify(tree.toJSON())).not.toContain("under a collection");
 });

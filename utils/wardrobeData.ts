@@ -1,5 +1,8 @@
 import type { RootState } from "../redux/store";
-import { normalizeGridColumns } from "../redux/settingsSlice";
+import {
+  normalizeCollapsedSections,
+  normalizeGridColumns,
+} from "../redux/settingsSlice";
 import type { item, logsType, CollectionTag } from "../redux/itemsSlice";
 import type { Category, CategoryCustomType } from "../redux/categoriesSlice";
 import {
@@ -14,6 +17,14 @@ const record = (value: unknown): Record<string, unknown> =>
     ? (value as Record<string, unknown>)
     : {};
 const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+// Renames of built-in categories and types: non-empty strings only.
+const renames = (value: unknown) =>
+  Object.fromEntries(
+    Object.entries(record(value)).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1].trim().length > 0,
+    ),
+  );
 function pick<T>(value: unknown, keys: readonly (keyof T)[]): T {
   const source = record(value);
   return Object.fromEntries(
@@ -46,6 +57,7 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
           ? settings.collectionSortValue
           : COLLECTION_SORT_VALUES.CUSTOM,
       gridColumns: normalizeGridColumns(settings.gridColumns),
+      collapsedSections: normalizeCollapsedSections(settings.collapsedSections),
       lastWardrobeId:
         validWardrobeId(
           wardrobes,
@@ -131,6 +143,14 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
           ]),
         ),
       })),
+      hiddenCategories: list(categories.hiddenCategories).filter(
+        (index): index is number => Number.isInteger(index),
+      ),
+      categoryNames: renames(categories.categoryNames),
+      hiddenTypes: list(categories.hiddenTypes).filter(
+        (key): key is string => typeof key === "string",
+      ),
+      typeNames: renames(categories.typeNames),
     },
   };
 }

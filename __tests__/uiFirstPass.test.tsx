@@ -17,12 +17,22 @@ const mockState: any = {
   settings: { language: 1 },
   CategoryList: {
     Categories: [{ index: 4, name: ["Hats"], screen: "ItemForm" }],
+    CategoryCustomTypes: [],
+  },
+  itemsList: {
+    items: [
+      { id: "a", category: 4 },
+      { id: "b", category: 4 },
+      { id: "c", category: 0 },
+    ],
   },
 };
 jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select(mockState),
   useDispatch: () => mockDispatch,
 }));
+jest.mock("nanoid", () => ({ nanoid: () => "new" }));
+jest.mock("react-native-get-random-values", () => ({}));
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => ({ navigate: mockNavigate, goBack: jest.fn() }),
 }));
@@ -77,21 +87,22 @@ test("More reaches every management screen", () => {
   ]);
 });
 
-test("custom categories are only deleted after confirmation; built-in ones cannot be", () => {
+test("any category is deleted only after confirmation, moving its garments to Other", () => {
   const tree = render(<ManageCategories />);
-  expect(
-    tree.root.findAll(x => x.props.accessibilityLabel === "Borrar: Tops"),
-  ).toHaveLength(0);
   const dialog = () => tree.root.findByType("ConfirmationDialog" as any);
   expect(dialog().props.visible).toBe(false);
   act(() => pressable(tree, "Borrar: Hats").props.onPress());
   expect(dialog().props.visible).toBe(true);
+  expect(dialog().props.message).toContain("2 prendas pasarán a Otros.");
   expect(mockDispatch).not.toHaveBeenCalled();
   act(() => dialog().props.onConfirm());
-  expect(mockDispatch).toHaveBeenCalledWith({
-    type: "CategoryList/delCategory",
-    payload: { index: 4 },
-  });
+  expect(mockDispatch.mock.calls).toEqual([
+    [{ type: "CategoryList/delCategory", payload: { index: 4 } }],
+    [{ type: "itemsList/clearGarmentCategory", payload: { category: 4 } }],
+  ]);
+  // Built-in categories can be deleted too
+  act(() => pressable(tree, "Borrar: Tops").props.onPress());
+  expect(dialog().props.message).toContain("1 prenda pasará a Otros.");
 });
 
 test("Reset clears sort, category, type, season and color together", () => {
@@ -101,6 +112,7 @@ test("Reset clears sort, category, type, season and color together", () => {
     setCategoriesFilter: jest.fn(),
     setTypeFilter: jest.fn(),
     setColorFilter: jest.fn(),
+    setCollectionFilter: jest.fn(),
   };
   resetHomeFilters(actions);
   expect(actions.setSortValue).toHaveBeenCalledWith("LA");
@@ -108,6 +120,7 @@ test("Reset clears sort, category, type, season and color together", () => {
   expect(actions.setCategoriesFilter).toHaveBeenCalledWith([]);
   expect(actions.setTypeFilter).toHaveBeenCalledWith([]);
   expect(actions.setColorFilter).toHaveBeenCalledWith([]);
+  expect(actions.setCollectionFilter).toHaveBeenCalledWith([]);
 });
 
 test("filter panel keeps one Reset, translates chips and shows types for a single category", () => {
@@ -120,6 +133,7 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
         categoriesFilter: [0],
         TypeFilter: [],
         colorFilter: [],
+        collectionFilter: [],
       }}
       filterActions={
         {
@@ -128,6 +142,7 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
           setCategoriesFilter,
           setTypeFilter: jest.fn(),
           setColorFilter: jest.fn(),
+          setCollectionFilter: jest.fn(),
         } as any
       }
       CategoriesList={[
@@ -135,13 +150,17 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
         { label: "Zapatos", value: 2 },
       ]}
       language={1}
-      storedCatTypes={[]}
+      categoryState={mockState.CategoryList}
+      collections={[{ label: "Trabajo", value: "work" }]}
     />,
   );
   expect(tree.root.findAllByType("Button" as any)).toHaveLength(1);
   expect(pressable(tree, "Verano")).toBeTruthy();
   expect(pressable(tree, "Camisa")).toBeTruthy();
   expect(pressable(tree, "Azul")).toBeTruthy();
+  expect(pressable(tree, "Trabajo")).toBeTruthy();
+  expect(pressable(tree, "Último uso ↑")).toBeTruthy();
+  expect(pressable(tree, "Último uso ↓")).toBeTruthy();
   act(() => pressable(tree, "Zapatos").props.onPress());
   expect(setCategoriesFilter).toHaveBeenCalledWith([0, 2]);
 });
