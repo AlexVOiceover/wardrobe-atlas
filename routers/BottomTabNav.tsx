@@ -16,6 +16,9 @@ export default function MyTabs() {
   const { language } = useSelector((s: RootState) => s.settings);
   return (
     <Tab.Navigator
+      // The root SafeAreaView in App.tsx already pads above the system
+      // navigation bar; adding the inset again leaves a gap under the tabs.
+      safeAreaInsets={{ bottom: 0 }}
       screenOptions={{
         headerShown: false,
         animation: "none",
