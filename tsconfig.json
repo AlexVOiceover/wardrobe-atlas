@@ -26,49 +26,9 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    // ? Babel Plugin Module Resolver
-    "baseUrl": "./src",
-    "paths": {
-      "@shared-components/*": [
-        "./shared/components/*"
-      ],
-      "@shared-constants": [
-        "./shared/constants"
-      ],
-      "@font-size": [
-        "./shared/theme/font-size"
-      ],
-      "@api": [
-        "./services/api/index"
-      ],
-      "@fonts": [
-        "./shared/theme/fonts"
-      ],
-      "@colors": [
-        "./shared/theme/colors"
-      ],
-      "@theme/*": [
-        "./shared/theme/*"
-      ],
-      "@services/*": [
-        "./services/*"
-      ],
-      "@screens/*": [
-        "./screens/*"
-      ],
-      "@utils": [
-        "./utils/"
-      ],
-      "@assets": [
-        "./assets/"
-      ],
-      "@local-storage": [
-        "./services/local-storage"
-      ]
-    }
+    "forceConsistentCasingInFileNames": true
   },
-  "extends": "@react-native/typescript-config",
+  "extends": "@react-native/typescript-config/tsconfig.json",
   "include": [
     "**/*.ts",
     "**/*.tsx"
