@@ -32,6 +32,7 @@ import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { EmptyState } from "../../components/EmptyState";
 import { cardDensity, GarmentGrid } from "../../components/GarmentGrid";
 import { FilterChip } from "../../components/FilterChip";
+import { ActiveFilters } from "../../components/ActiveFilters";
 import {
   GRID_COLUMN_OPTIONS,
   normalizeGridColumns,
@@ -213,6 +214,14 @@ export function HomeBottom() {
         search={search}
       />
 
+      <ActiveFilters
+        filterState={filterState}
+        filterActions={filterActions}
+        CategoriesList={CategoriesList}
+        storedCatTypes={storedCatTypes}
+        language={language}
+      />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
@@ -267,6 +276,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing.md,
+    paddingTop: theme.spacing.md,
     paddingBottom: ADD_BUTTON_CLEARANCE,
   },
   chips: {
