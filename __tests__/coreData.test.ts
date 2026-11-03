@@ -12,6 +12,7 @@ import {
 import { languagesList, seasonList } from "../utils/data";
 import settingsReducer, {
   importSettings,
+  setGridColumns,
   userNameSetter,
 } from "../redux/settingsSlice";
 import itemsReducer, { addItem, addLog, deleteLog } from "../redux/itemsSlice";
@@ -91,9 +92,38 @@ test("normalization keeps wardrobe content and only the current schema", () => {
     "appVer",
     "collectionSortValue",
     "enableHeatMap",
+    "gridColumns",
     "language",
     "name",
   ]);
+  // Older stored settings and backups have no grid size
+  expect(mockWardrobe.settings.gridColumns).toBe(2);
+});
+
+test.each([
+  [4, 4],
+  [5, 5],
+  [0, 2],
+  [6, 2],
+  ["3", 2],
+])("stored grid size %p loads as %p", (stored, expected) => {
+  const state = normalizeWardrobe({
+    ...previous,
+    settings: { ...previous.settings, gridColumns: stored },
+  });
+  expect(state.settings.gridColumns).toBe(expected);
+  expect(
+    settingsReducer(undefined, importSettings(state.settings)).gridColumns,
+  ).toBe(expected);
+});
+
+test("grid size changes are kept within 1 to 5 columns", () => {
+  let state = settingsReducer(undefined, { type: "init" });
+  expect(state.gridColumns).toBe(2);
+  state = settingsReducer(state, setGridColumns({ gridColumns: 5 }));
+  expect(state.gridColumns).toBe(5);
+  state = settingsReducer(state, setGridColumns({ gridColumns: 9 }));
+  expect(state.gridColumns).toBe(2);
 });
 
 test.each([0, 1, 3, 99])(

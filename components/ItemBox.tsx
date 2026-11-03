@@ -2,6 +2,7 @@ import { Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { item } from "../redux/itemsSlice";
 import { ItemSummary } from "./ItemSummary";
+import type { CardDensity } from "./GarmentGrid";
 export type ItemSummaryProps = {
   image: string;
   name: string;
@@ -11,6 +12,7 @@ export type ItemSummaryProps = {
   type: string;
   id: string;
   logs?: string[];
+  density?: CardDensity;
 };
 export const garmentSummary = (garment: item): ItemSummaryProps => ({
   id: garment.id,

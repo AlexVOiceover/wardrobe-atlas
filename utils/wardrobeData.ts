@@ -1,4 +1,5 @@
 import type { RootState } from "../redux/store";
+import { normalizeGridColumns } from "../redux/settingsSlice";
 import type { item, logsType, CollectionTag } from "../redux/itemsSlice";
 import type { Category, CategoryCustomType } from "../redux/categoriesSlice";
 import {
@@ -44,6 +45,7 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
         settings.collectionSortValue === COLLECTION_SORT_VALUES.NAME_DESC
           ? settings.collectionSortValue
           : COLLECTION_SORT_VALUES.CUSTOM,
+      gridColumns: normalizeGridColumns(settings.gridColumns),
     },
     itemsList: {
       wardrobes,

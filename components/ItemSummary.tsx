@@ -15,6 +15,7 @@ export function ItemSummary({
   secondary,
   tertiary,
   logs,
+  density = "full",
 }: ItemSummaryProps) {
   const recency = useHeatmap(logs || []);
   const language = useSelector((s: RootState) => s.settings.language);
@@ -33,29 +34,38 @@ export function ItemSummary({
           <Icon name="shirt-outline" size={32} color={theme.colors.muted} />
         </View>
       )}
-      <ThemeText numberOfLines={2} customStyle={styles.name}>
-        {name}
-      </ThemeText>
-      {!!type && (
-        <ThemeText numberOfLines={1} customStyle={captionText}>
-          {type}
+      {density !== "photo" && (
+        <ThemeText
+          numberOfLines={density === "full" ? 2 : 1}
+          customStyle={[styles.name, density === "name" && styles.smallName]}
+        >
+          {name}
         </ThemeText>
       )}
-      <View style={styles.meta}>
-        {swatches.map((color, index) => (
-          <View
-            key={index}
-            style={[styles.swatch, { backgroundColor: color }]}
-          />
-        ))}
-        {logs && (
-          <ThemeText customStyle={captionText}>
-            {localization.Uses[language]}: {logs.length}
-          </ThemeText>
-        )}
-      </View>
-      {showRecency && logs && (
-        <ThemeText customStyle={captionText}>{recency}</ThemeText>
+      {density === "full" && (
+        <>
+          {!!type && (
+            <ThemeText numberOfLines={1} customStyle={captionText}>
+              {type}
+            </ThemeText>
+          )}
+          <View style={styles.meta}>
+            {swatches.map((color, index) => (
+              <View
+                key={index}
+                style={[styles.swatch, { backgroundColor: color }]}
+              />
+            ))}
+            {logs && (
+              <ThemeText customStyle={captionText}>
+                {localization.Uses[language]}: {logs.length}
+              </ThemeText>
+            )}
+          </View>
+          {showRecency && logs && (
+            <ThemeText customStyle={captionText}>{recency}</ThemeText>
+          )}
+        </>
       )}
     </View>
   );
@@ -77,6 +87,9 @@ const styles = StyleSheet.create({
   },
   name: {
     fontWeight: "500",
+  },
+  smallName: {
+    fontSize: theme.type.caption,
   },
   meta: {
     flexDirection: "row",

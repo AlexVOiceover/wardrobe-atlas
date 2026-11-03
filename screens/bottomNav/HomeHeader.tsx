@@ -9,6 +9,7 @@ type Props = {
   wardrobe?: string;
   onWardrobeChange: (id?: string) => void;
   filterCount: number;
+  openGridSize: () => void;
   handleOpenDrawer: () => void;
   setIsSearchVisible: (v: boolean) => void;
   isSearchVisible: boolean;
@@ -20,6 +21,7 @@ const HomeHeader = ({
   wardrobe,
   onWardrobeChange,
   filterCount,
+  openGridSize,
   handleOpenDrawer,
   setIsSearchVisible,
   isSearchVisible,
@@ -33,6 +35,11 @@ const HomeHeader = ({
         compact
         value={wardrobe}
         onChange={onWardrobeChange}
+      />
+      <HeaderIcon
+        name="grid-outline"
+        label={localization.GridSize[language]}
+        onPress={openGridSize}
       />
       <HeaderIcon
         name="search-outline"

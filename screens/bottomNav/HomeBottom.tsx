@@ -1,10 +1,10 @@
 import { useWardrobeView } from "../../components/WardrobeSelector";
 import { filterByWardrobe } from "../../utils/wardrobes";
 import { localization as l } from "../../utils/localization";
-import { ScrollView, Keyboard, StyleSheet } from "react-native";
+import { ScrollView, Keyboard, StyleSheet, View } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import React, { useEffect, useState, useMemo } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { ItemBox, garmentSummary } from "../../components/ItemBox";
 import { item } from "../../redux/itemsSlice";
@@ -30,11 +30,14 @@ import { defaultCategories } from "../stackNav/Category";
 import { CollectionContainer } from "../../components/CollectionContainer";
 import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { EmptyState } from "../../components/EmptyState";
-import { GarmentGrid } from "../../components/GarmentGrid";
+import { cardDensity, GarmentGrid } from "../../components/GarmentGrid";
+import { FilterChip } from "../../components/FilterChip";
+import {
+  GRID_COLUMN_OPTIONS,
+  normalizeGridColumns,
+  setGridColumns,
+} from "../../redux/settingsSlice";
 import { theme } from "../../utils/theme";
-const renderGarment = (garment: item) => (
-  <ItemBox {...garmentSummary(garment)} />
-);
 export function HomeBottom() {
   //this is the main page
   const navigation = useNavigation<any>();
@@ -82,6 +85,13 @@ export function HomeBottom() {
       value: cat.index,
     }));
   const [isOpen, setIsOpen] = useState(false);
+  const [isGridSizeOpen, setIsGridSizeOpen] = useState(false);
+  const dispatch = useDispatch();
+  const columns = normalizeGridColumns(storedSettings.gridColumns);
+  const density = cardDensity(columns);
+  const renderGarment = (garment: item) => (
+    <ItemBox {...garmentSummary(garment)} density={density} />
+  );
   const handleOpenDrawer = () => {
     Keyboard.dismiss();
     setIsOpen(prev => !prev);
@@ -167,11 +177,35 @@ export function HomeBottom() {
         />
       </BottomSheet>
 
+      <BottomSheet
+        isOpen={isGridSizeOpen}
+        setIsOpen={setIsGridSizeOpen}
+        title={l.GridSize[language]}
+      >
+        <View style={styles.chips}>
+          {GRID_COLUMN_OPTIONS.map(option => (
+            <FilterChip
+              key={option}
+              label={l.Columns[language].replace("{n}", String(option))}
+              selected={option === columns}
+              onPress={() => {
+                dispatch(setGridColumns({ gridColumns: option }));
+                setIsGridSizeOpen(false);
+              }}
+            />
+          ))}
+        </View>
+      </BottomSheet>
+
       <HomeHeader
         language={language}
         wardrobe={activeWardrobe}
         onWardrobeChange={select}
         filterCount={filterCount}
+        openGridSize={() => {
+          Keyboard.dismiss();
+          setIsGridSizeOpen(true);
+        }}
         handleOpenDrawer={handleOpenDrawer}
         setIsSearchVisible={setIsSearchVisible}
         isSearchVisible={isSearchVisible}
@@ -211,6 +245,7 @@ export function HomeBottom() {
               <GarmentGrid
                 garments={collectionItems}
                 renderGarment={renderGarment}
+                columns={columns}
               />
             </CollectionContainer>
           );
@@ -220,6 +255,7 @@ export function HomeBottom() {
           <GarmentGrid
             garments={filteredData.nonCollectnized}
             renderGarment={renderGarment}
+            columns={columns}
           />
         )}
       </ScrollView>
@@ -232,5 +268,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: theme.spacing.md,
     paddingBottom: ADD_BUTTON_CLEARANCE,
+  },
+  chips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
   },
 });
