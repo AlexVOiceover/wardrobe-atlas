@@ -27,7 +27,8 @@ import CustomModal from "../../components/CustomModal";
 import { getPalette } from "@somesoap/react-native-image-palette";
 import { ThemeView } from "../../components/ThemeView";
 import { ThemeText } from "../../components/ThemeText";
-import { sizeList } from "../../utils/data";
+import { SEASONS, seasonList, sizeList } from "../../utils/data";
+import { FilterChip } from "../../components/FilterChip";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
 import {
@@ -81,6 +82,16 @@ export const ItemForm = ({
     selectedCategory ?? storedItems?.category ?? -1,
   );
   const [type, setType] = useState(storedItems ? storedItems.type : "");
+  const [seasons, setSeasons] = useState<string[]>(
+    storedItems?.seasons ?? [...SEASONS],
+  );
+  const toggleSeason = (season: string) =>
+    setSeasons(current =>
+      // Kept in calendar order whatever the tapping order.
+      SEASONS.filter(value =>
+        value === season ? !current.includes(value) : current.includes(value),
+      ),
+    );
   const [quantity, setQuantity] = useState(
     storedItems ? storedItems.quantity : 1,
   );
@@ -195,7 +206,7 @@ export const ItemForm = ({
           category: category,
           type: type,
           fit: storedItems?.fit ?? "",
-          season: storedItems?.season,
+          seasons: seasons,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -217,7 +228,7 @@ export const ItemForm = ({
           category: category,
           type: type,
           fit: storedItems?.fit ?? "",
-          season: storedItems?.season,
+          seasons: seasons,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -468,6 +479,21 @@ export const ItemForm = ({
             )}
           </View>
 
+          <View style={styles.seasons}>
+            <ThemeText customStyle={styles.sectionLabel}>
+              {localization.Seasons[storedSettings.language]}
+            </ThemeText>
+            <View style={styles.seasonChips}>
+              {(seasonList[storedSettings.language] ?? []).map(option => (
+                <FilterChip
+                  key={option.value}
+                  label={option.label}
+                  selected={seasons.includes(option.value)}
+                  onPress={() => toggleSeason(option.value)}
+                />
+              ))}
+            </View>
+          </View>
           <View style={styles.colors}>
             <View style={styles.colorsHeader}>
               <ThemeText customStyle={styles.sectionLabel}>
@@ -681,6 +707,14 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   colors: {
+    gap: theme.spacing.sm,
+  },
+  seasons: {
+    gap: theme.spacing.xs,
+  },
+  seasonChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: theme.spacing.sm,
   },
   colorsHeader: {

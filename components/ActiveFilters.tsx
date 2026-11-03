@@ -59,18 +59,16 @@ export const ActiveFilters = ({
           prev.filter(current => current !== value),
         ),
     })),
-    ...(seasonFilter
-      ? [
-          {
-            key: "season",
-            label:
-              seasonList[language]?.find(
-                option => option.value === seasonFilter,
-              )?.label ?? seasonFilter,
-            remove: () => filterActions.setSeasonFilter(""),
-          },
-        ]
-      : []),
+    ...seasonFilter.map(value => ({
+      key: `season-${value}`,
+      label:
+        seasonList[language]?.find(option => option.value === value)?.label ??
+        value,
+      remove: () =>
+        filterActions.setSeasonFilter(prev =>
+          prev.filter(current => current !== value),
+        ),
+    })),
     ...colorFilter.map(value => ({
       key: `color-${value}`,
       label: colorNames[language]?.[value] ?? value,
@@ -118,7 +116,7 @@ export const ActiveFilters = ({
         onPress={() => {
           filterActions.setCategoriesFilter([]);
           filterActions.setTypeFilter([]);
-          filterActions.setSeasonFilter("");
+          filterActions.setSeasonFilter([]);
           filterActions.setColorFilter([]);
           filterActions.setCollectionFilter([]);
         }}

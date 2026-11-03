@@ -111,7 +111,7 @@ test("simplified form keeps colors and Save inside a bounded scroll area with us
   expect(labelled(tree, "Secondary color")).toHaveLength(0);
 });
 
-test("new item saves typed name, chosen type and wardrobe without generated names or fit/season selection", () => {
+test("new item saves typed name, chosen type and wardrobe without generated names or fit selection, with all seasons", () => {
   const tree = render();
   const name = tree.root
     .findAllByType("CustomInput" as any)
@@ -136,7 +136,7 @@ test("new item saves typed name, chosen type and wardrobe without generated name
         name: "My blue shirt",
         wardrobeId: "home",
         fit: "",
-        season: undefined,
+        seasons: ["Spring", "Summer", "Fall", "Winter"],
       }),
     }),
   );
@@ -167,14 +167,14 @@ test("long garment names save without a length limit", () => {
   );
 });
 
-test("editing preserves existing fit and season while keeping Delete reachable in the scroll area", () => {
+test("editing preserves existing fit and seasons while keeping Delete reachable in the scroll area", () => {
   mockState.itemsList.items = [
     {
       id: "shirt",
       name: "Shirt",
       type: "T-Shirt",
       fit: "Slim Fit",
-      season: "Winter",
+      seasons: ["Winter"],
       quantity: 1,
       size: 10,
       sizeUnit: "UK",
@@ -202,7 +202,7 @@ test("editing preserves existing fit and season while keeping Delete reachable i
       payload: expect.objectContaining({
         id: "shirt",
         fit: "Slim Fit",
-        season: "Winter",
+        seasons: ["Winter"],
         image: "photo",
       }),
     }),
@@ -473,4 +473,37 @@ test("the category picker moves a garment and clears its type; no collection hin
     }),
   );
   expect(JSON.stringify(tree.toJSON())).not.toContain("under a collection");
+});
+
+test("season chips start all on and save only the chosen seasons", () => {
+  const tree = render();
+  const chip = (label: string) =>
+    tree.root.find(
+      n => n.props.accessibilityLabel === label && !!n.props.onPress,
+    );
+  ["Spring", "Summer", "Fall", "Winter"].forEach(label =>
+    expect(chip(label).props.accessibilityState.selected).toBe(true),
+  );
+  act(() => chip("Summer").props.onPress());
+  act(() => chip("Spring").props.onPress());
+  act(() => chip("Spring").props.onPress());
+  expect(chip("Summer").props.accessibilityState.selected).toBe(false);
+  const type = tree.root
+    .findAllByType("Dropdown" as any)
+    .find(d => d.props.placeholder === "Type")!;
+  act(() => type.props.setValue(type.props.items[0].value));
+  act(() =>
+    tree.root
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === "Save")!
+      .props.onPress(),
+  );
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/addItem",
+      payload: expect.objectContaining({
+        seasons: ["Spring", "Fall", "Winter"],
+      }),
+    }),
+  );
 });

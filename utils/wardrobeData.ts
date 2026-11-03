@@ -11,6 +11,7 @@ import {
 } from "./collectionOrder";
 
 import { normalizeWardrobes, validWardrobeId } from "./wardrobes";
+import { SEASONS } from "./data";
 export const DATA_FORMAT_VERSION = 2;
 const record = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value)
@@ -25,6 +26,13 @@ const renames = (value: unknown) =>
         typeof entry[1] === "string" && entry[1].trim().length > 0,
     ),
   );
+// Garments used to hold at most one season; without one they get all four.
+const garmentSeasons = (garment: Record<string, unknown>) =>
+  Array.isArray(garment.seasons)
+    ? SEASONS.filter(season => (garment.seasons as unknown[]).includes(season))
+    : SEASONS.includes(garment.season as string)
+    ? [garment.season as string]
+    : [...SEASONS];
 function pick<T>(value: unknown, keys: readonly (keyof T)[]): T {
   const source = record(value);
   return Object.fromEntries(
@@ -75,13 +83,13 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
             ? (record(value).wardrobeId as string)
             : undefined,
         ),
+        seasons: garmentSeasons(record(value)),
         ...pick<item>(value, [
           "id",
           "name",
           "type",
           "brand",
           "fit",
-          "season",
           "quantity",
           "size",
           "sizeUnit",

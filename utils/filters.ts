@@ -115,7 +115,7 @@ export type SortValuesType = {
   sortValue: string;
   categories: number[];
   types: string[];
-  season: string;
+  seasons: string[];
   colors: string[];
   collections?: string[];
   // Latest use per garment id, needed for the "last used" sorts.
@@ -166,7 +166,8 @@ function sortAndFilter(filters: SortValuesType, array: item[]) {
       (filters.categories.length === 0 ||
         filters.categories.includes(garment.category)) &&
       (filters.types.length === 0 || filters.types.includes(garment.type)) &&
-      (filters.season === "" || filters.season === garment.season) &&
+      (filters.seasons.length === 0 ||
+        filters.seasons.some(season => garment.seasons?.includes(season))) &&
       (filters.colors.length === 0 || matchesColors(garment, filters.colors)) &&
       (collections.length === 0 ||
         collections.some(value => garment.collection?.includes(value))),
@@ -193,14 +194,14 @@ export function HomeFilter(
 }
 
 export function activeFilterCount(filters: {
-  seasonFilter: string;
+  seasonFilter: unknown[];
   categoriesFilter: unknown[];
   TypeFilter: unknown[];
   colorFilter: unknown[];
   collectionFilter?: unknown[];
 }) {
   return (
-    (filters.seasonFilter ? 1 : 0) +
+    filters.seasonFilter.length +
     filters.categoriesFilter.length +
     filters.TypeFilter.length +
     filters.colorFilter.length +

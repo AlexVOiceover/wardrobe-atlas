@@ -273,7 +273,7 @@ describe("Closet structure and sorting", () => {
           sortValue,
           categories: [],
           types: [],
-          season: "",
+          seasons: [],
           colors: [],
           lastUsed,
         },
@@ -294,7 +294,7 @@ describe("Closet structure and sorting", () => {
       sortValue: "LA",
       categories: [],
       types: [],
-      season: "",
+      seasons: [],
       colors: [],
     };
     expect(
@@ -467,4 +467,54 @@ test("types are renamed in place and deleted after confirmation, counting garmen
     },
   ]);
   act(() => tree.unmount());
+});
+
+test("old garments keep their one season, or get all four, after load and import", () => {
+  const state = {
+    settings: {},
+    CategoryList: {},
+    itemsList: {
+      items: [
+        { id: "a", season: "Winter" },
+        { id: "b", season: "" },
+        { id: "c" },
+        { id: "d", seasons: ["Summer", "Monsoon", "Spring"] },
+      ],
+      logs: [],
+    },
+  };
+  const restored = readWardrobeBackup(
+    JSON.parse(JSON.stringify(createWardrobeBackup(state))),
+  );
+  expect(restored.itemsList.items.map(g => g.seasons)).toEqual([
+    ["Winter"],
+    ["Spring", "Summer", "Fall", "Winter"],
+    ["Spring", "Summer", "Fall", "Winter"],
+    ["Spring", "Summer"],
+  ]);
+  expect(JSON.stringify(restored)).not.toContain('"season"');
+});
+
+test("the season filter keeps garments in any chosen season", () => {
+  const garments = [
+    garment("summer", 0, "", { seasons: ["Summer"] }),
+    garment("winter", 0, "", { seasons: ["Winter"] }),
+    garment("none", 0, "", { seasons: [] }),
+  ];
+  const filters = {
+    sortValue: "LA",
+    categories: [],
+    types: [],
+    colors: [],
+  };
+  expect(
+    HomeFilter(
+      { ...filters, seasons: ["Summer", "Winter"] },
+      [...garments],
+      false,
+    ).map(g => g.id),
+  ).toEqual(["summer", "winter"]);
+  expect(
+    HomeFilter({ ...filters, seasons: [] }, [...garments], false),
+  ).toHaveLength(3);
 });

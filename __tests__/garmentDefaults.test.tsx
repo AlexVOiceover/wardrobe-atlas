@@ -41,7 +41,7 @@ test("sorting by purchase date puts garments without a date last", () => {
   ];
   const sorted = (sortValue: string) =>
     HomeFilter(
-      { sortValue, categories: [], types: [], season: "", colors: [] },
+      { sortValue, categories: [], types: [], seasons: [], colors: [] },
       [...garments],
       false,
     ).map(g => g.id);
@@ -64,7 +64,7 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
       <ActiveFilters
         filterState={{
           sortValue: "NA",
-          seasonFilter: "Summer",
+          seasonFilter: ["Summer"],
           categoriesFilter: [4],
           TypeFilter: ["linen"],
           colorFilter: ["navy"],
@@ -110,7 +110,7 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
   act(() => buttons()[5].props.onPress());
   expect(actions.setCategoriesFilter).toHaveBeenCalledWith([]);
   expect(actions.setTypeFilter).toHaveBeenCalledWith([]);
-  expect(actions.setSeasonFilter).toHaveBeenCalledWith("");
+  expect(actions.setSeasonFilter).toHaveBeenCalledWith([]);
   expect(actions.setColorFilter).toHaveBeenLastCalledWith([]);
   expect(actions.setCollectionFilter).toHaveBeenCalledWith([]);
   expect(actions.setSortValue).not.toHaveBeenCalled();
@@ -123,7 +123,7 @@ test("no chips when no filter is active", () => {
       <ActiveFilters
         filterState={{
           sortValue: "NA",
-          seasonFilter: "",
+          seasonFilter: [],
           categoriesFilter: [],
           TypeFilter: [],
           colorFilter: [],

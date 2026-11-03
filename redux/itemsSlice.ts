@@ -1,4 +1,5 @@
 import { validWardrobeId, wardrobeNameError } from "../utils/wardrobes";
+import { SEASONS } from "../utils/data";
 import { createSlice } from "@reduxjs/toolkit";
 import "react-native-get-random-values";
 import { nanoid } from "nanoid";
@@ -21,7 +22,8 @@ export type item = {
   type: string;
   brand?: string;
   fit: string;
-  season?: string;
+  // Seasons the garment is worn in; new garments get all four.
+  seasons?: string[];
   quantity: number;
   size: number;
   sizeUnit: string;
@@ -104,7 +106,7 @@ const itemsSlice = createSlice({
         secondaryColor: action.payload.secondaryColor,
         tertiaryColor: action.payload.tertiaryColor,
         logIds: [],
-        season: action.payload.season,
+        seasons: action.payload.seasons ?? [...SEASONS],
       } as item);
     },
     updateItem: (state, action) => {
@@ -135,7 +137,8 @@ const itemsSlice = createSlice({
       state.items[itemIndex].primaryColor = action.payload.primaryColor;
       state.items[itemIndex].secondaryColor = action.payload.secondaryColor;
       state.items[itemIndex].tertiaryColor = action.payload.tertiaryColor;
-      state.items[itemIndex].season = action.payload.season;
+      if (Array.isArray(action.payload.seasons))
+        state.items[itemIndex].seasons = action.payload.seasons;
     },
     addCollection: (state, action) => {
       state.collectionTags.push({

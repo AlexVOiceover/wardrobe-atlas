@@ -35,6 +35,7 @@ const seasonList_es = [
   },
 ];
 export const seasonList = [seasonList_en, seasonList_es];
+export const SEASONS = seasonList_en.map(season => season.value);
 export const sizeList = [
   { label: "US", value: "US" },
   { label: "UK", value: "UK" },
