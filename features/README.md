@@ -18,3 +18,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Garment form defaults, auto names and visible filters](garment-form-defaults/PLAN.md)
 - [Compact garment form](compact-item-form/PLAN.md)
 - [Quick use log, Closet by category, editable categories](quick-log-and-categories/PLAN.md)
+- [Steady update messages](steady-update-messages/PLAN.md)

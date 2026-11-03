@@ -1,5 +1,6 @@
 import React from "react";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
+import { StyleSheet } from "react-native";
 import { UpdateControls } from "../components/UpdateControls";
 
 const mockCheck = jest.fn().mockResolvedValue({ phase: "current" });
@@ -13,6 +14,7 @@ jest.mock("../hooks/useUpdates", () => ({
 }));
 jest.mock("react-redux", () => ({ useSelector: () => 0 }));
 jest.mock("react-native-paper", () => ({ Button: "Button" }));
+jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 test("Settings shows the installed package version and the app-wide banner does not", async () => {
@@ -57,4 +59,54 @@ test("Settings check requests an immediate manual check and disables during work
   await act(async () => {
     view!.unmount();
   });
+});
+
+test("the app-wide banner never shows for checks and floats over the screen", async () => {
+  let view: ReactTestRenderer;
+  for (const phase of ["idle", "checking", "current"]) {
+    mockPhase = phase;
+    await act(async () => {
+      view = create(<UpdateControls />);
+    });
+    expect(view!.toJSON()).toBeNull();
+  }
+  mockPhase = "downloading";
+  await act(async () => {
+    view!.update(<UpdateControls />);
+  });
+  const banner = view!.toJSON() as any;
+  expect(StyleSheet.flatten(banner.props.style).position).toBe("absolute");
+  // Closing hides it until the state changes
+  const close = view!.root.find(
+    n => n.props.accessibilityLabel === "Close" && !!n.props.onPress,
+  );
+  await act(async () => close.props.onPress());
+  expect(view!.toJSON()).toBeNull();
+  mockPhase = "ready";
+  await act(async () => {
+    view!.update(<UpdateControls />);
+  });
+  expect(JSON.stringify(view!.toJSON())).toContain("Install update");
+  await act(async () => {
+    view!.unmount();
+  });
+});
+
+test("in Settings the status keeps its height and sits below the version", async () => {
+  let view: ReactTestRenderer;
+  for (const phase of ["idle", "checking", "current"]) {
+    mockPhase = phase;
+    await act(async () => {
+      view = create(<UpdateControls settings />);
+    });
+    const children = (view!.toJSON() as any).children;
+    expect(children[1].props.testID).toBe("app-version");
+    const status = children[2];
+    expect(StyleSheet.flatten(status.props.style).minHeight).toBe(36);
+    expect(status.props.numberOfLines).toBe(2);
+    expect(children).toHaveLength(3);
+    await act(async () => {
+      view!.unmount();
+    });
+  }
 });
