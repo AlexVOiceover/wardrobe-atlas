@@ -68,8 +68,9 @@ function App(): ReactElement {
               <GestureHandlerRootView
                 style={{ flex: 1, backgroundColor: theme.colors.background }}
               >
-                <UpdateControls />
                 <Navigator />
+                {/* Floats over the screens; never pushes them down. */}
+                <UpdateControls />
               </GestureHandlerRootView>
             </SafeAreaView>
           </PaperProvider>
