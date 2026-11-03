@@ -10,6 +10,11 @@ export const normalizeGridColumns = (value: unknown) =>
   GRID_COLUMN_OPTIONS.includes(value as number)
     ? (value as number)
     : DEFAULT_GRID_COLUMNS;
+// Folded Closet sections survive restarts; only strings are kept.
+export const normalizeCollapsedSections = (value: unknown) =>
+  Array.isArray(value)
+    ? value.filter((key): key is string => typeof key === "string")
+    : [];
 export type SettingsType = {
   language: number;
   name: string;
@@ -19,6 +24,8 @@ export type SettingsType = {
   gridColumns: number;
   // Wardrobe of the last garment saved; new garments start there.
   lastWardrobeId: string;
+  // Closet category and type sections the user folded.
+  collapsedSections: string[];
 };
 const initialState: SettingsType = {
   language: 0,
@@ -28,6 +35,7 @@ const initialState: SettingsType = {
   collectionSortValue: COLLECTION_SORT_VALUES.CUSTOM,
   gridColumns: DEFAULT_GRID_COLUMNS,
   lastWardrobeId: "",
+  collapsedSections: [],
 };
 const settingsSlice = createSlice({
   name: "settings",
@@ -52,6 +60,13 @@ const settingsSlice = createSlice({
     setLastWardrobe: (state, action) => {
       state.lastWardrobeId = action.payload.wardrobeId || "";
     },
+    toggleSection: (state, action) => {
+      const key = action.payload.key;
+      const sections = state.collapsedSections ?? [];
+      state.collapsedSections = sections.includes(key)
+        ? sections.filter(current => current !== key)
+        : [...sections, key];
+    },
     importSettings: (state, action) => {
       state.language = action.payload.language === 1 ? 1 : 0;
       state.name = action.payload.name;
@@ -64,6 +79,9 @@ const settingsSlice = createSlice({
         typeof action.payload.lastWardrobeId === "string"
           ? action.payload.lastWardrobeId
           : "";
+      state.collapsedSections = normalizeCollapsedSections(
+        action.payload.collapsedSections,
+      );
     },
     setAppVer: (state, action) => {
       state.appVer = action.payload.appVer;
@@ -77,6 +95,7 @@ export const {
   setCollectionSortValue,
   setGridColumns,
   setLastWardrobe,
+  toggleSection,
   importSettings,
   setAppVer,
 } = settingsSlice.actions;

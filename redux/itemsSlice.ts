@@ -119,6 +119,8 @@ const itemsSlice = createSlice({
         );
       state.items[itemIndex].name = action.payload.name;
       state.items[itemIndex].image = action.payload.image;
+      if (typeof action.payload.category === "number")
+        state.items[itemIndex].category = action.payload.category;
       state.items[itemIndex].type = action.payload.type;
       if ("brand" in action.payload)
         state.items[itemIndex].brand = action.payload.brand;
@@ -246,6 +248,24 @@ const itemsSlice = createSlice({
         state.items[i].logIds?.splice(logIndex as number, 1);
       }
     },
+    // Deleting a category or type keeps its garments; they show under Other.
+    clearGarmentCategory: (state, action) => {
+      state.items.forEach(garment => {
+        if (garment.category === action.payload.category) {
+          garment.category = -1;
+          garment.type = "";
+        }
+      });
+    },
+    clearGarmentType: (state, action) => {
+      state.items.forEach(garment => {
+        if (
+          garment.category === action.payload.category &&
+          garment.type === action.payload.value
+        )
+          garment.type = "";
+      });
+    },
     itemRefresher: state => {
       state.refreshItems = !state.refreshItems;
     },
@@ -282,6 +302,8 @@ export const {
   deleteLog,
   addEventLog,
   deleteEventLog,
+  clearGarmentCategory,
+  clearGarmentType,
   itemRefresher,
   deleteItem,
   importItems,

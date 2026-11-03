@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm run lint)",
+      "Bash(npm test)",
+      "Bash(npm test *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git branch *)",
+      "Bash(gh pr checks * -R AlexVOiceover/wardrobe-atlas *)",
+      "Bash(gh pr view * -R AlexVOiceover/wardrobe-atlas *)",
+      "Bash(gh run list -R AlexVOiceover/wardrobe-atlas *)",
+      "Bash(gh run view * -R AlexVOiceover/wardrobe-atlas *)",
+      "Bash(gh run watch * -R AlexVOiceover/wardrobe-atlas *)",
+      "Bash(gh release view -R AlexVOiceover/wardrobe-atlas *)",
+      "Bash(bash .claude/hooks/analyze-plan.sh *)",
+      "Bash(rm -f .claude/loop)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/plan-iterator.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -4,7 +4,9 @@ import type {
   HomeFilterActions,
   HomeFilterState,
 } from "../screens/bottomNav/HomeFilterPanel";
-import { clothesList, colorNames, localization } from "../utils/localization";
+import { colorNames, localization } from "../utils/localization";
+import { categoryTypes } from "../utils/categories";
+import type { CategoryList } from "../redux/categoriesSlice";
 import { seasonList } from "../utils/data";
 import { theme } from "../utils/theme";
 
@@ -15,23 +17,29 @@ export const ActiveFilters = ({
   filterState,
   filterActions,
   CategoriesList,
-  storedCatTypes,
+  categoryState,
+  collections,
   language,
 }: {
   filterState: HomeFilterState;
   filterActions: HomeFilterActions;
   CategoriesList: { label: string; value: number }[];
-  storedCatTypes: any[];
+  categoryState: CategoryList;
+  collections: { label: string; value: string }[];
   language: number;
 }) => {
-  const { seasonFilter, categoriesFilter, TypeFilter, colorFilter } =
-    filterState;
-  const typeLabels: { label: string; value: string }[] = [
-    ...((clothesList as any)[language] ?? []).flat(),
-    ...(storedCatTypes ?? []).flatMap(
-      (category: any) => category?.customTypes ?? [],
-    ),
-  ];
+  const {
+    seasonFilter,
+    categoriesFilter,
+    TypeFilter,
+    colorFilter,
+    collectionFilter,
+  } = filterState;
+  // Type filters only exist while a single category is selected.
+  const typeLabels =
+    categoriesFilter.length === 1
+      ? categoryTypes(categoryState, categoriesFilter[0], language)
+      : [];
   const chips: Chip[] = [
     ...categoriesFilter.map(value => ({
       key: `category-${value}`,
@@ -71,6 +79,14 @@ export const ActiveFilters = ({
           prev.filter(current => current !== value),
         ),
     })),
+    ...collectionFilter.map(value => ({
+      key: `collection-${value}`,
+      label: collections.find(option => option.value === value)?.label ?? value,
+      remove: () =>
+        filterActions.setCollectionFilter(prev =>
+          prev.filter(current => current !== value),
+        ),
+    })),
   ];
   if (chips.length === 0) {
     return null;
@@ -104,6 +120,7 @@ export const ActiveFilters = ({
           filterActions.setTypeFilter([]);
           filterActions.setSeasonFilter("");
           filterActions.setColorFilter([]);
+          filterActions.setCollectionFilter([]);
         }}
         hitSlop={4}
         style={styles.clear}

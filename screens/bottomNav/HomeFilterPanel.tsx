@@ -5,7 +5,8 @@ import ColorFilter from "../../components/ColorFilter";
 import { FilterChip } from "../../components/FilterChip";
 import { SectionHeading } from "../../components/SectionHeading";
 import { localization } from "../../utils/localization";
-import { clothesList } from "../../utils/localization";
+import { categoryTypes } from "../../utils/categories";
+import type { CategoryList } from "../../redux/categoriesSlice";
 import { seasonList } from "../../utils/data";
 import { theme } from "../../utils/theme";
 type SetString = React.Dispatch<React.SetStateAction<string>>;
@@ -16,6 +17,7 @@ export type HomeFilterState = {
   categoriesFilter: any[];
   TypeFilter: string[];
   colorFilter: string[];
+  collectionFilter: string[];
 };
 export type HomeFilterActions = {
   setSortValue: SetString;
@@ -23,13 +25,15 @@ export type HomeFilterActions = {
   setCategoriesFilter: SetArray<any>;
   setTypeFilter: SetArray<string>;
   setColorFilter: SetArray<string>;
+  setCollectionFilter: SetArray<string>;
 };
 type Props = {
   filterState: HomeFilterState;
   filterActions: HomeFilterActions;
   CategoriesList: { label: string; value: number }[];
   language: number;
-  storedCatTypes: any[];
+  categoryState: CategoryList;
+  collections: { label: string; value: string }[];
 };
 export const resetHomeFilters = (actions: HomeFilterActions) => {
   actions.setSortValue("LA");
@@ -37,6 +41,7 @@ export const resetHomeFilters = (actions: HomeFilterActions) => {
   actions.setCategoriesFilter([]);
   actions.setTypeFilter([]);
   actions.setColorFilter([]);
+  actions.setCollectionFilter([]);
 };
 const toggled = <T,>(values: T[], value: T) =>
   values.includes(value)
@@ -47,16 +52,24 @@ const HomeFilterPanel = ({
   filterActions,
   CategoriesList,
   language,
-  storedCatTypes,
+  categoryState,
+  collections,
 }: Props) => {
-  const { sortValue, seasonFilter, categoriesFilter, TypeFilter, colorFilter } =
-    filterState;
+  const {
+    sortValue,
+    seasonFilter,
+    categoriesFilter,
+    TypeFilter,
+    colorFilter,
+    collectionFilter,
+  } = filterState;
   const {
     setSortValue,
     setSeasonFilter,
     setCategoriesFilter,
     setTypeFilter,
     setColorFilter,
+    setCollectionFilter,
   } = filterActions;
   const sortOptions = [
     { label: localization.Last_Added[language], value: "LA" },
@@ -64,12 +77,12 @@ const HomeFilterPanel = ({
     { label: localization.Name_Desc[language], value: "ND" },
     { label: localization.PurchaseDateAsc[language], value: "PDA" },
     { label: localization.PurchaseDateDesc[language], value: "PDD" },
+    { label: localization.LastUsedAsc[language], value: "LUA" },
+    { label: localization.LastUsedDesc[language], value: "LUD" },
   ];
   const typeOptions: { label: string; value: string }[] =
     categoriesFilter.length === 1
-      ? ((clothesList as any)[language][categoriesFilter[0]] ?? []).concat(
-          storedCatTypes[categoriesFilter[0]]?.customTypes || [],
-        )
+      ? categoryTypes(categoryState, categoriesFilter[0], language)
       : [];
   return (
     <View>
@@ -127,6 +140,23 @@ const HomeFilterPanel = ({
       </View>
       <SectionHeading title={localization.Color[language]} />
       <ColorFilter colors={colorFilter} setColors={setColorFilter} />
+      {collections.length > 0 && (
+        <>
+          <SectionHeading title={localization.Collections[language]} />
+          <View style={styles.chips}>
+            {collections.map(option => (
+              <FilterChip
+                key={option.value}
+                label={option.label}
+                selected={collectionFilter.includes(option.value)}
+                onPress={() =>
+                  setCollectionFilter(toggled(collectionFilter, option.value))
+                }
+              />
+            ))}
+          </View>
+        </>
+      )}
       <Button
         mode="outlined"
         style={styles.resetButton}

@@ -90,6 +90,7 @@ test("normalization keeps wardrobe content and only the current schema", () => {
   expect(JSON.stringify(mockWardrobe)).not.toContain('"obsolete"');
   expect(Object.keys(mockWardrobe.settings).sort()).toEqual([
     "appVer",
+    "collapsedSections",
     "collectionSortValue",
     "enableHeatMap",
     "gridColumns",
@@ -99,6 +100,14 @@ test("normalization keeps wardrobe content and only the current schema", () => {
   ]);
   // Older stored settings and backups have no grid size
   expect(mockWardrobe.settings.gridColumns).toBe(2);
+  // ...nor folded sections or category renames and deletions
+  expect(mockWardrobe.settings.collapsedSections).toEqual([]);
+  expect(mockWardrobe.CategoryList).toMatchObject({
+    hiddenCategories: [],
+    categoryNames: {},
+    hiddenTypes: [],
+    typeNames: {},
+  });
 });
 
 test.each([

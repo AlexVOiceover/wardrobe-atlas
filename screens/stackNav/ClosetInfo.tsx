@@ -5,7 +5,7 @@ import { closetInfo, localization } from "../../utils/localization";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useMemo } from "react";
-import { defaultCategories } from "./Category";
+import { visibleCategories } from "../../utils/categories";
 import { ItemBox, garmentSummary } from "../../components/ItemBox";
 import { GarmentGrid } from "../../components/GarmentGrid";
 import { ListRow } from "../../components/ListRow";
@@ -20,10 +20,10 @@ export const ClosetInfo = ({}) => {
   const storedCollections = useSelector(
     (state: RootState) => state.itemsList.collectionTags,
   );
-  const storedCategories = [
-    ...defaultCategories,
-    ...useSelector((state: RootState) => state.CategoryList.Categories),
-  ];
+  const storedCategories = visibleCategories(
+    useSelector((state: RootState) => state.CategoryList),
+    storedSettings.language,
+  );
   const data = useMemo(() => {
     const sortedItems = [...storedItems].sort(
       (a, b) => (b.logIds?.length || 0) - (a.logIds?.length || 0),
@@ -79,7 +79,7 @@ export const ClosetInfo = ({}) => {
           {storedCategories.map(category => (
             <ListRow
               key={category.index}
-              title={category.name[language] || category.name[0]}
+              title={category.label}
               right={count(
                 storedItems.filter(it => it.category === category.index).length,
               )}

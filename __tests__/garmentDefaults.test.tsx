@@ -56,6 +56,7 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
     setCategoriesFilter: jest.fn(),
     setTypeFilter: jest.fn(),
     setColorFilter: jest.fn(),
+    setCollectionFilter: jest.fn(),
   };
   let tree!: ReactTestRenderer;
   act(() => {
@@ -67,16 +68,23 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
           categoriesFilter: [4],
           TypeFilter: ["linen"],
           colorFilter: ["navy"],
+          collectionFilter: ["work"],
         }}
         filterActions={actions}
         CategoriesList={[{ label: "Hats", value: 4 }]}
-        storedCatTypes={[
-          {},
-          {},
-          {},
-          {},
-          { customTypes: [{ label: "Linen hat", value: "linen" }] },
-        ]}
+        categoryState={
+          {
+            Categories: [{ index: 4, name: ["Hats"] }],
+            CategoryCustomTypes: [
+              null,
+              null,
+              null,
+              null,
+              { customTypes: [{ label: "Linen hat", value: "linen" }] },
+            ],
+          } as any
+        }
+        collections={[{ label: "Work", value: "work" }]}
         language={0}
       />,
     );
@@ -92,17 +100,19 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
     "Remove filter: Linen hat",
     "Remove filter: Summer",
     "Remove filter: Navy",
+    "Remove filter: Work",
     "Clear all",
   ]);
   act(() => buttons()[3].props.onPress());
   expect(actions.setColorFilter.mock.calls[0][0](["navy", "red"])).toEqual([
     "red",
   ]);
-  act(() => buttons()[4].props.onPress());
+  act(() => buttons()[5].props.onPress());
   expect(actions.setCategoriesFilter).toHaveBeenCalledWith([]);
   expect(actions.setTypeFilter).toHaveBeenCalledWith([]);
   expect(actions.setSeasonFilter).toHaveBeenCalledWith("");
   expect(actions.setColorFilter).toHaveBeenLastCalledWith([]);
+  expect(actions.setCollectionFilter).toHaveBeenCalledWith([]);
   expect(actions.setSortValue).not.toHaveBeenCalled();
 });
 
@@ -117,10 +127,12 @@ test("no chips when no filter is active", () => {
           categoriesFilter: [],
           TypeFilter: [],
           colorFilter: [],
+          collectionFilter: [],
         }}
         filterActions={{} as any}
         CategoriesList={[]}
-        storedCatTypes={[]}
+        categoryState={{ Categories: [], CategoryCustomTypes: [] } as any}
+        collections={[]}
         language={0}
       />,
     );

@@ -30,7 +30,11 @@ const mockState: any = {
   CategoryList: { Categories: [], CategoryCustomTypes: [] },
   itemsList: {
     wardrobes: [{ id: "home", name: "Casa" }],
-    items: [garment, { ...garment, id: "coat", name: "Coat", collection: [] }],
+    // The coat's category was deleted, so it shows under "Otros".
+    items: [
+      garment,
+      { ...garment, id: "coat", name: "Coat", category: 9, collection: [] },
+    ],
     collectionTags: [{ label: "Verano", value: "summer", isOpen: true }],
     logs: [
       {
@@ -145,7 +149,7 @@ test.each<[string, React.ReactElement]>([
   await act(async () => tree!.unmount());
 });
 
-test("Closet shows collections as headings, garments once each and the add action", async () => {
+test("Closet groups garments by category and type, shows each once and keeps the add action", async () => {
   let tree: ReactTestRenderer;
   await act(async () => {
     tree = create(
@@ -155,7 +159,13 @@ test("Closet shows collections as headings, garments once each and the add actio
     );
   });
   const text = visibleText(tree!);
-  expect(text).toContain("Verano");
+  // Category heading, then the type heading, then the deleted category's garments
+  const order = ["Tops", "Camisa", "Linen shirt", "Otros", "Coat"].map(value =>
+    text.indexOf(value),
+  );
+  expect(order).toEqual([...order].sort((a, b) => a - b));
+  expect(order).not.toContain(-1);
+  expect(text).not.toContain("Verano");
   expect(text.filter(value => value === "Linen shirt")).toHaveLength(1);
   expect(text.filter(value => value === "Coat")).toHaveLength(1);
   const add = tree!.root.find(
@@ -163,5 +173,34 @@ test("Closet shows collections as headings, garments once each and the add actio
   );
   await act(async () => add.props.onPress());
   expect(mockNavigation.navigate).toHaveBeenCalledWith("Category");
+  await act(async () => tree!.unmount());
+});
+
+test("tapping a garment opens the use log; a long press edits it", async () => {
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <HomeBottom />
+      </WardrobeProvider>,
+    );
+  });
+  const card = () =>
+    tree!.root.find(
+      x =>
+        x.props.accessibilityLabel === "Linen shirt" && !!x.props.onLongPress,
+    );
+  const sheet = () =>
+    tree!.root.findByType(require("../components/QuickLogSheet").QuickLogSheet);
+  expect(sheet().props.garment).toBeUndefined();
+  await act(async () => card().props.onPress());
+  expect(sheet().props.garment.id).toBe("shirt");
+  expect(mockNavigation.navigate).not.toHaveBeenCalledWith("ItemForm", {
+    editingIndex: "shirt",
+  });
+  await act(async () => card().props.onLongPress());
+  expect(mockNavigation.navigate).toHaveBeenCalledWith("ItemForm", {
+    editingIndex: "shirt",
+  });
   await act(async () => tree!.unmount());
 });
