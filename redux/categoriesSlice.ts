@@ -12,8 +12,15 @@ export type Category = {
   screen: string;
   index: number;
 };
+// Names are [English, Spanish].
+export type Names = string[];
 export type CategoryCustomType = {
-  customTypes: { label: string; value: string; icon: number }[];
+  customTypes: {
+    label: string;
+    labels?: Names;
+    value: string;
+    icon: number;
+  }[];
 };
 export type CategoryList = {
   Categories: Category[];
@@ -21,9 +28,9 @@ export type CategoryList = {
   // Built-in categories and types can't be removed from the code, so
   // deletions and renames of them are stored here.
   hiddenCategories: number[];
-  categoryNames: Record<string, string>;
+  categoryNames: Record<string, Names>;
   hiddenTypes: string[];
-  typeNames: Record<string, string>;
+  typeNames: Record<string, Names>;
 };
 const initialState: CategoryList = {
   Categories: [],
@@ -34,6 +41,11 @@ const initialState: CategoryList = {
   typeNames: {},
 };
 export { initialState as CurrentCategories };
+// Older payloads and data carry one name for both languages.
+const bothNames = (name: unknown): Names =>
+  Array.isArray(name)
+    ? [name[0], name[1] || name[0]]
+    : [String(name), String(name)];
 const isBuiltIn = (index: number) =>
   index >= 0 && index < BUILT_IN_CATEGORY_COUNT;
 const customTypesOf = (state: CategoryList, index: number) => {
@@ -55,7 +67,7 @@ const categoriesSlice = createSlice({
         ...state.Categories.map(category => category.index + 1),
       );
       state.Categories.push({
-        name: [action.payload.name],
+        name: bothNames(action.payload.name),
         screen: "ItemForm",
         spriteSheet: customCategorySprite,
         index,
@@ -79,13 +91,14 @@ const categoriesSlice = createSlice({
         state.CategoryCustomTypes[index] = { customTypes: [] };
     },
     renameCategory: (state, action) => {
-      const { index, name } = action.payload;
+      const { index } = action.payload;
+      const name = bothNames(action.payload.name);
       if (isBuiltIn(index)) {
         state.categoryNames[String(index)] = name;
         return;
       }
       const category = state.Categories.find(x => x.index === index);
-      if (category) category.name = [name];
+      if (category) category.name = name;
     },
     importCategory: (state, action) => {
       state.Categories = action.payload.Categories;
@@ -96,7 +109,11 @@ const categoriesSlice = createSlice({
       state.typeNames = action.payload.typeNames ?? {};
     },
     addTypeToCategory: (state, action) => {
-      const { index, typeName } = action.payload;
+      const { index } = action.payload;
+      const labels = bothNames(
+        action.payload.labels ?? action.payload.typeName,
+      );
+      const typeName = labels[0];
       const customTypes = customTypesOf(state, index);
       // Renames keep the stored value, so a new type may need a fresh one.
       const taken = new Set([
@@ -105,15 +122,18 @@ const categoriesSlice = createSlice({
       ]);
       let value = typeName;
       for (let n = 2; taken.has(value); n++) value = `${typeName} (${n})`;
-      customTypes.push({ label: typeName, value, icon: 0 });
+      customTypes.push({ label: typeName, labels, value, icon: 0 });
     },
     renameType: (state, action) => {
-      const { category, value, name } = action.payload;
+      const { category, value } = action.payload;
+      const name = bothNames(action.payload.name);
       const custom = state.CategoryCustomTypes?.[category]?.customTypes.find(
         x => x.value === value,
       );
-      if (custom) custom.label = name;
-      else state.typeNames[typeKey(category, value)] = name;
+      if (custom) {
+        custom.label = name[0];
+        custom.labels = name;
+      } else state.typeNames[typeKey(category, value)] = name;
     },
     deleteType: (state, action) => {
       const { category, value } = action.payload;

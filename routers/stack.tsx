@@ -3,7 +3,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import MyTabs from "./BottomTabNav";
 import { Category } from "../screens/stackNav/Category";
 import { ItemForm } from "../screens/stackNav/ItemForm";
-import { CategoryForm } from "../screens/stackNav/CategoryForm";
 import { ItemSelector } from "../screens/stackNav/ItemSelector";
 import { EventLogForm } from "../screens/stackNav/EventLogForm";
 import { CollectionForm } from "../screens/stackNav/CollectionForm";
@@ -11,7 +10,6 @@ import { Settings } from "../screens/stackNav/Settings";
 import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
 import { ManageCategories } from "../screens/stackNav/ManageCategories";
 import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
-import { EditCategory } from "../screens/stackNav/EditCategory";
 import { Wardrobes } from "../screens/stackNav/Wardrobes";
 import { WardrobeProvider } from "../components/WardrobeSelector";
 import { theme } from "../utils/theme";
@@ -57,11 +55,6 @@ export default function Navigator() {
             options={{ headerShown: false }}
           />
           <Stack.Screen
-            name="EditCategory"
-            component={EditCategory}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
             name="ManageCategories"
             component={ManageCategories}
             options={{ headerShown: false }}
@@ -74,11 +67,6 @@ export default function Navigator() {
           <Stack.Screen
             name="ItemSelector"
             component={ItemSelector}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="CategoryForm"
-            component={CategoryForm}
             options={{ headerShown: false }}
           />
           <Stack.Screen

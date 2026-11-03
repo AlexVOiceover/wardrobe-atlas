@@ -16,6 +16,7 @@ class MainApplication : Application(), ReactApplication {
       if (mReactHost == null) {
         val packages = PackageList(this).packages.toMutableList()
         packages.add(WardrobeUpdatesPackage())
+        packages.add(WardrobeTranslatorPackage())
         mReactHost = DefaultReactHost.getDefaultReactHost(
           applicationContext,
           packages
