@@ -583,3 +583,46 @@ test("Remove background replaces the photo, Undo brings it back, and Save stores
     }),
   );
 });
+
+test("styles follow the subcategory until a chip is tapped; editing keeps saved styles", () => {
+  const chip = (tree: ReactTestRenderer, label: string) =>
+    tree.root.find(
+      n => n.props.accessibilityLabel === label && !!n.props.onPress,
+    );
+  const selected = (tree: ReactTestRenderer) =>
+    ["Casual", "Sporty", "Elegant", "Formal"].filter(
+      label => chip(tree, label).props.accessibilityState.selected,
+    );
+  const tree = render();
+  const type = () =>
+    tree.root
+      .findAllByType("Dropdown" as any)
+      .find(d => d.props.placeholder === "Subcategory")!;
+  act(() => type().props.setValue("Blazer"));
+  expect(selected(tree)).toEqual(["Elegant", "Formal"]);
+  act(() => type().props.setValue("Hoodie"));
+  expect(selected(tree)).toEqual(["Casual", "Sporty"]);
+  act(() => chip(tree, "Elegant").props.onPress());
+  act(() => type().props.setValue("Blazer"));
+  expect(selected(tree)).toEqual(["Casual", "Sporty", "Elegant"]);
+  act(() => button(tree, "Save")!.props.onPress());
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/addItem",
+      payload: expect.objectContaining({
+        styles: ["casual", "sporty", "elegant"],
+      }),
+    }),
+  );
+  mockState.itemsList.items = [
+    {
+      id: "s",
+      name: "S",
+      type: "Blazer",
+      category: 0,
+      styles: ["sporty"],
+      collection: [],
+    },
+  ];
+  expect(selected(render("s"))).toEqual(["Sporty"]);
+});

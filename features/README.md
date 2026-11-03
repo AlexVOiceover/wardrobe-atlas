@@ -23,3 +23,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Storage and selecting several garments](storage-and-multi-select/PLAN.md)
 - [Bilingual categories and subcategories](bilingual-categories/PLAN.md)
 - [Remove photo backgrounds](remove-photo-background/PLAN.md)
+- [Suggest an outfit](suggest-outfit/PLAN.md)

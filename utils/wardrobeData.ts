@@ -12,6 +12,7 @@ import {
 
 import { normalizeWardrobes, validWardrobeId } from "./wardrobes";
 import { SEASONS } from "./data";
+import { STYLES, defaultStyles } from "./styles";
 export const DATA_FORMAT_VERSION = 2;
 const record = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value)
@@ -91,6 +92,11 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
         ),
         seasons: garmentSeasons(record(value)),
         stored: record(value).stored === true,
+        styles: Array.isArray(record(value).styles)
+          ? STYLES.filter(style =>
+              (record(value).styles as unknown[]).includes(style),
+            )
+          : defaultStyles(record(value).type as string),
         ...pick<item>(value, [
           "id",
           "name",
