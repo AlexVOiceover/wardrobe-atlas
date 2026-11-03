@@ -47,6 +47,26 @@ export const localization = {
   NotSet: ["Not set", "Sin fecha"],
   ClearDate: ["Clear date", "Borrar fecha"],
   Other: ["Other", "Otros"],
+  Storage: ["Storage", "Almacenamiento"],
+  InStorage: ["In storage", "Almacenada"],
+  InUse: ["In use", "En uso"],
+  Stored: ["Stored", "Almacenadas"],
+  Select: ["Select garments", "Seleccionar prendas"],
+  SelectAll: ["Select all", "Seleccionar todo"],
+  EndSelection: ["Stop selecting", "Dejar de seleccionar"],
+  SelectedCount: ["{n} selected", "{n} seleccionadas"],
+  Store: ["Store", "Almacenar"],
+  Unstore: ["Unstore", "Sacar"],
+  Move: ["Move", "Mover"],
+  MoveTo: ["Move to", "Mover a"],
+  MovedTo: ["Moved to {name}", "Movidas a {name}"],
+  Outfit: ["Outfit", "Atuendo"],
+  GarmentCount: ["1 garment", "1 prenda"],
+  GarmentsCount: ["{n} garments", "{n} prendas"],
+  GarmentStored: ["1 garment stored", "1 prenda almacenada"],
+  GarmentsStored: ["{n} garments stored", "{n} prendas almacenadas"],
+  GarmentUnstored: ["1 garment taken out of storage", "1 prenda sacada del almacenamiento"],
+  GarmentsUnstored: ["{n} garments taken out of storage", "{n} prendas sacadas del almacenamiento"],
   LogUse: ["Log use", "Registrar uso"],
   When: ["When", "Cuándo"],
   Now: ["Now", "Ahora"],
@@ -417,3 +437,11 @@ export const colorNames: Record<string, string>[] = [
     none: "Sin color",
   },
 ];
+/** Picks the singular text for 1, otherwise fills {n} in the plural one. */
+export const countText = (
+  one: readonly string[],
+  many: readonly string[],
+  count: number,
+  language: number,
+) =>
+  count === 1 ? one[language] : many[language].replace("{n}", String(count));

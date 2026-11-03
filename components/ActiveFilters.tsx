@@ -34,6 +34,7 @@ export const ActiveFilters = ({
     TypeFilter,
     colorFilter,
     collectionFilter,
+    storageFilter,
   } = filterState;
   // Type filters only exist while a single category is selected.
   const typeLabels =
@@ -77,6 +78,18 @@ export const ActiveFilters = ({
           prev.filter(current => current !== value),
         ),
     })),
+    ...(storageFilter
+      ? [
+          {
+            key: "storage",
+            label:
+              storageFilter === "stored"
+                ? localization.Stored[language]
+                : localization.InUse[language],
+            remove: () => filterActions.setStorageFilter(""),
+          },
+        ]
+      : []),
     ...collectionFilter.map(value => ({
       key: `collection-${value}`,
       label: collections.find(option => option.value === value)?.label ?? value,
@@ -119,6 +132,7 @@ export const ActiveFilters = ({
           filterActions.setSeasonFilter([]);
           filterActions.setColorFilter([]);
           filterActions.setCollectionFilter([]);
+          filterActions.setStorageFilter("");
         }}
         hitSlop={4}
         style={styles.clear}

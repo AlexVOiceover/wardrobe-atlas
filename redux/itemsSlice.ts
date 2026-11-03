@@ -24,6 +24,8 @@ export type item = {
   fit: string;
   // Seasons the garment is worn in; new garments get all four.
   seasons?: string[];
+  // Put away (e.g. next season's box); missing means in use.
+  stored?: boolean;
   quantity: number;
   size: number;
   sizeUnit: string;
@@ -107,6 +109,7 @@ const itemsSlice = createSlice({
         tertiaryColor: action.payload.tertiaryColor,
         logIds: [],
         seasons: action.payload.seasons ?? [...SEASONS],
+        stored: action.payload.stored === true,
       } as item);
     },
     updateItem: (state, action) => {
@@ -137,6 +140,8 @@ const itemsSlice = createSlice({
       state.items[itemIndex].primaryColor = action.payload.primaryColor;
       state.items[itemIndex].secondaryColor = action.payload.secondaryColor;
       state.items[itemIndex].tertiaryColor = action.payload.tertiaryColor;
+      if ("stored" in action.payload)
+        state.items[itemIndex].stored = action.payload.stored === true;
       if (Array.isArray(action.payload.seasons))
         state.items[itemIndex].seasons = action.payload.seasons;
     },
@@ -251,6 +256,26 @@ const itemsSlice = createSlice({
         state.items[i].logIds?.splice(logIndex as number, 1);
       }
     },
+    setGarmentsStored: (state, action) => {
+      const ids: string[] = action.payload.ids ?? [];
+      state.items.forEach(garment => {
+        if (ids.includes(garment.id))
+          garment.stored = action.payload.stored === true;
+      });
+    },
+    setGarmentsWardrobe: (state, action) => {
+      const ids: string[] = action.payload.ids ?? [];
+      const wardrobeId = validWardrobeId(
+        state.wardrobes,
+        action.payload.wardrobeId,
+      );
+      // An unknown wardrobe means Unassigned, as when a wardrobe is deleted.
+      state.items.forEach(garment => {
+        if (!ids.includes(garment.id)) return;
+        if (wardrobeId) garment.wardrobeId = wardrobeId;
+        else delete garment.wardrobeId;
+      });
+    },
     // Deleting a category or type keeps its garments; they show under Other.
     clearGarmentCategory: (state, action) => {
       state.items.forEach(garment => {
@@ -305,6 +330,8 @@ export const {
   deleteLog,
   addEventLog,
   deleteEventLog,
+  setGarmentsStored,
+  setGarmentsWardrobe,
   clearGarmentCategory,
   clearGarmentType,
   itemRefresher,

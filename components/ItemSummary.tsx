@@ -16,6 +16,8 @@ export function ItemSummary({
   tertiary,
   logs,
   density = "full",
+  stored = false,
+  selected,
 }: ItemSummaryProps) {
   const recency = useHeatmap(logs || []);
   const language = useSelector((s: RootState) => s.settings.language);
@@ -23,17 +25,39 @@ export function ItemSummary({
   const swatches = [primary, secondary, tertiary].filter(Boolean);
   return (
     <View style={styles.card}>
-      {image ? (
-        <Image
-          accessibilityLabel={name}
-          source={{ uri: `data:image/*;base64,${image}` }}
-          style={styles.photo}
-        />
-      ) : (
-        <View style={[styles.photo, styles.placeholder]}>
-          <Icon name="shirt-outline" size={32} color={theme.colors.muted} />
+      <View style={[styles.frame, selected && styles.selectedFrame]}>
+        {/* Stored garments are faded and carry a box icon. */}
+        <View style={stored && styles.faded}>
+          {image ? (
+            <Image
+              accessibilityLabel={name}
+              source={{ uri: `data:image/*;base64,${image}` }}
+              style={styles.photo}
+            />
+          ) : (
+            <View style={[styles.photo, styles.placeholder]}>
+              <Icon name="shirt-outline" size={32} color={theme.colors.muted} />
+            </View>
+          )}
         </View>
-      )}
+        {stored && (
+          <View
+            accessibilityLabel={localization.InStorage[language]}
+            style={[styles.badge, styles.storedBadge]}
+          >
+            <Icon name="archive-outline" size={14} color={theme.colors.text} />
+          </View>
+        )}
+        {selected !== undefined && (
+          <View style={[styles.badge, styles.selectBadge]}>
+            <Icon
+              name={selected ? "checkmark-circle" : "ellipse-outline"}
+              size={24}
+              color={selected ? theme.colors.bar : theme.colors.background}
+            />
+          </View>
+        )}
+      </View>
       {density !== "photo" && (
         <ThemeText
           numberOfLines={density === "full" ? 2 : 1}
@@ -80,6 +104,35 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     backgroundColor: theme.colors.surface,
     resizeMode: "cover",
+  },
+  frame: {
+    borderRadius: theme.radius.sm,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  selectedFrame: {
+    borderColor: theme.colors.bar,
+  },
+  faded: {
+    opacity: 0.45,
+  },
+  badge: {
+    position: "absolute",
+    top: theme.spacing.xs,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  storedBadge: {
+    left: theme.spacing.xs,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: theme.colors.background,
+  },
+  selectBadge: {
+    right: theme.spacing.xs,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
   },
   placeholder: {
     justifyContent: "center",

@@ -57,6 +57,7 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
     setTypeFilter: jest.fn(),
     setColorFilter: jest.fn(),
     setCollectionFilter: jest.fn(),
+    setStorageFilter: jest.fn(),
   };
   let tree!: ReactTestRenderer;
   act(() => {
@@ -69,6 +70,7 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
           TypeFilter: ["linen"],
           colorFilter: ["navy"],
           collectionFilter: ["work"],
+          storageFilter: "stored",
         }}
         filterActions={actions}
         CategoriesList={[{ label: "Hats", value: 4 }]}
@@ -100,6 +102,7 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
     "Remove filter: Linen hat",
     "Remove filter: Summer",
     "Remove filter: Navy",
+    "Remove filter: Stored",
     "Remove filter: Work",
     "Clear all",
   ]);
@@ -107,12 +110,13 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
   expect(actions.setColorFilter.mock.calls[0][0](["navy", "red"])).toEqual([
     "red",
   ]);
-  act(() => buttons()[5].props.onPress());
+  act(() => buttons()[6].props.onPress());
   expect(actions.setCategoriesFilter).toHaveBeenCalledWith([]);
   expect(actions.setTypeFilter).toHaveBeenCalledWith([]);
   expect(actions.setSeasonFilter).toHaveBeenCalledWith([]);
   expect(actions.setColorFilter).toHaveBeenLastCalledWith([]);
   expect(actions.setCollectionFilter).toHaveBeenCalledWith([]);
+  expect(actions.setStorageFilter).toHaveBeenCalledWith("");
   expect(actions.setSortValue).not.toHaveBeenCalled();
 });
 
@@ -128,6 +132,7 @@ test("no chips when no filter is active", () => {
           TypeFilter: [],
           colorFilter: [],
           collectionFilter: [],
+          storageFilter: "",
         }}
         filterActions={{} as any}
         CategoriesList={[]}

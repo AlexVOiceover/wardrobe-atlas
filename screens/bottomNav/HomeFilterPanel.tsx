@@ -18,6 +18,8 @@ export type HomeFilterState = {
   TypeFilter: string[];
   colorFilter: string[];
   collectionFilter: string[];
+  // "inUse", "stored" or empty for both.
+  storageFilter: string;
 };
 export type HomeFilterActions = {
   setSortValue: SetString;
@@ -26,6 +28,7 @@ export type HomeFilterActions = {
   setTypeFilter: SetArray<string>;
   setColorFilter: SetArray<string>;
   setCollectionFilter: SetArray<string>;
+  setStorageFilter: SetString;
 };
 type Props = {
   filterState: HomeFilterState;
@@ -42,6 +45,7 @@ export const resetHomeFilters = (actions: HomeFilterActions) => {
   actions.setTypeFilter([]);
   actions.setColorFilter([]);
   actions.setCollectionFilter([]);
+  actions.setStorageFilter("");
 };
 const toggled = <T,>(values: T[], value: T) =>
   values.includes(value)
@@ -62,6 +66,7 @@ const HomeFilterPanel = ({
     TypeFilter,
     colorFilter,
     collectionFilter,
+    storageFilter,
   } = filterState;
   const {
     setSortValue,
@@ -70,6 +75,7 @@ const HomeFilterPanel = ({
     setTypeFilter,
     setColorFilter,
     setCollectionFilter,
+    setStorageFilter,
   } = filterActions;
   const sortOptions = [
     { label: localization.Last_Added[language], value: "LA" },
@@ -133,6 +139,24 @@ const HomeFilterPanel = ({
             label={option.label}
             selected={seasonFilter.includes(option.value)}
             onPress={() => setSeasonFilter(toggled(seasonFilter, option.value))}
+          />
+        ))}
+      </View>
+      <SectionHeading title={localization.Storage[language]} />
+      <View style={styles.chips}>
+        {[
+          { label: localization.InUse[language], value: "inUse" },
+          { label: localization.Stored[language], value: "stored" },
+        ].map(option => (
+          <FilterChip
+            key={option.value}
+            label={option.label}
+            selected={storageFilter === option.value}
+            onPress={() =>
+              setStorageFilter(
+                storageFilter === option.value ? "" : option.value,
+              )
+            }
           />
         ))}
       </View>

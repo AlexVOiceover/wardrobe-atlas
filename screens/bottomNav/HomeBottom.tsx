@@ -1,13 +1,30 @@
 import { useWardrobeView } from "../../components/WardrobeSelector";
 import { filterByWardrobe } from "../../utils/wardrobes";
-import { localization as l } from "../../utils/localization";
-import { ScrollView, Keyboard, StyleSheet, View } from "react-native";
+import { countText, localization as l } from "../../utils/localization";
+import {
+  BackHandler,
+  ScrollView,
+  Keyboard,
+  StyleSheet,
+  View,
+} from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { ItemBox, garmentSummary } from "../../components/ItemBox";
-import { deleteEventLog, deleteLog, item } from "../../redux/itemsSlice";
+import {
+  deleteEventLog,
+  deleteLog,
+  item,
+  setGarmentsStored,
+  setGarmentsWardrobe,
+} from "../../redux/itemsSlice";
+import {
+  SelectionBar,
+  SELECTION_BAR_CLEARANCE,
+} from "../../components/SelectionBar";
+import { MoveSheet } from "../../components/MoveSheet";
 import { Snackbar } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { BottomSheet } from "../../components/BottomSheet";
@@ -65,6 +82,7 @@ export function HomeBottom() {
   const [seasonFilter, setSeasonFilter] = useState<string[]>([]);
   const [colorFilter, setColorFilter] = useState<string[]>([]);
   const [collectionFilter, setCollectionFilter] = useState<string[]>([]);
+  const [storageFilter, setStorageFilter] = useState("");
   const filterState: HomeFilterState = {
     sortValue,
     seasonFilter,
@@ -72,6 +90,7 @@ export function HomeBottom() {
     TypeFilter,
     colorFilter,
     collectionFilter,
+    storageFilter,
   };
   const filterActions: HomeFilterActions = {
     setSortValue,
@@ -80,6 +99,7 @@ export function HomeBottom() {
     setTypeFilter,
     setColorFilter,
     setCollectionFilter,
+    setStorageFilter,
   };
   const storedSettings = useSelector((state: RootState) => state.settings);
   const categoryState = useSelector((state: RootState) => state.CategoryList);
@@ -93,8 +113,35 @@ export function HomeBottom() {
   ).map(tag => ({ label: tag.label, value: tag.value }));
   const [isOpen, setIsOpen] = useState(false);
   const [isGridSizeOpen, setIsGridSizeOpen] = useState(false);
-  const [logging, setLogging] = useState<item>();
-  const [lastLog, setLastLog] = useState<{ eventId: string; name: string }>();
+  // Garments in the log sheet, by id so their storage switch stays current.
+  const [logging, setLogging] = useState<string[]>([]);
+  const [undo, setUndo] = useState<{ message: string; run: () => void }>();
+  // Select mode: ids of the ticked garments.
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [isMoveOpen, setIsMoveOpen] = useState(false);
+  const stopSelecting = () => {
+    setSelecting(false);
+    setPicked([]);
+  };
+  const togglePicked = (id: string) =>
+    setPicked(current =>
+      current.includes(id)
+        ? current.filter(value => value !== id)
+        : [...current, id],
+    );
+  useEffect(() => {
+    if (!selecting) return;
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        setSelecting(false);
+        setPicked([]);
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [selecting]);
   const dispatch = useDispatch();
   const columns = normalizeGridColumns(storedSettings.gridColumns);
   const density = cardDensity(columns);
@@ -106,8 +153,13 @@ export function HomeBottom() {
       {...garmentSummary(garment)}
       type=""
       density={density}
-      onPress={() => setLogging(garment)}
-      onLongPress={() => editGarment(garment)}
+      selected={selecting ? picked.includes(garment.id) : undefined}
+      onPress={() =>
+        selecting ? togglePicked(garment.id) : setLogging([garment.id])
+      }
+      onLongPress={() =>
+        selecting ? togglePicked(garment.id) : editGarment(garment)
+      }
     />
   );
   const handleOpenDrawer = () => {
@@ -127,6 +179,7 @@ export function HomeBottom() {
         seasons: seasonFilter,
         colors: colorFilter,
         collections: collectionFilter,
+        storage: storageFilter,
         lastUsed,
       },
       [...filterByWardrobe(itemsState.items, activeWardrobe)],
@@ -146,11 +199,51 @@ export function HomeBottom() {
     seasonFilter,
     colorFilter,
     collectionFilter,
+    storageFilter,
     lastUsed,
     search,
     categoryState,
     language,
   ]);
+  const pickedGarments = itemsState.items.filter(garment =>
+    picked.includes(garment.id),
+  );
+  const loggingGarments = itemsState.items.filter(garment =>
+    logging.includes(garment.id),
+  );
+  const storePicked = (stored: boolean) => {
+    const changed = pickedGarments.filter(g => (g.stored === true) !== stored);
+    const ids = changed.map(g => g.id);
+    dispatch(setGarmentsStored({ ids, stored }));
+    stopSelecting();
+    setUndo({
+      message: countText(
+        stored ? l.GarmentStored : l.GarmentUnstored,
+        stored ? l.GarmentsStored : l.GarmentsUnstored,
+        ids.length,
+        language,
+      ),
+      run: () => dispatch(setGarmentsStored({ ids, stored: !stored })),
+    });
+  };
+  const movePicked = (wardrobe: { id: string; name: string }) => {
+    // Remembered per garment so Undo puts each back where it was.
+    const previous = pickedGarments.map(g => [g.id, g.wardrobeId ?? ""]);
+    dispatch(
+      setGarmentsWardrobe({
+        ids: pickedGarments.map(g => g.id),
+        wardrobeId: wardrobe.id,
+      }),
+    );
+    stopSelecting();
+    setUndo({
+      message: l.MovedTo[language].replace("{name}", wardrobe.name),
+      run: () =>
+        previous.forEach(([id, wardrobeId]) =>
+          dispatch(setGarmentsWardrobe({ ids: [id], wardrobeId })),
+        ),
+    });
+  };
   useEffect(() => {
     if (categoriesFilter.length !== 1) setTypeFilter([]);
   }, [categoriesFilter]);
@@ -199,6 +292,10 @@ export function HomeBottom() {
         wardrobe={activeWardrobe}
         onWardrobeChange={select}
         filterCount={filterCount}
+        startSelecting={() => {
+          Keyboard.dismiss();
+          setSelecting(true);
+        }}
         openGridSize={() => {
           Keyboard.dismiss();
           setIsGridSizeOpen(true);
@@ -221,7 +318,10 @@ export function HomeBottom() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={[
+          styles.scrollViewContent,
+          selecting && styles.selectingContent,
+        ]}
       >
         {isEmpty &&
           (filterCount > 0 || search ? (
@@ -248,30 +348,71 @@ export function HomeBottom() {
           renderGarment={renderGarment}
         />
       </ScrollView>
-      <AddButton label={l.AddGarment[language]} onPress={addGarment} />
-      <QuickLogSheet
-        garment={logging}
-        lastUsed={logging ? lastUsed[logging.id] : undefined}
+      {selecting ? (
+        <SelectionBar
+          count={pickedGarments.length}
+          language={language}
+          canStore={pickedGarments.some(g => !g.stored)}
+          canUnstore={pickedGarments.some(g => g.stored)}
+          onClose={stopSelecting}
+          onSelectAll={() =>
+            setPicked(current => [
+              ...current,
+              ...sections
+                .flatMap(section => section.types)
+                .flatMap(group => group.garments)
+                .map(garment => garment.id)
+                .filter(id => !current.includes(id)),
+            ])
+          }
+          onStore={() => storePicked(true)}
+          onUnstore={() => storePicked(false)}
+          onLog={() => setLogging(pickedGarments.map(g => g.id))}
+          onMove={() => setIsMoveOpen(true)}
+        />
+      ) : (
+        <AddButton label={l.AddGarment[language]} onPress={addGarment} />
+      )}
+      <MoveSheet
+        isOpen={isMoveOpen}
+        setIsOpen={setIsMoveOpen}
         language={language}
-        onClose={() => setLogging(undefined)}
+        onMove={movePicked}
+      />
+      <QuickLogSheet
+        garments={loggingGarments}
+        lastUsed={
+          loggingGarments.length === 1
+            ? lastUsed[loggingGarments[0].id]
+            : undefined
+        }
+        language={language}
+        onClose={() => setLogging([])}
         onEdit={editGarment}
-        onLogged={setLastLog}
+        onLogged={log => {
+          stopSelecting();
+          setUndo({
+            message: l.Logged[language].replace("{name}", log.name),
+            run: () => {
+              dispatch(deleteLog({ selectedLogId: log.eventId }));
+              dispatch(deleteEventLog({ selectedLogId: log.eventId }));
+            },
+          });
+        }}
       />
       <Snackbar
-        visible={!!lastLog}
-        onDismiss={() => setLastLog(undefined)}
+        visible={!!undo}
+        onDismiss={() => setUndo(undefined)}
         duration={5000}
-        wrapperStyle={styles.snackbar}
+        wrapperStyle={
+          selecting ? styles.snackbarOverSelection : styles.snackbar
+        }
         action={{
           label: l.Undo[language],
-          onPress: () => {
-            if (!lastLog) return;
-            dispatch(deleteLog({ selectedLogId: lastLog.eventId }));
-            dispatch(deleteEventLog({ selectedLogId: lastLog.eventId }));
-          },
+          onPress: () => undo?.run(),
         }}
       >
-        {lastLog ? l.Logged[language].replace("{name}", lastLog.name) : ""}
+        {undo?.message ?? ""}
       </Snackbar>
     </ThemeView>
   );
@@ -285,6 +426,12 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     bottom: ADD_BUTTON_CLEARANCE,
+  },
+  snackbarOverSelection: {
+    bottom: SELECTION_BAR_CLEARANCE,
+  },
+  selectingContent: {
+    paddingBottom: SELECTION_BAR_CLEARANCE,
   },
   chips: {
     flexDirection: "row",

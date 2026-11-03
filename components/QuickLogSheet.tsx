@@ -1,14 +1,19 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
-import { Button } from "react-native-paper";
+import { Button, Switch } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
 import dayjs from "dayjs";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useDispatch } from "react-redux";
 import "react-native-get-random-values";
 import { nanoid } from "nanoid";
-import { addEventLog, addLog, type item } from "../redux/itemsSlice";
-import { localization } from "../utils/localization";
+import {
+  addEventLog,
+  addLog,
+  setGarmentsStored,
+  type item,
+} from "../redux/itemsSlice";
+import { countText, localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
 import { BottomSheet } from "./BottomSheet";
 import { ThemeText } from "./ThemeText";
@@ -32,18 +37,19 @@ export const usageSummary = (
 };
 
 /**
- * Logs one use of a garment as its own Outfits entry. "When" starts as now
- * and can be moved to an earlier time.
+ * Logs one use of the given garments as a single Outfits entry. "When" starts
+ * as now and can be moved to an earlier time. With one garment it also shows
+ * its uses, its storage switch and Edit.
  */
 export function QuickLogSheet({
-  garment,
+  garments,
   lastUsed,
   language,
   onClose,
   onEdit,
   onLogged,
 }: {
-  garment?: item;
+  garments: item[];
   lastUsed?: string;
   language: number;
   onClose: () => void;
@@ -51,6 +57,7 @@ export function QuickLogSheet({
   onLogged: (log: { eventId: string; name: string }) => void;
 }) {
   const dispatch = useDispatch();
+  const garment = garments.length === 1 ? garments[0] : undefined;
   const [when, setWhen] = useState<Date>();
   const [pickerOpen, setPickerOpen] = useState(false);
   const close = () => {
@@ -61,9 +68,11 @@ export function QuickLogSheet({
     if (!(typeof value === "function" ? value(true) : value)) close();
   };
   const logUse = () => {
-    if (!garment) return;
+    if (garments.length === 0) return;
     const eventId = nanoid();
-    const name = garment.name.trim() || localization.Garment[language];
+    const name = garment
+      ? garment.name.trim() || localization.Garment[language]
+      : localization.Outfit[language];
     dispatch(
       addEventLog({
         eventId,
@@ -72,7 +81,9 @@ export function QuickLogSheet({
         logTime: JSON.stringify(new Date()),
       }),
     );
-    dispatch(addLog({ selectedId: garment.id, logId: eventId }));
+    garments.forEach(selected =>
+      dispatch(addLog({ selectedId: selected.id, logId: eventId })),
+    );
     close();
     onLogged({ eventId, name });
   };
@@ -81,31 +92,61 @@ export function QuickLogSheet({
     : localization.Now[language];
   return (
     <BottomSheet
-      isOpen={!!garment}
+      isOpen={garments.length > 0}
       setIsOpen={setOpen}
-      title={garment?.name || localization.Garment[language]}
+      title={
+        garment
+          ? garment.name || localization.Garment[language]
+          : localization.Outfit[language]
+      }
     >
-      {garment && (
+      {garments.length > 0 && (
         <View style={styles.content}>
-          <View style={styles.summary}>
-            {garment.image ? (
-              <Image
-                source={{ uri: `data:image/*;base64,${garment.image}` }}
-                style={styles.photo}
-              />
-            ) : (
-              <View style={[styles.photo, styles.placeholder]}>
-                <Icon
-                  name="shirt-outline"
-                  size={24}
-                  color={theme.colors.muted}
-                />
-              </View>
-            )}
-            <ThemeText customStyle={[captionText, styles.usage]}>
-              {usageSummary(garment.logIds?.length ?? 0, lastUsed, language)}
+          {!garment && (
+            <ThemeText customStyle={captionText}>
+              {countText(
+                localization.GarmentCount,
+                localization.GarmentsCount,
+                garments.length,
+                language,
+              )}
             </ThemeText>
-          </View>
+          )}
+          {garment && (
+            <View style={styles.summary}>
+              {garment.image ? (
+                <Image
+                  source={{ uri: `data:image/*;base64,${garment.image}` }}
+                  style={styles.photo}
+                />
+              ) : (
+                <View style={[styles.photo, styles.placeholder]}>
+                  <Icon
+                    name="shirt-outline"
+                    size={24}
+                    color={theme.colors.muted}
+                  />
+                </View>
+              )}
+              <ThemeText customStyle={[captionText, styles.usage]}>
+                {usageSummary(garment.logIds?.length ?? 0, lastUsed, language)}
+              </ThemeText>
+            </View>
+          )}
+          {garment && (
+            <View style={styles.storage}>
+              <ThemeText customStyle={styles.storageLabel}>
+                {localization.InStorage[language]}
+              </ThemeText>
+              <Switch
+                accessibilityLabel={localization.InStorage[language]}
+                value={garment.stored === true}
+                onValueChange={stored => {
+                  dispatch(setGarmentsStored({ ids: [garment.id], stored }));
+                }}
+              />
+            </View>
+          )}
           <View style={styles.when}>
             <Pressable
               accessibilityRole="button"
@@ -138,16 +179,18 @@ export function QuickLogSheet({
             )}
           </View>
           <View style={styles.actions}>
-            <Button
-              mode="outlined"
-              style={styles.action}
-              onPress={() => {
-                close();
-                onEdit(garment);
-              }}
-            >
-              {localization.Edit[language]}
-            </Button>
+            {garment && (
+              <Button
+                mode="outlined"
+                style={styles.action}
+                onPress={() => {
+                  close();
+                  onEdit(garment);
+                }}
+              >
+                {localization.Edit[language]}
+              </Button>
+            )}
             <Button mode="contained" style={styles.action} onPress={logUse}>
               {localization.LogUse[language]}
             </Button>
@@ -210,6 +253,14 @@ const styles = StyleSheet.create({
     minHeight: theme.touch,
     justifyContent: "center",
     alignItems: "center",
+  },
+  storage: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: theme.touch,
+  },
+  storageLabel: {
+    flex: 1,
   },
   actions: {
     flexDirection: "row",

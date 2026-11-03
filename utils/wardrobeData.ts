@@ -84,6 +84,7 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
             : undefined,
         ),
         seasons: garmentSeasons(record(value)),
+        stored: record(value).stored === true,
         ...pick<item>(value, [
           "id",
           "name",
