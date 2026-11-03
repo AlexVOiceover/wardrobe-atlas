@@ -1,5 +1,6 @@
 import React from "react";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
+import { Text } from "react-native";
 import ColorModal from "../components/ColorModal";
 
 jest.mock("react-redux", () => ({ useSelector: () => ({ language: 0 }) }));
@@ -122,4 +123,55 @@ test("with a photo, the picker opens on the photo and saves the tapped color", a
     view.unmount();
   });
   expect(mockFs.unlink).toHaveBeenCalled();
+});
+
+test("on the wheel the photo stays in view next to a live swatch", async () => {
+  let view!: ReactTestRenderer;
+  await act(async () => {
+    view = create(
+      <ColorModal
+        colors={["#123456"]}
+        setColors={jest.fn()}
+        colorSelection={0}
+        visible={true}
+        setVisible={jest.fn()}
+        image="photo-data"
+      />,
+    );
+  });
+  const chip = view.root.find(
+    n => n.props.accessibilityLabel === "Wheel" && !!n.props.onPress,
+  );
+  await act(async () => chip.props.onPress());
+  const photo = view.root.find(
+    n => n.props.accessibilityLabel === "Photo" && !!n.props.source,
+  );
+  expect(photo.props.source.uri).toBe("data:image/jpeg;base64,photo-data");
+  const swatch = () =>
+    view.root.find(n => n.props.testID === "wheel-swatch" && !!n.props.style);
+  await act(async () =>
+    view.root.findByType("ColorPicker" as any).props.onColorChange("#AA0000"),
+  );
+  expect(JSON.stringify(swatch().props.style)).toContain("#AA0000");
+  expect(swatch().findByType(Text).props.children).toBe("#AA0000");
+  await act(async () => view.unmount());
+});
+
+test("without a photo the wheel shows no comparison", async () => {
+  let view!: ReactTestRenderer;
+  await act(async () => {
+    view = create(
+      <ColorModal
+        colors={["#123456"]}
+        setColors={jest.fn()}
+        colorSelection={0}
+        visible={true}
+        setVisible={jest.fn()}
+      />,
+    );
+  });
+  expect(
+    view.root.findAll(n => n.props.testID === "wheel-swatch"),
+  ).toHaveLength(0);
+  await act(async () => view.unmount());
 });
