@@ -10,7 +10,9 @@ import { ThemeText } from "./ThemeText";
 export const ImageViewer = ({
   imageUrl,
   setImageModalVisible,
+  size = 160,
 }: {
+  size?: number;
   imageUrl: string;
   setImageModalVisible: Dispatch<SetStateAction<boolean>>;
 }) => {
@@ -36,8 +38,8 @@ export const ImageViewer = ({
         onLongPress={() => imageUrl !== "" && setShowImageFull(true)}
         onPress={() => setImageModalVisible(true)}
         style={{
-          width: 160,
-          height: 160,
+          width: size,
+          height: size,
           borderRadius: theme.radius.sm,
           overflow: "hidden",
           backgroundColor: theme.colors.surface,
@@ -48,7 +50,7 @@ export const ImageViewer = ({
         {imageUrl !== "" ? (
           <Image
             source={{ uri: `data:image/*;base64,${imageUrl}` }}
-            style={{ width: 160, height: 160, resizeMode: "cover" }}
+            style={{ width: size, height: size, resizeMode: "cover" }}
           />
         ) : (
           <ThemeText>{localization.AddPhoto[language]}</ThemeText>
