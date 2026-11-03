@@ -25,3 +25,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Remove photo backgrounds](remove-photo-background/PLAN.md)
 - [Suggest an outfit](suggest-outfit/PLAN.md)
 - [Keep only the garment](garment-segmentation/PLAN.md)
+- [Compare the photo on the color wheel](wheel-photo-compare/PLAN.md)
