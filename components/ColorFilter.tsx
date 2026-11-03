@@ -4,25 +4,9 @@ import { ThemeText } from "./ThemeText";
 import { colorNames } from "../utils/localization";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { theme } from "../utils/theme";
-const basicColors: { [key: string]: string } = {
-  yellow: "#FEFD00",
-  yellow_Orange: "#F8A900",
-  yellow_Green: "#48FE00",
-  orange: "#F67300",
-  green: "#206F00",
-  red_Orange: "#F53C00",
-  blue_Green: "#31A6A6",
-  red: "#F40000",
-  blue: "#1420FF",
-  red_Violet: "#BE0FAA",
-  blue_Violet: "#66169F",
-  violet: "#AC1DFF",
-  black: "#000",
-  white: "#fff",
-  gray: "#808080",
-  unknown: "",
-};
+import { captionText, theme } from "../utils/theme";
+import { clothingColors, NO_COLOR } from "../utils/colors";
+const filterColors = [...Object.keys(clothingColors), NO_COLOR];
 const ColorFilter = ({
   colors,
   setColors,
@@ -31,38 +15,56 @@ const ColorFilter = ({
   setColors: Dispatch<SetStateAction<string[]>>;
 }) => {
   const language = useSelector((state: RootState) => state.settings.language);
+  const selectedNames = filterColors
+    .filter(name => colors.includes(name))
+    .map(name => colorNames[language][name]);
   return (
-    <View style={styles.grid}>
-      {Object.keys(basicColors).map(name => {
-        const selected = colors.includes(name);
-        return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={colorNames[language][name]}
-            accessibilityState={{ selected }}
-            onPress={() =>
-              setColors(prev =>
-                prev.includes(name)
-                  ? prev.filter(color => color !== name)
-                  : [...prev, name],
-              )
-            }
-            key={name}
-            style={[styles.cell, selected && styles.selected]}
-          >
-            <View
-              style={[styles.swatch, { backgroundColor: basicColors[name] }]}
+    <View style={styles.container}>
+      <View style={styles.grid}>
+        {filterColors.map(name => {
+          const selected = colors.includes(name);
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={colorNames[language][name]}
+              accessibilityState={{ selected }}
+              onPress={() =>
+                setColors(prev =>
+                  prev.includes(name)
+                    ? prev.filter(color => color !== name)
+                    : [...prev, name],
+                )
+              }
+              key={name}
+              style={[styles.cell, selected && styles.selected]}
             >
-              {name === "unknown" && <ThemeText>?</ThemeText>}
-            </View>
-          </Pressable>
-        );
-      })}
+              <View
+                style={[
+                  styles.swatch,
+                  name === NO_COLOR
+                    ? styles.noColor
+                    : { backgroundColor: clothingColors[name] },
+                ]}
+              >
+                {name === NO_COLOR && <ThemeText>?</ThemeText>}
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+      {selectedNames.length > 0 && (
+        <ThemeText customStyle={captionText}>
+          {selectedNames.join(", ")}
+        </ThemeText>
+      )}
     </View>
   );
 };
 export default ColorFilter;
 const styles = StyleSheet.create({
+  container: {
+    gap: theme.spacing.sm,
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -86,5 +88,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.muted,
+  },
+  noColor: {
+    borderStyle: "dashed",
+    borderWidth: 1,
   },
 });

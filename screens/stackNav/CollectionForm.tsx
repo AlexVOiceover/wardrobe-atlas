@@ -7,7 +7,7 @@ import { CustomInput } from "../../components/CustomInput";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { addCollection, moveCollection } from "../../redux/itemsSlice";
-import { colors as appColors } from "./../../utils/colors";
+import { defaultCollectionColor } from "./../../utils/colors";
 import { localization } from "../../utils/localization";
 import { CollectionList } from "../../components/CollectionList";
 import { FilterChip } from "../../components/FilterChip";
@@ -57,9 +57,6 @@ export const CollectionForm = () => {
     if (name.length <= 0) {
       errors.push(localization.CollectionNameRequired[language]);
     }
-    if (name.length > 20) {
-      errors.push(localization.NameTooLong[language]);
-    }
     if (
       CollectionsState.find(x => x.label.toLowerCase() === name.toLowerCase())
     ) {
@@ -73,7 +70,7 @@ export const CollectionForm = () => {
     dispatch(
       addCollection({
         name: name,
-        color: appColors.defaultCollectionColor,
+        color: defaultCollectionColor,
       }),
     );
   };

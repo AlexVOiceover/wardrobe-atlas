@@ -13,3 +13,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 
 - [Reliable updates and version header](reliable-updates-header/PLAN.md)
 - [UI first pass](ui-first-pass/PLAN.md)
+- [UI polish: colors, bars, names](ui-polish-colors/PLAN.md)

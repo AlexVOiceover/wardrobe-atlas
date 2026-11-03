@@ -10,7 +10,9 @@ export const SectionHeading = ({
   right?: ReactNode;
 }) => (
   <View style={styles.row}>
-    <ThemeText customStyle={styles.title}>{title}</ThemeText>
+    <ThemeText numberOfLines={2} customStyle={styles.title}>
+      {title}
+    </ThemeText>
     {right}
   </View>
 );

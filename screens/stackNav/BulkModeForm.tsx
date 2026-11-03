@@ -172,8 +172,6 @@ export const BulkModeForm = ({
     }
     if (prefix.trim().length <= 0) {
       errors.push(localization.PrefixRequired[language]);
-    } else if (prefix.length > 20) {
-      errors.push(localization.NameTooLong[language]);
     }
     if (errors.length > 0) {
       setErrorsList(errors);

@@ -33,9 +33,6 @@ export const EventLogForm = ({
     if (eventName.length <= 0) {
       errors.push(localization.EventNameRequired[storedSettings.language]);
     }
-    if (eventName.length > 20) {
-      errors.push(localization.NameTooLong[storedSettings.language]);
-    }
     if (errors.length > 0) {
       setErrorsList(errors);
       return;

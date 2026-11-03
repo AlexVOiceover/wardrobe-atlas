@@ -24,7 +24,7 @@ export const HeaderIcon = ({
     onPress={onPress}
     style={styles.icon}
   >
-    <Icon name={name} size={24} color={theme.colors.text} />
+    <Icon name={name} size={24} color={theme.colors.onBar} />
     {badge > 0 && (
       <View style={styles.badge}>
         <Text style={styles.badgeText}>{badge}</Text>
@@ -55,7 +55,9 @@ export const PageHeader = ({
           }}
         />
       )}
-      <ThemeText customStyle={styles.title}>{title}</ThemeText>
+      <ThemeText numberOfLines={1} customStyle={styles.title}>
+        {title}
+      </ThemeText>
       {actions}
     </View>
   );
@@ -66,12 +68,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 56,
     paddingHorizontal: theme.spacing.xs,
+    backgroundColor: theme.colors.bar,
   },
   rootContainer: {
     paddingLeft: theme.spacing.md,
   },
   title: {
     flex: 1,
+    color: theme.colors.onBar,
     fontSize: theme.type.title,
     fontWeight: "600",
   },
@@ -89,12 +93,12 @@ const styles = StyleSheet.create({
     height: 16,
     paddingHorizontal: 3,
     borderRadius: 8,
-    backgroundColor: theme.colors.text,
+    backgroundColor: theme.colors.onBar,
     justifyContent: "center",
     alignItems: "center",
   },
   badgeText: {
-    color: theme.colors.background,
+    color: theme.colors.bar,
     fontSize: 10,
     fontWeight: "600",
   },

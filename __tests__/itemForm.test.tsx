@@ -119,6 +119,31 @@ test("new item saves typed name, chosen type and wardrobe without generated name
   );
 });
 
+test("long garment names save without a length limit", () => {
+  const longName = "Navy wool overcoat with horn buttons from the winter sale";
+  const tree = render();
+  const name = tree.root
+    .findAllByType("CustomInput" as any)
+    .find(i => i.props.label === "Name")!;
+  act(() => name.props.onChange({ nativeEvent: { text: longName } }));
+  const type = tree.root
+    .findAllByType("Dropdown" as any)
+    .find(d => d.props.placeholder === "Type")!;
+  act(() => type.props.setValue(type.props.items[0].value));
+  act(() =>
+    tree.root
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === "Save")!
+      .props.onPress(),
+  );
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "itemsList/addItem",
+      payload: expect.objectContaining({ name: longName }),
+    }),
+  );
+});
+
 test("editing preserves existing fit and season while keeping Delete reachable in the scroll area", () => {
   mockState.itemsList.items = [
     {

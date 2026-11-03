@@ -62,7 +62,9 @@ export const EditItemList = ({
           />
         </View>
       ) : (
-        <ThemeText customStyle={styles.itemLabel}>{item.label}</ThemeText>
+        <ThemeText numberOfLines={2} customStyle={styles.itemLabel}>
+          {item.label}
+        </ThemeText>
       )}
 
       {(currentIndex ?? 0) >= (ignoreNum ?? 0) && (

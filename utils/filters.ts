@@ -1,5 +1,5 @@
 import { item, logsType } from "../redux/itemsSlice";
-import { categorizeColor } from "./colors";
+import { categorizeColor, NO_COLOR } from "./colors";
 
 function desc(array: any[], sub: string) {
   array.sort((a, b) => {
@@ -82,6 +82,22 @@ export function LogFilter(
   return newArray;
 }
 
+// Filter colors a garment belongs to; empty color slots are ignored, so
+// "No color" only matches garments without any usable color.
+function garmentColorKeys(garment: item) {
+  const keys = [
+    garment.primaryColor,
+    garment.secondaryColor,
+    garment.tertiaryColor,
+  ]
+    .map(color => categorizeColor(color || ""))
+    .filter(key => key !== NO_COLOR);
+  return keys.length > 0 ? keys : [NO_COLOR];
+}
+function matchesColors(garment: item, colors: string[]) {
+  return garmentColorKeys(garment).some(key => colors.includes(key));
+}
+
 export type SortValuesType = {
   sortValue: string;
   categories: number[];
@@ -137,16 +153,13 @@ export function HomeFilter(
         );
       }
       if (filters.season !== "") {
-        newArray[i] = newArray[i].filter(garment => filters.season === garment.season);
+        newArray[i] = newArray[i].filter(
+          garment => filters.season === garment.season,
+        );
       }
       if (filters.colors.length > 0) {
-        newArray[i] = newArray[i].filter(
-          garment =>
-            filters.colors.includes(categorizeColor(garment.primaryColor || "")) ||
-            filters.colors.includes(
-              categorizeColor(garment.secondaryColor || ""),
-            ) ||
-            filters.colors.includes(categorizeColor(garment.tertiaryColor || "")),
+        newArray[i] = newArray[i].filter(garment =>
+          matchesColors(garment, filters.colors),
         );
       }
     }
@@ -177,17 +190,16 @@ export function HomeFilter(
     }
 
     if (filters.types.length > 0) {
-      newArray = newArray.filter(garment => filters.types.includes(garment.type));
+      newArray = newArray.filter(garment =>
+        filters.types.includes(garment.type),
+      );
     }
     if (filters.season !== "") {
       newArray = newArray.filter(garment => filters.season === garment.season);
     }
     if (filters.colors.length > 0) {
-      newArray = newArray.filter(
-        garment =>
-          filters.colors.includes(categorizeColor(garment.primaryColor || "")) ||
-          filters.colors.includes(categorizeColor(garment.secondaryColor || "")) ||
-          filters.colors.includes(categorizeColor(garment.tertiaryColor || "")),
+      newArray = newArray.filter(garment =>
+        matchesColors(garment, filters.colors),
       );
     }
     return newArray;

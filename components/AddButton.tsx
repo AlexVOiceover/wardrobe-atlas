@@ -14,7 +14,7 @@ export const AddButton = ({
     onPress={onPress}
     style={styles.button}
   >
-    <Icon name="add" size={28} color={theme.colors.background} />
+    <Icon name="add" size={28} color={theme.colors.onBar} />
   </Pressable>
 );
 export const ADD_BUTTON_CLEARANCE = 88;
@@ -27,6 +27,6 @@ const styles = StyleSheet.create({
     height: 56,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: theme.colors.text,
+    backgroundColor: theme.colors.bar,
   },
 });

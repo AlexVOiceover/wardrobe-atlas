@@ -1,4 +1,7 @@
 import React from "react";
+import { StyleSheet } from "react-native";
+import { HeaderIcon, PageHeader } from "../components/PageHeader";
+import { theme } from "../utils/theme";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
 import { Category } from "../screens/stackNav/Category";
 import { ManageCategories } from "../screens/stackNav/ManageCategories";
@@ -160,4 +163,28 @@ test("the filter badge counts active filters but not the sort order", () => {
       colorFilter: ["red", "blue"],
     }),
   ).toBe(5);
+});
+
+test("page headers use the accent bar with readable icons and title", () => {
+  const tree = render(
+    <PageHeader
+      title="Settings"
+      actions={
+        <HeaderIcon name="add" label="Add" badge={2} onPress={jest.fn()} />
+      }
+    />,
+  );
+  const bar = tree.root.findAll(
+    n =>
+      StyleSheet.flatten(n.props.style)?.backgroundColor === theme.colors.bar,
+  );
+  expect(bar.length).toBeGreaterThan(0);
+  tree.root
+    .findAllByType("Icon" as any)
+    .forEach(icon => expect(icon.props.color).toBe(theme.colors.onBar));
+  const title = tree.root.findAll(
+    n => typeof n.type === "string" && n.props.children === "Settings",
+  )[0];
+  expect(StyleSheet.flatten(title.props.style).color).toBe(theme.colors.onBar);
+  expect(title.props.numberOfLines).toBe(1);
 });

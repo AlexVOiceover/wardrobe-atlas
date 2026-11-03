@@ -67,5 +67,6 @@ const styles = StyleSheet.create({
     height: 56,
     paddingLeft: theme.spacing.xs,
     paddingRight: theme.spacing.xs,
+    backgroundColor: theme.colors.bar,
   },
 });

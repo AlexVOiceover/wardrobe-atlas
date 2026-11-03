@@ -57,7 +57,9 @@ export const LogComponent = ({
           onPress={handlePress}
           style={styles.eventInfo}
         >
-          <ThemeText customStyle={styles.eventTitle}>{eventName}</ThemeText>
+          <ThemeText numberOfLines={2} customStyle={styles.eventTitle}>
+            {eventName}
+          </ThemeText>
           <ThemeText customStyle={captionText}>
             {dayjs(eventDate).format("DD/MM/YYYY · h:mm A")}
           </ThemeText>
