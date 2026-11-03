@@ -52,6 +52,16 @@ jest.mock("../utils/backgroundRemoval", () => ({
   ...jest.requireActual("../utils/backgroundRemoval"),
   removeBackground: (image: string) => mockRemoveBackground(image),
 }));
+const mockGarmentModel = { present: true, download: jest.fn() };
+const mockIsolateGarment = jest.fn();
+jest.mock("../utils/garmentIsolation", () => ({
+  ...jest.requireActual("../utils/garmentIsolation"),
+  hasGarmentModel: async () => mockGarmentModel.present,
+  downloadGarmentModel: (onProgress: (percent: number) => void) =>
+    mockGarmentModel.download(onProgress),
+  isolateGarment: (image: string, part: string) =>
+    mockIsolateGarment(image, part),
+}));
 
 beforeEach(() => {
   mockDispatch.mockClear();
@@ -85,6 +95,16 @@ function render(editingIndex?: string) {
         navigation={navigation}
         route={{ params: { selectedCategory: 0, editingIndex } }}
       />,
+    );
+  });
+  return tree!;
+}
+// Editing from the Closet passes only the garment, like the app does.
+function edit(editingIndex: string) {
+  let tree: ReactTestRenderer;
+  act(() => {
+    tree = create(
+      <ItemForm navigation={navigation} route={{ params: { editingIndex } }} />,
     );
   });
   return tree!;
@@ -219,7 +239,10 @@ test("garment delete only happens after confirming the dialog", () => {
     { id: "a", name: "Coat", collection: [], category: 0 },
   ];
   const tree = render("a");
-  const dialog = () => tree.root.findByType("ConfirmationDialog" as any);
+  const dialog = () =>
+    tree.root
+      .findAllByType("ConfirmationDialog" as any)
+      .find(d => !d.props.title)!;
   const pressDelete = () =>
     tree.root
       .findAllByType("Button" as any)
@@ -539,21 +562,21 @@ test("In storage starts off for new garments and is saved when switched on", () 
   );
 });
 
-test("Remove background replaces the photo, Undo brings it back, and Save stores the cutout", async () => {
+test("Remove background replaces a shoe photo, Undo brings it back, and Save stores the cutout", async () => {
   mockState.itemsList.items = [
     {
-      id: "shirt",
-      name: "Shirt",
-      type: "Shirt",
-      category: 0,
+      id: "shoe",
+      name: "Shoe",
+      type: "Sneakers",
+      category: 2,
       image: "/9j/photo",
       collection: [],
     },
     {
       id: "cut",
       name: "Cut",
-      type: "Shirt",
-      category: 0,
+      type: "Sneakers",
+      category: 2,
       image: "UklGRcut",
       collection: [],
     },
@@ -561,8 +584,8 @@ test("Remove background replaces the photo, Undo brings it back, and Save stores
   const photo = (tree: ReactTestRenderer) =>
     tree.root.findByType("ImageViewer" as any).props.imageUrl;
   // Already cut out: no button
-  expect(button(render("cut"), "Remove background")).toBeUndefined();
-  const tree = render("shirt");
+  expect(button(edit("cut"), "Remove background")).toBeUndefined();
+  const tree = edit("shoe");
   mockRemoveBackground.mockResolvedValueOnce({ error: "noSubject" });
   await act(async () => button(tree, "Remove background")!.props.onPress());
   expect(photo(tree)).toBe("/9j/photo");
@@ -570,6 +593,7 @@ test("Remove background replaces the photo, Undo brings it back, and Save stores
   mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
   await act(async () => button(tree, "Remove background")!.props.onPress());
   expect(mockRemoveBackground).toHaveBeenLastCalledWith("/9j/photo");
+  expect(mockIsolateGarment).not.toHaveBeenCalled();
   expect(photo(tree)).toBe("UklGRnew");
   act(() => button(tree, "Undo")!.props.onPress());
   expect(photo(tree)).toBe("/9j/photo");
@@ -579,9 +603,112 @@ test("Remove background replaces the photo, Undo brings it back, and Save stores
   expect(mockDispatch).toHaveBeenCalledWith(
     expect.objectContaining({
       type: "itemsList/updateItem",
-      payload: expect.objectContaining({ id: "shirt", image: "UklGRnew" }),
+      payload: expect.objectContaining({ id: "shoe", image: "UklGRnew" }),
     }),
   );
+});
+
+describe("Keep only the garment", () => {
+  const items = () => [
+    {
+      id: "fleece",
+      name: "Fleece",
+      type: "Sweater",
+      category: 0,
+      image: "/9j/photo",
+      collection: [],
+    },
+    // An earlier cutout that still shows the person
+    {
+      id: "jeans",
+      name: "Jeans",
+      type: "Jeans",
+      category: 1,
+      image: "UklGRold",
+      collection: [],
+    },
+  ];
+  const modelDialog = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAllByType("ConfirmationDialog" as any)
+      .find(d => d.props.title === "Download the garment model?")!;
+  beforeEach(() => {
+    mockRemoveBackground.mockClear();
+    mockIsolateGarment.mockReset();
+    mockGarmentModel.present = true;
+    mockGarmentModel.download.mockReset();
+  });
+
+  test("tops keep the upper garment, and earlier cutouts of bottoms can be redone", async () => {
+    mockState.itemsList.items = items();
+    let tree = edit("fleece");
+    expect(button(tree, "Remove background")).toBeUndefined();
+    mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRtop" });
+    await act(async () =>
+      button(tree, "Keep only the garment")!.props.onPress(),
+    );
+    expect(mockIsolateGarment).toHaveBeenLastCalledWith("/9j/photo", "upper");
+    expect(mockRemoveBackground).not.toHaveBeenCalled();
+    expect(tree.root.findByType("ImageViewer" as any).props.imageUrl).toBe(
+      "UklGRtop",
+    );
+    tree = edit("jeans");
+    mockIsolateGarment.mockResolvedValueOnce({ error: "noSubject" });
+    await act(async () =>
+      button(tree, "Keep only the garment")!.props.onPress(),
+    );
+    expect(mockIsolateGarment).toHaveBeenLastCalledWith("UklGRold", "lower");
+    expect(JSON.stringify(tree.toJSON())).toContain("No garment found");
+  });
+
+  test("asks before downloading the model, shows progress, then isolates", async () => {
+    mockState.itemsList.items = items();
+    mockGarmentModel.present = false;
+    const tree = edit("fleece");
+    await act(async () =>
+      button(tree, "Keep only the garment")!.props.onPress(),
+    );
+    expect(modelDialog(tree).props.visible).toBe(true);
+    expect(modelDialog(tree).props.message).toContain("176 MB");
+    expect(mockGarmentModel.download).not.toHaveBeenCalled();
+    let finish!: (ok: boolean) => void;
+    mockGarmentModel.download.mockImplementation(
+      (onProgress: (percent: number) => void) =>
+        new Promise(resolve => {
+          onProgress(42);
+          finish = resolve;
+        }),
+    );
+    await act(async () => {
+      modelDialog(tree).props.onConfirm();
+    });
+    expect(
+      button(tree, "Downloading the garment model… 42%")!.props.disabled,
+    ).toBe(true);
+    mockGarmentModel.present = true;
+    mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRtop" });
+    await act(async () => finish(true));
+    expect(mockIsolateGarment).toHaveBeenCalledWith("/9j/photo", "upper");
+    expect(button(tree, "Undo")).toBeDefined();
+  });
+
+  test("a failed download says so and changes nothing", async () => {
+    mockState.itemsList.items = items();
+    mockGarmentModel.present = false;
+    mockGarmentModel.download.mockResolvedValueOnce(false);
+    const tree = edit("fleece");
+    await act(async () =>
+      button(tree, "Keep only the garment")!.props.onPress(),
+    );
+    await act(async () => modelDialog(tree).props.onConfirm());
+    expect(JSON.stringify(tree.toJSON())).toContain(
+      "Couldn't download the garment model",
+    );
+    expect(mockIsolateGarment).not.toHaveBeenCalled();
+    expect(tree.root.findByType("ImageViewer" as any).props.imageUrl).toBe(
+      "/9j/photo",
+    );
+  });
 });
 
 test("styles follow the subcategory until a chip is tapped; editing keeps saved styles", () => {

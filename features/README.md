@@ -24,3 +24,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Bilingual categories and subcategories](bilingual-categories/PLAN.md)
 - [Remove photo backgrounds](remove-photo-background/PLAN.md)
 - [Suggest an outfit](suggest-outfit/PLAN.md)
+- [Keep only the garment](garment-segmentation/PLAN.md)
