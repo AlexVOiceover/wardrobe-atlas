@@ -5,10 +5,17 @@ import { ItemForm } from "../screens/stackNav/ItemForm";
 
 const mockDispatch = jest.fn();
 const mockState = {
-  settings: { language: 0, collectionSortValue: "CUSTOM" },
+  settings: {
+    language: 0,
+    collectionSortValue: "CUSTOM",
+    lastWardrobeId: "" as string | undefined,
+  },
   CategoryList: { CategoryCustomTypes: [] },
   itemsList: {
-    wardrobes: [{ id: "home", name: "Home" }],
+    wardrobes: [
+      { id: "home", name: "Home" },
+      { id: "work", name: "Work" },
+    ],
     collectionTags: [],
     items: [] as any[],
   },
@@ -47,9 +54,17 @@ beforeEach(() => {
   navigation.popToTop.mockClear();
   navigation.dispatch.mockClear();
   mockState.itemsList.items = [];
+  mockState.settings.lastWardrobeId = "";
 });
 
 const navigation = { popToTop: jest.fn(), dispatch: jest.fn() };
+// Switch rows expose their Switch element as the ListRow's `right` prop.
+const toggleRow = (tree: ReactTestRenderer, title: string, on: boolean) =>
+  act(() =>
+    tree.root
+      .findAll(n => n.props.title === title && n.props.right)[0]
+      .props.right.props.onValueChange(on),
+  );
 function render(editingIndex?: string) {
   let tree: ReactTestRenderer;
   act(() => {
@@ -83,7 +98,8 @@ test("simplified form keeps colors and Save inside a bounded scroll area with us
   scroll
     .findAllByType("Dropdown" as any)
     .forEach(d => expect(d.props.listMode).toBe("MODAL"));
-  // New garments ask for the primary color only
+  // New garments start with automatic colors, and ask for the primary color only
+  toggleRow(tree, "Automatic color selection", false);
   expect(
     scroll.findAll(node => node.props.children === "Primary color").length,
   ).toBeGreaterThan(0);
@@ -229,6 +245,7 @@ const button = (tree: ReactTestRenderer, label: string) =>
 
 test("secondary and tertiary colors are optional and only added on request", () => {
   const tree = render();
+  toggleRow(tree, "Automatic color selection", false);
   expect(colorRows(tree)).toEqual(["Primary color"]);
   // Secondary can only be added once primary is set
   expect(button(tree, "Add secondary color")!.props.disabled).toBe(true);
@@ -279,6 +296,131 @@ test("editing shows existing colors, and removing secondary moves tertiary up", 
         secondaryColor: "#B22222",
         tertiaryColor: "",
       }),
+    }),
+  );
+});
+
+const input = (tree: ReactTestRenderer, label: string) =>
+  tree.root
+    .findAllByType("CustomInput" as any)
+    .find(i => i.props.label === label)!;
+const chooseFirstType = (tree: ReactTestRenderer) => {
+  const type = tree.root
+    .findAllByType("Dropdown" as any)
+    .find(d => d.props.placeholder === "Type")!;
+  act(() => type.props.setValue(type.props.items[0].value));
+  return type.props.items[0].label as string;
+};
+const save = (tree: ReactTestRenderer) =>
+  act(() => button(tree, "Save")!.props.onPress());
+const savedPayload = () =>
+  mockDispatch.mock.calls
+    .map(([action]) => action)
+    .find(action => /itemsList\/(add|update)Item/.test(action.type)).payload;
+
+test("new garments start in the last used wardrobe, with automatic colors and no purchase date", () => {
+  mockState.settings.lastWardrobeId = "work";
+  const tree = render();
+  expect(tree.root.findByType("WardrobeSelector" as any).props.value).toBe(
+    "work",
+  );
+  const rowSwitch = (title: string) =>
+    tree.root.findAll(n => n.props.title === title && n.props.right)[0].props
+      .right.props.value;
+  expect(rowSwitch("Automatic color selection")).toBe(true);
+  expect(rowSwitch("Purchase Date")).toBe(false);
+  expect(tree.root.findAllByType("DatePicker" as any)).toHaveLength(0);
+  chooseFirstType(tree);
+  save(tree);
+  expect(savedPayload()).toEqual(
+    expect.objectContaining({
+      wardrobeId: "work",
+      purchaseDate: "",
+      automaticColor: true,
+    }),
+  );
+  expect(mockDispatch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: "settings/setLastWardrobe",
+      payload: { wardrobeId: "work" },
+    }),
+  );
+});
+
+test("a deleted last wardrobe falls back to the Closet selection", () => {
+  mockState.settings.lastWardrobeId = "gone";
+  const tree = render();
+  expect(tree.root.findByType("WardrobeSelector" as any).props.value).toBe(
+    "home",
+  );
+});
+
+test("the name follows color, brand and type until edited, and is generated on Save when empty", () => {
+  const tree = render();
+  const typeLabel = chooseFirstType(tree);
+  act(() =>
+    tree.root
+      .findByType("ColorModal" as any)
+      .props.setColors(["#1F2A44", "", ""]),
+  );
+  act(() =>
+    input(tree, "Brand").props.onChange({ nativeEvent: { text: "Benetton" } }),
+  );
+  expect(input(tree, "Name").props.value).toBe(`Navy Benetton ${typeLabel}`);
+  act(() =>
+    input(tree, "Name").props.onChange({ nativeEvent: { text: "Work coat" } }),
+  );
+  act(() =>
+    input(tree, "Brand").props.onChange({ nativeEvent: { text: "Zara" } }),
+  );
+  expect(input(tree, "Name").props.value).toBe("Work coat");
+  // Clearing the name lets it follow the fields again
+  act(() => input(tree, "Name").props.onChange({ nativeEvent: { text: "" } }));
+  expect(input(tree, "Name").props.value).toBe(`Navy Zara ${typeLabel}`);
+  save(tree);
+  expect(savedPayload()).toEqual(
+    expect.objectContaining({ name: `Navy Zara ${typeLabel}`, brand: "Zara" }),
+  );
+});
+
+test("turning the purchase date on saves the chosen date", () => {
+  const tree = render();
+  chooseFirstType(tree);
+  toggleRow(tree, "Purchase Date", true);
+  const picker = tree.root.findByType("DatePicker" as any);
+  act(() => picker.props.setDate(new Date("2026-10-01T00:00:00.000Z")));
+  save(tree);
+  expect(savedPayload().purchaseDate).toBe(
+    JSON.stringify(new Date("2026-10-01T00:00:00.000Z")),
+  );
+});
+
+test("editing keeps the name, brand, color setting and purchase date", () => {
+  mockState.itemsList.items = [
+    {
+      id: "coat",
+      name: "Old coat",
+      brand: "Benetton",
+      type: "T-Shirt",
+      image: "",
+      collection: [],
+      wardrobeId: "home",
+      automaticColor: false,
+      primaryColor: "#B22222",
+      purchaseDate: JSON.stringify(new Date("2025-01-02T00:00:00.000Z")),
+    },
+  ];
+  const tree = render("coat");
+  expect(input(tree, "Name").props.value).toBe("Old coat");
+  expect(input(tree, "Brand").props.value).toBe("Benetton");
+  expect(colorRows(tree)).toEqual(["Primary color"]);
+  save(tree);
+  expect(savedPayload()).toEqual(
+    expect.objectContaining({
+      name: "Old coat",
+      brand: "Benetton",
+      automaticColor: false,
+      purchaseDate: JSON.stringify(new Date("2025-01-02T00:00:00.000Z")),
     }),
   );
 });

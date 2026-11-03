@@ -94,6 +94,7 @@ test("normalization keeps wardrobe content and only the current schema", () => {
     "enableHeatMap",
     "gridColumns",
     "language",
+    "lastWardrobeId",
     "name",
   ]);
   // Older stored settings and backups have no grid size
@@ -204,4 +205,30 @@ test("core garment creation and outfit logging remain intact", () => {
   expect(state.items[0].logIds).toEqual(["new-event"]);
   state = itemsReducer(state, deleteLog({ selectedLogId: "new-event" }));
   expect(state.items[0].logIds).toEqual([]);
+});
+
+test("brand and the last used wardrobe survive load and backups; old data has none", () => {
+  expect(mockWardrobe.itemsList.items[0].brand).toBeUndefined();
+  expect(mockWardrobe.settings.lastWardrobeId).toBe("");
+  const withBrand = normalizeWardrobe({
+    ...previous,
+    settings: { ...previous.settings, lastWardrobeId: "home" },
+    itemsList: {
+      ...previous.itemsList,
+      wardrobes: [{ id: "home", name: "Home" }],
+      items: [{ ...previous.itemsList.items[0], brand: "Benetton" }],
+    },
+  });
+  expect(withBrand.itemsList.items[0].brand).toBe("Benetton");
+  expect(withBrand.settings.lastWardrobeId).toBe("home");
+  expect(
+    settingsReducer(undefined, importSettings(withBrand.settings))
+      .lastWardrobeId,
+  ).toBe("home");
+  // A wardrobe that no longer exists is dropped
+  const missing = normalizeWardrobe({
+    ...previous,
+    settings: { ...previous.settings, lastWardrobeId: "gone" },
+  });
+  expect(missing.settings.lastWardrobeId).toBe("");
 });
