@@ -5,6 +5,7 @@ import { OutfitLog } from "../screens/bottomNav/OutfitLog";
 import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
 import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
 import { ManageCategories } from "../screens/stackNav/ManageCategories";
+import { SuggestOutfit } from "../screens/stackNav/SuggestOutfit";
 import { CollectionForm } from "../screens/stackNav/CollectionForm";
 import { EventLogForm } from "../screens/stackNav/EventLogForm";
 import { ItemForm } from "../screens/stackNav/ItemForm";
@@ -119,6 +120,7 @@ test.each<[string, React.ReactElement]>([
   ["Outfits", <OutfitLog />],
   ["Closet info", <ClosetInfo />],
   ["Categories", <ManageCategories />],
+  ["Suggest outfit", <SuggestOutfit />],
   ["Select items", <ItemSelector />],
   ["Settings", <Settings />],
   ["Wardrobes", <Wardrobes />],

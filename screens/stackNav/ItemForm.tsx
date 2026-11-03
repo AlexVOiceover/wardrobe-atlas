@@ -28,6 +28,7 @@ import { getPalette } from "@somesoap/react-native-image-palette";
 import { ThemeView } from "../../components/ThemeView";
 import { ThemeText } from "../../components/ThemeText";
 import { SEASONS, seasonList, sizeList } from "../../utils/data";
+import { STYLES, defaultStyles } from "../../utils/styles";
 import { FilterChip } from "../../components/FilterChip";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
@@ -35,7 +36,7 @@ import {
   getCollectionSortValue,
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
-import { localization } from "../../utils/localization";
+import { localization, styleNames } from "../../utils/localization";
 import { categoryTypes, visibleCategories } from "../../utils/categories";
 import { ImageViewer } from "../../components/ImageViewer";
 import {
@@ -88,9 +89,25 @@ export const ItemForm = ({
   );
   const [type, setType] = useState(storedItems ? storedItems.type : "");
   const [stored, setStored] = useState(storedItems?.stored === true);
+  // New garments' styles follow the subcategory until a chip is tapped.
+  const [garmentStyles, setGarmentStyles] = useState<string[]>(
+    storedItems?.styles ?? [],
+  );
+  const [stylesEdited, setStylesEdited] = useState(Boolean(storedItems));
   const [seasons, setSeasons] = useState<string[]>(
     storedItems?.seasons ?? [...SEASONS],
   );
+  const shownStyles = stylesEdited ? garmentStyles : defaultStyles(type);
+  const toggleStyle = (style: string) => {
+    setGarmentStyles(
+      STYLES.filter(value =>
+        value === style
+          ? !shownStyles.includes(value)
+          : shownStyles.includes(value),
+      ),
+    );
+    setStylesEdited(true);
+  };
   const toggleSeason = (season: string) =>
     setSeasons(current =>
       // Kept in calendar order whatever the tapping order.
@@ -235,6 +252,7 @@ export const ItemForm = ({
           fit: storedItems?.fit ?? "",
           seasons: seasons,
           stored: stored,
+          styles: shownStyles,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -258,6 +276,7 @@ export const ItemForm = ({
           fit: storedItems?.fit ?? "",
           seasons: seasons,
           stored: stored,
+          styles: shownStyles,
           size: size,
           sizeUnit: sizeUnit,
           quantity: quantity === 0 ? 1 : quantity,
@@ -560,6 +579,21 @@ export const ItemForm = ({
                   label={option.label}
                   selected={seasons.includes(option.value)}
                   onPress={() => toggleSeason(option.value)}
+                />
+              ))}
+            </View>
+          </View>
+          <View style={styles.seasons}>
+            <ThemeText customStyle={styles.sectionLabel}>
+              {localization.Styles[storedSettings.language]}
+            </ThemeText>
+            <View style={styles.seasonChips}>
+              {STYLES.map(value => (
+                <FilterChip
+                  key={value}
+                  label={styleNames[storedSettings.language][value]}
+                  selected={shownStyles.includes(value)}
+                  onPress={() => toggleStyle(value)}
                 />
               ))}
             </View>

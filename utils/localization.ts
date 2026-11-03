@@ -47,6 +47,17 @@ export const localization = {
   NotSet: ["Not set", "Sin fecha"],
   ClearDate: ["Clear date", "Borrar fecha"],
   Other: ["Other", "Otros"],
+  Styles: ["Styles", "Estilos"],
+  Style: ["Style", "Estilo"],
+  SuggestOutfit: ["Suggest outfit", "Sugerir atuendo"],
+  PreferLeastWorn: ["Prefer least worn", "Priorizar lo menos usado"],
+  IncludeAccessory: ["Include an accessory", "Incluir un accesorio"],
+  ShuffleAll: ["Shuffle all", "Cambiar todo"],
+  WearThis: ["Wear this", "Ponérmelo"],
+  AnotherOption: ["Another option: {piece}", "Otra opción: {piece}"],
+  NeverWorn: ["never worn", "nunca usada"],
+  StyledOutfit: ["{style} outfit", "Atuendo {style}"],
+  NoCandidates: ["No {pieces} for {style} · {season}", "Sin {pieces} para {style} · {season}"],
   RemoveBackground: ["Remove background", "Quitar fondo"],
   RemovingBackground: ["Removing background…", "Quitando fondo…"],
   BackgroundPreparing: ["Background removal is getting ready; try again in a minute.", "Quitar el fondo se está preparando; inténtalo en un minuto."],
@@ -390,6 +401,26 @@ const shoeTypes_es = [
   { value: "Dress Shoes", label: "Zapatos elegantes" },
   { value: "Flip-Flops", label: "Chanclas" },
   { value: "Winter Boots", label: "Botas de invierno" },
+];
+// Style values → names; Spanish names are used in lower case inside sentences.
+export const styleNames: Record<string, string>[] = [
+  { casual: "Casual", sporty: "Sporty", elegant: "Elegant", formal: "Formal" },
+  { casual: "Informal", sporty: "Deportivo", elegant: "Elegante", formal: "Formal" },
+];
+// Outfit pieces, by built-in category: singular, then plural.
+export const outfitPieces: { one: string; many: string }[][] = [
+  [
+    { one: "Top", many: "tops" },
+    { one: "Bottom", many: "bottoms" },
+    { one: "Shoes", many: "shoes" },
+    { one: "Accessory", many: "accessories" },
+  ],
+  [
+    { one: "Parte de arriba", many: "prendas de arriba" },
+    { one: "Parte de abajo", many: "prendas de abajo" },
+    { one: "Calzado", many: "calzado" },
+    { one: "Accesorio", many: "accesorios" },
+  ],
 ];
 export const clothesList = [
   [tops_en, bottoms_en, shoeTypes_en, accessories_en],

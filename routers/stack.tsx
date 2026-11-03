@@ -11,6 +11,7 @@ import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
 import { ManageCategories } from "../screens/stackNav/ManageCategories";
 import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
 import { Wardrobes } from "../screens/stackNav/Wardrobes";
+import { SuggestOutfit } from "../screens/stackNav/SuggestOutfit";
 import { WardrobeProvider } from "../components/WardrobeSelector";
 import { theme } from "../utils/theme";
 export default function Navigator() {
@@ -52,6 +53,11 @@ export default function Navigator() {
           <Stack.Screen
             name="Category"
             component={Category}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SuggestOutfit"
+            component={SuggestOutfit}
             options={{ headerShown: false }}
           />
           <Stack.Screen

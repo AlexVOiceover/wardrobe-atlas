@@ -20,6 +20,7 @@ import { FilterChip } from "../../components/FilterChip";
 import { EmptyState } from "../../components/EmptyState";
 import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { captionText, theme } from "../../utils/theme";
+import { Button } from "react-native-paper";
 export const OutfitLog = () => {
   const navigation = useNavigation<any>();
   const [search, setSearch] = useState("");
@@ -129,6 +130,16 @@ export const OutfitLog = () => {
         data={filteredLogs}
         extraData={refresh}
         keyExtractor={item => item.eventId}
+        ListHeaderComponent={
+          <Button
+            mode="outlined"
+            icon="auto-fix"
+            style={styles.suggest}
+            onPress={() => navigation.navigate("SuggestOutfit")}
+          >
+            {localization.SuggestOutfit[language]}
+          </Button>
+        }
         ListEmptyComponent={
           logsState.length > 0 ? (
             <EmptyState message={localization.NoLogsMatch[language]} />
@@ -166,6 +177,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: theme.spacing.sm,
+  },
+  suggest: {
+    marginBottom: theme.spacing.md,
   },
   list: {
     flexGrow: 1,
