@@ -23,6 +23,8 @@ export default function MyTabs() {
       screenOptions={{
         headerShown: false,
         animation: "none",
+        // The app now rises above the keyboard; the tabs needn't ride on it.
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: theme.colors.onBar,
         tabBarInactiveTintColor: theme.colors.onBarMuted,
         tabBarStyle: {
