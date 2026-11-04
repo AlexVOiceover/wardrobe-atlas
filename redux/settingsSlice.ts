@@ -3,7 +3,7 @@ import {
   COLLECTION_SORT_VALUES,
   type CollectionSortValue,
 } from "../utils/collectionOrder";
-export const GRID_COLUMN_OPTIONS = [1, 2, 3, 4, 5];
+export const GRID_COLUMN_OPTIONS = [1, 2, 3, 4, 5, 6];
 export const DEFAULT_GRID_COLUMNS = 2;
 // Stored settings and backups from before the grid size setting have no value.
 export const normalizeGridColumns = (value: unknown) =>

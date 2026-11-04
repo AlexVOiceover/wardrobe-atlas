@@ -8,16 +8,19 @@ export const FilterChip = ({
   onPress,
   icon,
   dense = false,
+  accessibilityLabel = label,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
   icon?: string;
   dense?: boolean;
+  // For short labels such as a number
+  accessibilityLabel?: string;
 }) => (
   <Pressable
     accessibilityRole="button"
-    accessibilityLabel={label}
+    accessibilityLabel={accessibilityLabel}
     accessibilityState={{ selected }}
     onPress={onPress}
     style={[styles.chip, dense && styles.dense, selected && styles.selected]}

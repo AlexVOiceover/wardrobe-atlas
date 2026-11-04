@@ -114,7 +114,8 @@ test.each([
   [4, 4],
   [5, 5],
   [0, 2],
-  [6, 2],
+  [6, 6],
+  [7, 2],
   ["3", 2],
 ])("stored grid size %p loads as %p", (stored, expected) => {
   const state = normalizeWardrobe({
@@ -127,11 +128,11 @@ test.each([
   ).toBe(expected);
 });
 
-test("grid size changes are kept within 1 to 5 columns", () => {
+test("grid size changes are kept within 1 to 6 columns", () => {
   let state = settingsReducer(undefined, { type: "init" });
   expect(state.gridColumns).toBe(2);
-  state = settingsReducer(state, setGridColumns({ gridColumns: 5 }));
-  expect(state.gridColumns).toBe(5);
+  state = settingsReducer(state, setGridColumns({ gridColumns: 6 }));
+  expect(state.gridColumns).toBe(6);
   state = settingsReducer(state, setGridColumns({ gridColumns: 9 }));
   expect(state.gridColumns).toBe(2);
 });

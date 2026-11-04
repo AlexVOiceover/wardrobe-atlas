@@ -7,7 +7,7 @@ export const localization = {
   Categories: ["Categories", "Categorías"],
   Category: ["Category", "Categoría"],
   ChooseCategory: ["Choose a category", "Elige una categoría"],
-  Filters: ["Filters", "Filtros"],
+  ViewAndFilters: ["View & filters", "Vista y filtros"],
   Color: ["Color", "Color"],
   Profile: ["Profile", "Perfil"],
   Backup: ["Backup", "Copia de seguridad"],

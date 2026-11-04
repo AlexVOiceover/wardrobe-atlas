@@ -8,6 +8,7 @@ import { localization } from "../../utils/localization";
 import { categoryTypes } from "../../utils/categories";
 import type { CategoryList } from "../../redux/categoriesSlice";
 import { seasonList } from "../../utils/data";
+import { GRID_COLUMN_OPTIONS } from "../../redux/settingsSlice";
 import { theme } from "../../utils/theme";
 type SetString = React.Dispatch<React.SetStateAction<string>>;
 type SetArray<T> = React.Dispatch<React.SetStateAction<T[]>>;
@@ -37,6 +38,9 @@ type Props = {
   language: number;
   categoryState: CategoryList;
   collections: { label: string; value: string }[];
+  // The grid size is a view setting, kept apart from the filter count.
+  columns: number;
+  onColumnsChange: (columns: number) => void;
 };
 export const resetHomeFilters = (actions: HomeFilterActions) => {
   actions.setSortValue("LA");
@@ -58,6 +62,8 @@ const HomeFilterPanel = ({
   language,
   categoryState,
   collections,
+  columns,
+  onColumnsChange,
 }: Props) => {
   const {
     sortValue,
@@ -92,6 +98,22 @@ const HomeFilterPanel = ({
       : [];
   return (
     <View>
+      <SectionHeading title={localization.GridSize[language]} />
+      <View style={styles.chips}>
+        {GRID_COLUMN_OPTIONS.map(option => (
+          <FilterChip
+            key={option}
+            dense
+            label={String(option)}
+            accessibilityLabel={localization.Columns[language].replace(
+              "{n}",
+              String(option),
+            )}
+            selected={option === columns}
+            onPress={() => onColumnsChange(option)}
+          />
+        ))}
+      </View>
       <SectionHeading title={localization.Sort[language]} />
       <View style={styles.chips}>
         {sortOptions.map(option => (

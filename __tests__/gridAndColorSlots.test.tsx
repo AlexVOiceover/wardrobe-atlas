@@ -7,13 +7,14 @@ test.each([
   [3, "name"],
   [4, "name"],
   [5, "photo"],
+  [6, "photo"],
 ])("%i columns show %s cards", (columns, density) => {
   expect(cardDensity(columns)).toBe(density);
 });
 
 test("grid cells fill the row exactly, and 2 columns keep today's 48% cells", () => {
   expect(gridCellLayout(2).width).toBe(48);
-  [1, 2, 3, 4, 5].forEach(columns => {
+  [1, 2, 3, 4, 5, 6].forEach(columns => {
     const { width, gap } = gridCellLayout(columns);
     expect(width * columns + gap * (columns - 1)).toBeCloseTo(100);
   });
