@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "android": "sh scripts/android.sh",
-    "ios": "react-native run-ios",
     "lint": "eslint . --ext .js,.ts,.tsx --max-warnings 0",
     "start": "react-native start",
     "test": "jest"
@@ -18,7 +17,6 @@
     "@reduxjs/toolkit": "^2.5.0",
     "@somesoap/react-native-image-palette": "^1.2.2",
     "@types/react-native-vector-icons": "^6.4.13",
-    "@types/react-redux": "^7.1.25",
     "dayjs": "^1.11.9",
     "nanoid": "^5.0.9",
     "react": "19.1.1",
@@ -45,7 +43,6 @@
     "@babel/runtime": "^7.29.2",
     "@react-native-community/cli": "20.0.2",
     "@react-native-community/cli-platform-android": "20.0.2",
-    "@react-native-community/cli-platform-ios": "20.0.2",
     "@react-native/babel-preset": "0.82.1",
     "@react-native/eslint-config": "0.82.1",
     "@react-native/metro-config": "0.82.1",

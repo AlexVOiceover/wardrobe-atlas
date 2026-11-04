@@ -6,7 +6,6 @@ import {
 import type { item } from "../redux/itemsSlice";
 import { clothesList, localization } from "./localization";
 
-export const NO_CATEGORY = -1;
 const builtInNames = [
   localization.Tops,
   localization.Bottoms,

@@ -1,1 +1,1 @@
-module.exports = { project: { ios: {}, android: {} } };
+module.exports = { project: { android: {} } };
