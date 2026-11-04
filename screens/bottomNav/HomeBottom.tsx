@@ -1,13 +1,7 @@
 import { useWardrobeView } from "../../components/WardrobeSelector";
 import { filterByWardrobe } from "../../utils/wardrobes";
 import { countText, localization as l } from "../../utils/localization";
-import {
-  BackHandler,
-  ScrollView,
-  Keyboard,
-  StyleSheet,
-  View,
-} from "react-native";
+import { BackHandler, ScrollView, Keyboard, StyleSheet } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -53,10 +47,8 @@ import { QuickLogSheet, logGarments } from "../../components/QuickLogSheet";
 import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { EmptyState } from "../../components/EmptyState";
 import { cardDensity } from "../../components/GarmentGrid";
-import { FilterChip } from "../../components/FilterChip";
 import { ActiveFilters } from "../../components/ActiveFilters";
 import {
-  GRID_COLUMN_OPTIONS,
   normalizeGridColumns,
   setGridColumns,
   toggleSection,
@@ -112,7 +104,6 @@ export function HomeBottom() {
     getCollectionSortValue(storedSettings.collectionSortValue),
   ).map(tag => ({ label: tag.label, value: tag.value }));
   const [isOpen, setIsOpen] = useState(false);
-  const [isGridSizeOpen, setIsGridSizeOpen] = useState(false);
   // Garments in the log sheet, by id so their storage switch stays current.
   const [logging, setLogging] = useState<string[]>([]);
   const [undo, setUndo] = useState<{ message: string; run: () => void }>();
@@ -267,7 +258,7 @@ export function HomeBottom() {
       <BottomSheet
         isOpen={isOpen}
         setIsOpen={setIsOpen}
-        title={l.Filters[language]}
+        title={l.ViewAndFilters[language]}
       >
         <HomeFilterPanel
           filterState={filterState}
@@ -276,27 +267,11 @@ export function HomeBottom() {
           language={language}
           categoryState={categoryState}
           collections={collections}
+          columns={columns}
+          onColumnsChange={option =>
+            dispatch(setGridColumns({ gridColumns: option }))
+          }
         />
-      </BottomSheet>
-
-      <BottomSheet
-        isOpen={isGridSizeOpen}
-        setIsOpen={setIsGridSizeOpen}
-        title={l.GridSize[language]}
-      >
-        <View style={styles.chips}>
-          {GRID_COLUMN_OPTIONS.map(option => (
-            <FilterChip
-              key={option}
-              label={l.Columns[language].replace("{n}", String(option))}
-              selected={option === columns}
-              onPress={() => {
-                dispatch(setGridColumns({ gridColumns: option }));
-                setIsGridSizeOpen(false);
-              }}
-            />
-          ))}
-        </View>
       </BottomSheet>
 
       <HomeHeader
@@ -307,10 +282,6 @@ export function HomeBottom() {
         startSelecting={() => {
           Keyboard.dismiss();
           setSelecting(true);
-        }}
-        openGridSize={() => {
-          Keyboard.dismiss();
-          setIsGridSizeOpen(true);
         }}
         handleOpenDrawer={handleOpenDrawer}
         setIsSearchVisible={setIsSearchVisible}
@@ -438,10 +409,5 @@ const styles = StyleSheet.create({
   },
   selectingContent: {
     paddingBottom: SELECTION_BAR_CLEARANCE,
-  },
-  chips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: theme.spacing.sm,
   },
 });

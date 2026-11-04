@@ -28,3 +28,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Compare the photo on the color wheel](wheel-photo-compare/PLAN.md)
 - [Codebase cleanup](codebase-cleanup/PLAN.md)
 - [Smoother logging and a compact garment form](smoother-logging/PLAN.md)
+- [View & filters, and a 6-column grid](view-and-filters/PLAN.md)

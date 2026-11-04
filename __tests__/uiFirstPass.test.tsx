@@ -155,6 +155,8 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
       language={1}
       categoryState={mockState.CategoryList}
       collections={[{ label: "Trabajo", value: "work" }]}
+      columns={2}
+      onColumnsChange={jest.fn()}
     />,
   );
   expect(tree.root.findAllByType("Button" as any)).toHaveLength(1);
@@ -166,6 +168,34 @@ test("filter panel keeps one Reset, translates chips and shows types for a singl
   expect(pressable(tree, "Último uso ↓")).toBeTruthy();
   act(() => pressable(tree, "Zapatos").props.onPress());
   expect(setCategoriesFilter).toHaveBeenCalledWith([0, 2]);
+});
+
+test("the grid size sits in the panel, from 1 to 6 columns", () => {
+  const onColumnsChange = jest.fn();
+  const tree = render(
+    <HomeFilterPanel
+      filterState={{
+        sortValue: "LA",
+        seasonFilter: [],
+        categoriesFilter: [],
+        TypeFilter: [],
+        colorFilter: [],
+        collectionFilter: [],
+        storageFilter: "",
+      }}
+      filterActions={{} as any}
+      CategoriesList={[]}
+      language={1}
+      categoryState={mockState.CategoryList}
+      collections={[]}
+      columns={3}
+      onColumnsChange={onColumnsChange}
+    />,
+  );
+  expect(pressable(tree, "3 columnas").props.selected).toBe(true);
+  expect(pressable(tree, "1 columnas")).toBeTruthy();
+  act(() => pressable(tree, "6 columnas").props.onPress());
+  expect(onColumnsChange).toHaveBeenCalledWith(6);
 });
 
 test("the filter badge counts active filters but not the sort order", () => {
