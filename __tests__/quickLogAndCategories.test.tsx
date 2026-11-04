@@ -791,7 +791,11 @@ describe("storage", () => {
       />,
     );
     expect(JSON.stringify(tree.toJSON())).toContain("2 garments");
-    expect(tree.root.findAllByType("Switch" as any)).toHaveLength(0);
+    expect(
+      tree.root.findAll(
+        n => n.props.accessibilityLabel === "In storage" && !!n.props.onPress,
+      ),
+    ).toHaveLength(0);
     act(() =>
       tree.root
         .findAllByType("Button" as any)
@@ -820,7 +824,11 @@ describe("storage", () => {
       />,
     );
     act(() =>
-      single.root.findByType("Switch" as any).props.onValueChange(true),
+      single.root
+        .find(
+          n => n.props.accessibilityLabel === "In storage" && !!n.props.onPress,
+        )
+        .props.onPress(),
     );
     expect(mockDispatch).toHaveBeenCalledWith({
       type: "itemsList/setGarmentsStored",

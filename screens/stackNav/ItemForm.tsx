@@ -3,7 +3,13 @@ import {
   useWardrobeView,
 } from "../../components/WardrobeSelector";
 import { validWardrobeId } from "../../utils/wardrobes";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Button, Switch } from "react-native-paper";
 import { useState } from "react";
@@ -54,6 +60,8 @@ import {
 import { OptionalDateField } from "../../components/OptionalDateField";
 import { FormErrors } from "../../components/FormErrors";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
+// The photo is a square at the top of the form.
+const PHOTO_SIZE = 112;
 export const ItemForm = ({
   navigation,
   route,
@@ -220,6 +228,21 @@ export const ItemForm = ({
     if (downloaded) await cutOut();
     else setCutoutStatus("downloadFailed");
   };
+  const cutoutBusy = cutoutStatus === "working" || modelProgress !== undefined;
+  // The photo's corner button: its label says what it does.
+  const cutoutLabel = (
+    photoBeforeCutout
+      ? localization.Undo
+      : modelProgress !== undefined
+      ? localization.DownloadingGarmentModel
+      : part
+      ? cutoutStatus === "working"
+        ? localization.IsolatingGarment
+        : localization.IsolateGarment
+      : cutoutStatus === "working"
+      ? localization.RemovingBackground
+      : localization.RemoveBackground
+  )[storedSettings.language].replace("{percent}", String(modelProgress ?? 0));
   const categoryOptions = visibleCategories(
     categoryState,
     storedSettings.language,
@@ -507,13 +530,65 @@ export const ItemForm = ({
           keyboardDismissMode="on-drag"
         >
           <View style={styles.topRow}>
-            <ImageViewer
-              size={152}
-              imageUrl={imageUrl}
-              setImageModalVisible={setImageModalVisible}
-            />
+            <View>
+              <ImageViewer
+                size={PHOTO_SIZE}
+                imageUrl={imageUrl}
+                setImageModalVisible={setImageModalVisible}
+              />
+              {cutoutBusy && (
+                <View pointerEvents="none" style={styles.photoBusy}>
+                  <ActivityIndicator color={theme.colors.background} />
+                  {modelProgress !== undefined && (
+                    <ThemeText customStyle={styles.photoBusyText}>
+                      {`${modelProgress}%`}
+                    </ThemeText>
+                  )}
+                </View>
+              )}
+              {/* Earlier cutouts of tops and bottoms may still show the person. */}
+              {!!imageUrl &&
+                (!!part || !isCutout(imageUrl) || photoBeforeCutout) && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={cutoutLabel}
+                    accessibilityState={{ disabled: cutoutBusy }}
+                    disabled={cutoutBusy}
+                    hitSlop={6}
+                    onPress={
+                      photoBeforeCutout
+                        ? () => {
+                            setImageUrl(photoBeforeCutout);
+                            setPhotoBeforeCutout(undefined);
+                          }
+                        : cutOut
+                    }
+                    style={styles.photoAction}
+                  >
+                    <Icon
+                      name={photoBeforeCutout ? "arrow-undo" : "cut"}
+                      size={20}
+                      color={theme.colors.text}
+                    />
+                  </Pressable>
+                )}
+            </View>
             <View style={styles.topFields}>
-              <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
+              <View style={styles.whereRow}>
+                <View style={styles.wardrobe}>
+                  <WardrobeSelector
+                    value={wardrobeId}
+                    onChange={setWardrobeId}
+                  />
+                </View>
+                <FilterChip
+                  dense
+                  icon="archive-outline"
+                  label={localization.InStorage[storedSettings.language]}
+                  selected={stored}
+                  onPress={() => setStored(!stored)}
+                />
+              </View>
               <CustomInput
                 mode="outlined"
                 dense
@@ -533,58 +608,14 @@ export const ItemForm = ({
               />
             </View>
           </View>
-          {/* Earlier cutouts of tops and bottoms may still show the person. */}
-          {!!imageUrl &&
-            (!!part || !isCutout(imageUrl) || photoBeforeCutout) && (
-              <View style={styles.cutout}>
-                <View style={styles.cutoutActions}>
-                  {photoBeforeCutout ? (
-                    <Button
-                      icon="undo"
-                      compact
-                      onPress={() => {
-                        setImageUrl(photoBeforeCutout);
-                        setPhotoBeforeCutout(undefined);
-                      }}
-                    >
-                      {localization.Undo[storedSettings.language]}
-                    </Button>
-                  ) : (
-                    <Button
-                      icon="content-cut"
-                      compact
-                      disabled={
-                        cutoutStatus === "working" ||
-                        modelProgress !== undefined
-                      }
-                      onPress={cutOut}
-                    >
-                      {modelProgress !== undefined
-                        ? localization.DownloadingGarmentModel[
-                            storedSettings.language
-                          ].replace("{percent}", String(modelProgress))
-                        : (part
-                            ? cutoutStatus === "working"
-                              ? localization.IsolatingGarment
-                              : localization.IsolateGarment
-                            : cutoutStatus === "working"
-                            ? localization.RemovingBackground
-                            : localization.RemoveBackground)[
-                            storedSettings.language
-                          ]}
-                    </Button>
-                  )}
-                </View>
-                {cutoutStatus !== "" && cutoutStatus !== "working" && (
-                  <ThemeText
-                    accessibilityLiveRegion="polite"
-                    customStyle={captionText}
-                  >
-                    {cutoutMessages[cutoutStatus][storedSettings.language]}
-                  </ThemeText>
-                )}
-              </View>
-            )}
+          {cutoutStatus !== "" && cutoutStatus !== "working" && (
+            <ThemeText
+              accessibilityLiveRegion="polite"
+              customStyle={captionText}
+            >
+              {cutoutMessages[cutoutStatus][storedSettings.language]}
+            </ThemeText>
+          )}
           <View style={styles.pairRow}>
             <View style={styles.pairField}>
               <DropDownPicker
@@ -631,6 +662,7 @@ export const ItemForm = ({
             <View style={styles.seasonChips}>
               {(seasonList[storedSettings.language] ?? []).map(option => (
                 <FilterChip
+                  dense
                   key={option.value}
                   label={option.label}
                   selected={seasons.includes(option.value)}
@@ -646,6 +678,7 @@ export const ItemForm = ({
             <View style={styles.seasonChips}>
               {STYLES.map(value => (
                 <FilterChip
+                  dense
                   key={value}
                   label={styleNames[storedSettings.language][value]}
                   selected={shownStyles.includes(value)}
@@ -653,18 +686,6 @@ export const ItemForm = ({
                 />
               ))}
             </View>
-          </View>
-          <View style={styles.storageRow}>
-            <ThemeText customStyle={styles.sectionLabel}>
-              {localization.InStorage[storedSettings.language]}
-            </ThemeText>
-            <Switch
-              accessibilityLabel={
-                localization.InStorage[storedSettings.language]
-              }
-              value={stored}
-              onValueChange={setStored}
-            />
           </View>
           <View style={styles.colors}>
             <View style={styles.colorsHeader}>
@@ -856,22 +877,49 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.md,
     paddingBottom: 40,
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   topRow: {
     flexDirection: "row",
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   topFields: {
     flex: 1,
     justifyContent: "space-between",
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
-  cutout: {
-    marginTop: -theme.spacing.sm,
-  },
-  cutoutActions: {
+  whereRow: {
     flexDirection: "row",
+    alignItems: "flex-end",
+    gap: theme.spacing.xs,
+  },
+  wardrobe: {
+    flex: 1,
+  },
+  photoAction: {
+    position: "absolute",
+    right: theme.spacing.xs,
+    bottom: theme.spacing.xs,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.muted,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoBusy: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: theme.radius.sm,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+  },
+  photoBusyText: {
+    color: theme.colors.background,
+    fontSize: theme.type.caption,
   },
   pairRow: {
     flexDirection: "row",
@@ -882,7 +930,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   picker: {
-    minHeight: 48,
+    minHeight: 40,
   },
   colors: {
     gap: theme.spacing.sm,
@@ -890,15 +938,10 @@ const styles = StyleSheet.create({
   seasons: {
     gap: theme.spacing.xs,
   },
-  storageRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: theme.touch,
-  },
   seasonChips: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
   colorsHeader: {
     flexDirection: "row",
@@ -911,11 +954,11 @@ const styles = StyleSheet.create({
   },
   swatches: {
     flexDirection: "row",
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   colorSwatch: {
-    width: theme.touch,
-    height: theme.touch,
+    width: 40,
+    height: 40,
     borderRadius: theme.radius.sm,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.muted,
