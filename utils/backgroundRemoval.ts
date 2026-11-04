@@ -36,3 +36,40 @@ export async function removeBackground(
     }
   }
 }
+
+/** A brush stroke over a cutout; size and points are fractions of the image. */
+export type CutoutStroke = {
+  mode: "erase" | "restore";
+  size: number;
+  points: number[];
+};
+
+/**
+ * Applies brush strokes to a cutout: "erase" clears, "restore" brings back
+ * the original photo (when there is one). Resolves the edited WebP.
+ */
+export async function editCutout(
+  image: string,
+  original: string | undefined,
+  strokes: CutoutStroke[],
+): Promise<string | undefined> {
+  const editor = NativeModules.WardrobeBackground;
+  try {
+    const edited = await editor?.editCutout(image, original ?? "", strokes);
+    return typeof edited === "string" && edited ? edited : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Up to three main colors of a cutout, ignoring its transparent background. */
+export async function cutoutColors(
+  image: string,
+): Promise<string[] | undefined> {
+  try {
+    const colors = await NativeModules.WardrobeBackground?.cutoutColors(image);
+    return Array.isArray(colors) && colors.length > 0 ? colors : undefined;
+  } catch {
+    return undefined;
+  }
+}

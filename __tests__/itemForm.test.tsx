@@ -48,9 +48,14 @@ jest.mock("../components/OptionalDateField", () => ({
 }));
 jest.mock("../components/ImageViewer", () => ({ ImageViewer: "ImageViewer" }));
 const mockRemoveBackground = jest.fn();
+const mockCutoutColors = jest.fn();
 jest.mock("../utils/backgroundRemoval", () => ({
   ...jest.requireActual("../utils/backgroundRemoval"),
   removeBackground: (image: string) => mockRemoveBackground(image),
+  cutoutColors: (image: string) => mockCutoutColors(image),
+}));
+jest.mock("../components/CutoutEditor", () => ({
+  CutoutEditor: "CutoutEditor",
 }));
 const mockGarmentModel = { present: true, download: jest.fn() };
 const mockIsolateGarment = jest.fn();
@@ -765,4 +770,69 @@ test("styles follow the subcategory until a chip is tapped; editing keeps saved 
     },
   ];
   expect(selected(render("s"))).toEqual(["Sporty"]);
+});
+
+describe("Fix the cut-out", () => {
+  const items = () => [
+    {
+      id: "trousers",
+      name: "Trousers",
+      type: "Trousers",
+      category: 1,
+      image: "/9j/photo",
+      automaticColor: true,
+      collection: [],
+    },
+  ];
+  const editor = (tree: ReactTestRenderer) =>
+    tree.root.findAllByType("CutoutEditor" as any)[0];
+  const photo = (tree: ReactTestRenderer) =>
+    tree.root.findByType("ImageViewer" as any).props.imageUrl;
+  const primary = (tree: ReactTestRenderer) =>
+    tree.root.findByType("ColorModal" as any).props.colors[0];
+  beforeEach(() => {
+    mockIsolateGarment.mockReset();
+    mockCutoutColors.mockReset();
+    mockGarmentModel.present = true;
+  });
+
+  test("only cutouts can be fixed by hand, with the original for Restore", async () => {
+    mockState.itemsList.items = items();
+    const tree = edit("trousers");
+    expect(photoAction(tree, "Fix the cut-out")).toBeUndefined();
+    expect(editor(tree)).toBeUndefined();
+    mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRcut" });
+    mockCutoutColors.mockResolvedValue(["#C8B49A"]);
+    await act(async () =>
+      photoAction(tree, "Keep only the garment")!.props.onPress(),
+    );
+    // Automatic colors come from the garment, not the old background.
+    expect(mockCutoutColors).toHaveBeenLastCalledWith("UklGRcut");
+    expect(primary(tree)).toBe("#C8B49A");
+    act(() => photoAction(tree, "Fix the cut-out")!.props.onPress());
+    expect(editor(tree).props).toMatchObject({
+      visible: true,
+      image: "UklGRcut",
+      original: "/9j/photo",
+    });
+    mockCutoutColors.mockResolvedValue(["#B9A27F"]);
+    await act(async () => editor(tree).props.onDone("UklGRfixed"));
+    expect(editor(tree).props.visible).toBe(false);
+    expect(photo(tree)).toBe("UklGRfixed");
+    expect(primary(tree)).toBe("#B9A27F");
+    act(() => button(tree, "Save")!.props.onPress());
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "itemsList/updateItem",
+        payload: expect.objectContaining({ image: "UklGRfixed" }),
+      }),
+    );
+  });
+
+  test("a saved cutout can still be erased, but has no original to restore", () => {
+    mockState.itemsList.items = [{ ...items()[0], image: "UklGRsaved" }];
+    const tree = edit("trousers");
+    act(() => photoAction(tree, "Fix the cut-out")!.props.onPress());
+    expect(editor(tree).props.original).toBeUndefined();
+  });
 });
