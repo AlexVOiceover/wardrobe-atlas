@@ -74,13 +74,12 @@ test("choosing a category goes straight to the form, or to bulk entry when switc
 
 test("More reaches every management screen", () => {
   const tree = render(<More navigation={{ navigate: mockNavigate }} />);
-  ["Armarios", "Colecciones", "Categorías", "Información del armario"].forEach(
-    label => act(() => pressable(tree, label).props.onPress()),
+  ["Armarios", "Categorías", "Información del armario"].forEach(label =>
+    act(() => pressable(tree, label).props.onPress()),
   );
   act(() => pressable(tree, "Configuración").props.onPress());
   expect(mockNavigate.mock.calls.map(call => call[0])).toEqual([
     "Wardrobes",
-    "CollectionForm",
     "ManageCategories",
     "ClosetInfo",
     "Settings",

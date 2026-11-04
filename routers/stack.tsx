@@ -5,7 +5,7 @@ import { Category } from "../screens/stackNav/Category";
 import { ItemForm } from "../screens/stackNav/ItemForm";
 import { ItemSelector } from "../screens/stackNav/ItemSelector";
 import { EventLogForm } from "../screens/stackNav/EventLogForm";
-import { CollectionForm } from "../screens/stackNav/CollectionForm";
+import { Collection } from "../screens/stackNav/Collection";
 import { Settings } from "../screens/stackNav/Settings";
 import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
 import { ManageCategories } from "../screens/stackNav/ManageCategories";
@@ -36,8 +36,8 @@ export default function Navigator() {
             options={{ headerShown: false }}
           />
           <Stack.Screen
-            name="CollectionForm"
-            component={CollectionForm}
+            name="Collection"
+            component={Collection}
             options={{ headerShown: false }}
           />
           <Stack.Screen

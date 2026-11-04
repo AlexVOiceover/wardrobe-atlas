@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Icon from "react-native-vector-icons/Ionicons";
 import { HomeBottom } from "../screens/bottomNav/HomeBottom";
+import { Collections } from "../screens/bottomNav/Collections";
 import { More } from "../screens/bottomNav/More";
 import { OutfitLog } from "../screens/bottomNav/OutfitLog";
 import { localization } from "../utils/localization";
@@ -45,6 +46,14 @@ export default function MyTabs() {
         options={{
           title: localization.Outfits[language],
           tabBarIcon: tabIcon("calendar-outline"),
+        }}
+      />
+      <Tab.Screen
+        name="Collections"
+        component={Collections}
+        options={{
+          title: localization.Collections[language],
+          tabBarIcon: tabIcon("albums-outline"),
         }}
       />
       <Tab.Screen

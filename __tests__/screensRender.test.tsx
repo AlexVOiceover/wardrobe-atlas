@@ -6,7 +6,8 @@ import { BulkModeForm } from "../screens/stackNav/BulkModeForm";
 import { ClosetInfo } from "../screens/stackNav/ClosetInfo";
 import { ManageCategories } from "../screens/stackNav/ManageCategories";
 import { SuggestOutfit } from "../screens/stackNav/SuggestOutfit";
-import { CollectionForm } from "../screens/stackNav/CollectionForm";
+import { Collections } from "../screens/bottomNav/Collections";
+import { Collection } from "../screens/stackNav/Collection";
 import { EventLogForm } from "../screens/stackNav/EventLogForm";
 import { ItemForm } from "../screens/stackNav/ItemForm";
 import { ItemSelector } from "../screens/stackNav/ItemSelector";
@@ -124,7 +125,11 @@ test.each<[string, React.ReactElement]>([
   ["Select items", <ItemSelector />],
   ["Settings", <Settings />],
   ["Wardrobes", <Wardrobes />],
-  ["Collections", <CollectionForm />],
+  ["Collections", <Collections {...navProps} />],
+  [
+    "Collection",
+    <Collection {...navProps} route={{ params: { value: "summer" } }} />,
+  ],
   [
     "Event form",
     <EventLogForm {...navProps} route={{ params: { selectedIDs: [] } }} />,
