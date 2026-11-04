@@ -152,8 +152,12 @@ const itemsSlice = createSlice({
         state.items[itemIndex].seasons = action.payload.seasons;
     },
     addCollection: (state, action) => {
+      // A renamed collection keeps its old name as its id; never reuse it.
+      let value = action.payload.name;
+      for (let n = 2; state.collectionTags.some(t => t.value === value); n++)
+        value = `${action.payload.name} (${n})`;
       state.collectionTags.push({
-        value: action.payload.name,
+        value,
         label: action.payload.name,
         color: action.payload.color,
         isOpen: true,
@@ -205,6 +209,18 @@ const itemsSlice = createSlice({
       } catch (err) {
         console.log("Error occurred at deleteCollection: " + err);
       }
+    },
+    // Garments in ids belong to the collection afterwards; the rest don't.
+    setCollectionGarments: (state, action) => {
+      const { value, ids } = action.payload;
+      state.items.forEach(garment => {
+        const current = garment.collection ?? [];
+        const member = ids.includes(garment.id);
+        if (member && !current.includes(value))
+          garment.collection = [...current, value];
+        if (!member && current.includes(value))
+          garment.collection = current.filter(other => other !== value);
+      });
     },
     moveCollection: (state, action) => {
       state.collectionTags = moveCollectionTag(
@@ -335,6 +351,7 @@ export const {
   toggleCollection,
   deleteCollection,
   updateCollection,
+  setCollectionGarments,
   moveCollection,
   addLog,
   deleteLog,

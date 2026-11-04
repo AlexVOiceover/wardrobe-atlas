@@ -29,3 +29,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Codebase cleanup](codebase-cleanup/PLAN.md)
 - [Smoother logging and a compact garment form](smoother-logging/PLAN.md)
 - [View & filters, and a 6-column grid](view-and-filters/PLAN.md)
+- [Collections tab](collections-tab/PLAN.md)

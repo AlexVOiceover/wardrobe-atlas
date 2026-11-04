@@ -14,7 +14,6 @@ export const More = ({ navigation }: { navigation: any }) => {
       icon: "file-tray-stacked-outline",
       route: "Wardrobes",
     },
-    { title: l.Collections, icon: "albums-outline", route: "CollectionForm" },
     {
       title: l.Categories,
       icon: "pricetags-outline",

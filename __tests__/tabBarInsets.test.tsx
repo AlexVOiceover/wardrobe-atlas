@@ -16,6 +16,9 @@ jest.mock("../screens/bottomNav/HomeBottom", () => ({
 }));
 jest.mock("../screens/bottomNav/OutfitLog", () => ({ OutfitLog: () => null }));
 jest.mock("../screens/bottomNav/More", () => ({ More: () => null }));
+jest.mock("../screens/bottomNav/Collections", () => ({
+  Collections: () => null,
+}));
 
 // Android 3-button navigation bar under edge-to-edge
 const NAV_BAR = 48;
