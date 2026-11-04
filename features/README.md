@@ -31,3 +31,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [View & filters, and a 6-column grid](view-and-filters/PLAN.md)
 - [Collections tab](collections-tab/PLAN.md)
 - [Fields stay above the keyboard](keyboard-insets/PLAN.md)
+- [Fix the cut-out by hand](fix-cutout/PLAN.md)

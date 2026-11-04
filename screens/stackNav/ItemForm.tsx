@@ -46,10 +46,12 @@ import { localization, styleNames } from "../../utils/localization";
 import { categoryTypes, visibleCategories } from "../../utils/categories";
 import { ImageViewer } from "../../components/ImageViewer";
 import {
+  cutoutColors,
   isCutout,
   removeBackground,
   type BackgroundError,
 } from "../../utils/backgroundRemoval";
+import { CutoutEditor } from "../../components/CutoutEditor";
 import {
   GARMENT_MODEL,
   downloadGarmentModel,
@@ -158,6 +160,7 @@ export const ItemForm = ({
   // Download progress of the garment model, while it downloads.
   const [modelProgress, setModelProgress] = useState<number>();
   const [modelPromptVisible, setModelPromptVisible] = useState(false);
+  const [editorVisible, setEditorVisible] = useState(false);
   const cutoutMessages: Record<
     BackgroundError | "noModel" | "downloadFailed",
     readonly string[]
@@ -216,7 +219,7 @@ export const ItemForm = ({
       : await removeBackground(original);
     if ("image" in result) {
       setPhotoBeforeCutout(original);
-      setImageUrl(result.image);
+      changePhoto(result.image);
       setCutoutStatus("");
     } else setCutoutStatus(result.error);
   };
@@ -352,6 +355,11 @@ export const ItemForm = ({
       dispatch(itemRefresher());
     }
   }
+  // A new version of the photo; automatic colors follow it.
+  const changePhoto = (photo: string) => {
+    setImageUrl(photo);
+    if (isAutoOn && photo) colorsExtractor(photo);
+  };
   const onToggleSwitch = (val: boolean) => {
     setIsAutoOn(val);
     if (val && imageUrl) {
@@ -359,6 +367,16 @@ export const ItemForm = ({
     }
   };
   const colorsExtractor = async (base64: string) => {
+    // Cutouts: only the garment counts, not the transparent background.
+    const garment = isCutout(base64) ? await cutoutColors(base64) : undefined;
+    if (garment) {
+      setColors(
+        [0, 1, 2].map(index =>
+          index < colorSlots ? garment[index] ?? "" : "",
+        ),
+      );
+      return;
+    }
     try {
       const tmp = `${
         ReactNativeBlobUtil.fs.dirs.CacheDir
@@ -489,6 +507,19 @@ export const ItemForm = ({
         ].replace("{mb}", String(GARMENT_MODEL.megabytes))}
         onConfirm={downloadModel}
       />
+      {isCutout(imageUrl) && (
+        <CutoutEditor
+          visible={editorVisible}
+          image={imageUrl}
+          original={photoBeforeCutout}
+          language={storedSettings.language}
+          onCancel={() => setEditorVisible(false)}
+          onDone={edited => {
+            setEditorVisible(false);
+            changePhoto(edited);
+          }}
+        />
+      )}
       <ColorModal
         colors={colors}
         setColors={setColors}
@@ -530,7 +561,7 @@ export const ItemForm = ({
           keyboardDismissMode="on-drag"
         >
           <View style={styles.topRow}>
-            <View>
+            <View style={styles.photo}>
               <ImageViewer
                 size={PHOTO_SIZE}
                 imageUrl={imageUrl}
@@ -558,7 +589,7 @@ export const ItemForm = ({
                     onPress={
                       photoBeforeCutout
                         ? () => {
-                            setImageUrl(photoBeforeCutout);
+                            changePhoto(photoBeforeCutout);
                             setPhotoBeforeCutout(undefined);
                           }
                         : cutOut
@@ -572,6 +603,19 @@ export const ItemForm = ({
                     />
                   </Pressable>
                 )}
+              {isCutout(imageUrl) && !cutoutBusy && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    localization.FixCutout[storedSettings.language]
+                  }
+                  hitSlop={6}
+                  onPress={() => setEditorVisible(true)}
+                  style={[styles.photoAction, styles.photoActionLeft]}
+                >
+                  <Icon name="brush" size={20} color={theme.colors.text} />
+                </Pressable>
+              )}
             </View>
             <View style={styles.topFields}>
               <View style={styles.whereRow}>
@@ -895,6 +939,14 @@ const styles = StyleSheet.create({
   },
   wardrobe: {
     flex: 1,
+  },
+  // Keeps the corner buttons on the photo, not under it.
+  photo: {
+    alignSelf: "flex-start",
+  },
+  photoActionLeft: {
+    right: undefined,
+    left: theme.spacing.xs,
   },
   photoAction: {
     position: "absolute",

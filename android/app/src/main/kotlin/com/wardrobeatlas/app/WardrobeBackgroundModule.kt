@@ -2,18 +2,25 @@ package com.wardrobeatlas.app
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
+import android.graphics.Shader
 import android.os.Build
 import android.util.Base64
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.uimanager.ViewManager
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
@@ -225,6 +232,115 @@ class WardrobeBackgroundModule(private val context: ReactApplicationContext) : R
       }
     }
     return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
+  }
+
+  private fun decode(base64: String): Bitmap? {
+    val bytes = try { Base64.decode(base64, Base64.DEFAULT) } catch (error: IllegalArgumentException) { null }
+    return bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+  }
+
+  // Applies hand-painted fixes to a cutout. Each stroke has a mode ("erase"
+  // clears, "restore" brings back the original photo), a brush size as a
+  // fraction of the image width and points as x, y fractions of the image.
+  @ReactMethod
+  fun editCutout(cutout: String, original: String, strokes: ReadableArray, promise: Promise) {
+    worker.execute {
+      try {
+        val image = decode(cutout)?.copy(Bitmap.Config.ARGB_8888, true)
+        if (image == null) {
+          promise.reject("FAILED", "Unreadable cutout")
+          return@execute
+        }
+        val source = if (original.isEmpty()) null else decode(original)?.let {
+          if (it.width == image.width && it.height == image.height) it
+          else Bitmap.createScaledBitmap(it, image.width, image.height, true)
+        }
+        val canvas = Canvas(image)
+        for (k in 0 until strokes.size()) {
+          val stroke = strokes.getMap(k) ?: continue
+          val points = stroke.getArray("points") ?: continue
+          val restore = stroke.getString("mode") == "restore"
+          if (points.size() < 2 || (restore && source == null)) continue
+          val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            strokeWidth = (stroke.getDouble("size") * image.width).toFloat()
+            if (restore) {
+              shader = BitmapShader(source!!, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+              xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC)
+            } else xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+          }
+          val path = Path()
+          for (p in 0 until points.size() / 2) {
+            val x = (points.getDouble(2 * p) * image.width).toFloat()
+            val y = (points.getDouble(2 * p + 1) * image.height).toFloat()
+            if (p == 0) path.moveTo(x, y) else path.lineTo(x, y)
+          }
+          // A tap leaves a dot.
+          if (points.size() < 4) path.rLineTo(0.1f, 0f)
+          canvas.drawPath(path, paint)
+        }
+        promise.resolve(webp(image))
+      } catch (error: Throwable) {
+        promise.reject("FAILED", "The cutout couldn't be edited", error)
+      }
+    }
+  }
+
+  // Up to three main colors of a cutout, most common first, ignoring its
+  // transparent background. Colors closer than a small distance count as one.
+  @ReactMethod
+  fun cutoutColors(base64: String, promise: Promise) {
+    worker.execute {
+      try {
+        val photo = decode(base64)
+        if (photo == null) {
+          promise.reject("FAILED", "Unreadable cutout")
+          return@execute
+        }
+        val scale = minOf(1f, 96f / maxOf(photo.width, photo.height))
+        val small = Bitmap.createScaledBitmap(
+          photo, maxOf(1, (photo.width * scale).toInt()), maxOf(1, (photo.height * scale).toInt()), true
+        )
+        val pixels = IntArray(small.width * small.height)
+        small.getPixels(pixels, 0, small.width, 0, 0, small.width, small.height)
+        // Buckets of 16 levels per channel: summed r, g, b and a count.
+        val buckets = HashMap<Int, IntArray>()
+        var total = 0
+        for (color in pixels) {
+          if ((color ushr 24) < 200) continue
+          val r = (color shr 16) and 0xff
+          val g = (color shr 8) and 0xff
+          val b = color and 0xff
+          val sums = buckets.getOrPut(((r shr 4) shl 8) or ((g shr 4) shl 4) or (b shr 4)) { IntArray(4) }
+          sums[0] += r
+          sums[1] += g
+          sums[2] += b
+          sums[3]++
+          total++
+        }
+        if (total == 0) {
+          promise.reject("NO_SUBJECT", "The cutout is empty")
+          return@execute
+        }
+        val chosen = ArrayList<IntArray>()
+        for (sums in buckets.values.sortedByDescending { it[3] }) {
+          // Second and third colors need at least 5% of the garment.
+          if (chosen.size == 3 || (chosen.isNotEmpty() && sums[3] * 20 < total)) break
+          val color = intArrayOf(sums[0] / sums[3], sums[1] / sums[3], sums[2] / sums[3])
+          val distinct = chosen.all { other ->
+            (0..2).sumOf { (color[it] - other[it]) * (color[it] - other[it]) } > 48 * 48
+          }
+          if (distinct) chosen.add(color)
+        }
+        val result = Arguments.createArray()
+        chosen.forEach { result.pushString(String.format("#%02X%02X%02X", it[0], it[1], it[2])) }
+        promise.resolve(result)
+      } catch (error: Throwable) {
+        promise.reject("FAILED", "Colors couldn't be read", error)
+      }
+    }
   }
 
   override fun invalidate() {
