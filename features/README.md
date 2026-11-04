@@ -32,3 +32,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Collections tab](collections-tab/PLAN.md)
 - [Fields stay above the keyboard](keyboard-insets/PLAN.md)
 - [Fix the cut-out by hand](fix-cutout/PLAN.md)
+- [Taller photo on the garment form](taller-photo/PLAN.md)

@@ -7,29 +7,40 @@ import CustomModal from "./CustomModal";
 import useWidthScreen from "../hooks/useWidthScreen";
 import { theme } from "../utils/theme";
 import { ThemeText } from "./ThemeText";
+/**
+ * The garment's photo. It is `width` wide and fills the height its parent
+ * gives it, never shorter than a square.
+ */
 export const ImageViewer = ({
   imageUrl,
   setImageModalVisible,
-  size = 160,
+  width = 160,
+  fit = "cover",
 }: {
-  size?: number;
+  width?: number;
+  // "contain" shows the whole image, for cut-outs on a plain background.
+  fit?: "cover" | "contain";
   imageUrl: string;
   setImageModalVisible: Dispatch<SetStateAction<boolean>>;
 }) => {
   const [showImageFull, setShowImageFull] = useState(false);
   const language = useSelector((s: RootState) => s.settings.language);
-  const width = useWidthScreen();
+  const screenWidth = useWidthScreen();
   return (
     <>
       <CustomModal
         setVisible={setShowImageFull}
         visible={showImageFull}
-        maxHeight={width}
+        maxHeight={screenWidth}
       >
         <Image
           accessibilityLabel={localization.Photo[language]}
           source={{ uri: `data:image/*;base64,${imageUrl}` }}
-          style={{ width: "100%", height: width * 0.7, resizeMode: "contain" }}
+          style={{
+            width: "100%",
+            height: screenWidth * 0.7,
+            resizeMode: "contain",
+          }}
         />
       </CustomModal>
       <Pressable
@@ -38,8 +49,9 @@ export const ImageViewer = ({
         onLongPress={() => imageUrl !== "" && setShowImageFull(true)}
         onPress={() => setImageModalVisible(true)}
         style={{
-          width: size,
-          height: size,
+          width,
+          flexGrow: 1,
+          minHeight: width,
           borderRadius: theme.radius.sm,
           overflow: "hidden",
           backgroundColor: theme.colors.surface,
@@ -50,7 +62,7 @@ export const ImageViewer = ({
         {imageUrl !== "" ? (
           <Image
             source={{ uri: `data:image/*;base64,${imageUrl}` }}
-            style={{ width: size, height: size, resizeMode: "cover" }}
+            style={{ width: "100%", height: "100%", resizeMode: fit }}
           />
         ) : (
           <ThemeText>{localization.AddPhoto[language]}</ThemeText>

@@ -800,6 +800,8 @@ describe("Fix the cut-out", () => {
     mockState.itemsList.items = items();
     const tree = edit("trousers");
     expect(photoAction(tree, "Fix the cut-out")).toBeUndefined();
+    // A photo fills its frame; a cut-out is shown whole.
+    expect(tree.root.findByType("ImageViewer" as any).props.fit).toBe("cover");
     expect(editor(tree)).toBeUndefined();
     mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRcut" });
     mockCutoutColors.mockResolvedValue(["#C8B49A"]);
@@ -809,6 +811,7 @@ describe("Fix the cut-out", () => {
     // Automatic colors come from the garment, not the old background.
     expect(mockCutoutColors).toHaveBeenLastCalledWith("UklGRcut");
     expect(primary(tree)).toBe("#C8B49A");
+    expect(tree.root.findByType("ImageViewer" as any).props.fit).toBe("contain");
     act(() => photoAction(tree, "Fix the cut-out")!.props.onPress());
     expect(editor(tree).props).toMatchObject({
       visible: true,
