@@ -49,7 +49,7 @@ import {
   visibleCategories,
 } from "../../utils/categories";
 import { ClosetSections } from "../../components/ClosetSections";
-import { QuickLogSheet } from "../../components/QuickLogSheet";
+import { QuickLogSheet, logGarments } from "../../components/QuickLogSheet";
 import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { EmptyState } from "../../components/EmptyState";
 import { cardDensity } from "../../components/GarmentGrid";
@@ -145,6 +145,17 @@ export function HomeBottom() {
   const dispatch = useDispatch();
   const columns = normalizeGridColumns(storedSettings.gridColumns);
   const density = cardDensity(columns);
+  const offerUndo = (log: { eventId: string; name: string }) =>
+    setUndo({
+      message: l.Logged[language].replace("{name}", log.name),
+      run: () => {
+        dispatch(deleteLog({ selectedLogId: log.eventId }));
+        dispatch(deleteEventLog({ selectedLogId: log.eventId }));
+      },
+    });
+  // A double tap logs a use now, without the dialog.
+  const logNow = (garment: item) =>
+    offerUndo(logGarments(dispatch, [garment], language));
   const editGarment = (garment: item) =>
     navigation.navigate("ItemForm", { editingIndex: garment.id });
   // The type is shown by the heading above, so cards leave it out.
@@ -160,6 +171,7 @@ export function HomeBottom() {
       onLongPress={() =>
         selecting ? togglePicked(garment.id) : editGarment(garment)
       }
+      onDoubleTap={selecting ? undefined : () => logNow(garment)}
     />
   );
   const handleOpenDrawer = () => {
@@ -391,13 +403,7 @@ export function HomeBottom() {
         onEdit={editGarment}
         onLogged={log => {
           stopSelecting();
-          setUndo({
-            message: l.Logged[language].replace("{name}", log.name),
-            run: () => {
-              dispatch(deleteLog({ selectedLogId: log.eventId }));
-              dispatch(deleteEventLog({ selectedLogId: log.eventId }));
-            },
-          });
+          offerUndo(log);
         }}
       />
       <Snackbar

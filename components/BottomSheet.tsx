@@ -6,6 +6,7 @@ import { RootState } from "../redux/store";
 import { useSelector } from "react-redux";
 import { theme } from "../utils/theme";
 import { SectionHeading } from "./SectionHeading";
+/** A panel centred on the screen, closed by its button or a tap outside. */
 export const BottomSheet = ({
   isOpen,
   setIsOpen,
@@ -30,7 +31,7 @@ export const BottomSheet = ({
         <Pressable
           accessibilityLabel={localization.Close[language]}
           onPress={close}
-          style={styles.backdrop}
+          style={StyleSheet.absoluteFill}
         />
         <View style={styles.sheet}>
           <SectionHeading
@@ -53,18 +54,16 @@ export const BottomSheet = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    justifyContent: "center",
+    padding: theme.spacing.md,
     backgroundColor: theme.colors.scrim,
-  },
-  backdrop: {
-    flex: 1,
   },
   sheet: {
     maxHeight: "85%",
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
     backgroundColor: theme.colors.background,
-    borderTopLeftRadius: theme.radius.sm,
-    borderTopRightRadius: theme.radius.sm,
+    borderRadius: theme.radius.sm,
   },
   content: {
     paddingBottom: theme.spacing.lg,

@@ -275,6 +275,11 @@ const button = (tree: ReactTestRenderer, label: string) =>
   tree.root
     .findAllByType("Button" as any)
     .find(b => b.props.children === label);
+// The icon button on the photo's corner, found by what it does.
+const photoAction = (tree: ReactTestRenderer, label: string) =>
+  tree.root
+    .findAll(n => n.props.accessibilityLabel === label && !!n.props.onPress)
+    .at(0);
 
 test("secondary and tertiary colors are optional and only added on request", () => {
   const tree = render();
@@ -538,12 +543,14 @@ test("season chips start all on and save only the chosen seasons", () => {
 
 test("In storage starts off for new garments and is saved when switched on", () => {
   const tree = render();
+  // A chip beside the wardrobe
   const storage = () =>
-    tree.root
-      .findAllByType("Switch" as any)
-      .find(s => s.props.accessibilityLabel === "In storage")!;
-  expect(storage().props.value).toBe(false);
-  act(() => storage().props.onValueChange(true));
+    tree.root.find(
+      n => n.props.accessibilityLabel === "In storage" && !!n.props.onPress,
+    );
+  expect(storage().props.accessibilityState.selected).toBe(false);
+  act(() => storage().props.onPress());
+  expect(storage().props.accessibilityState.selected).toBe(true);
   const type = tree.root
     .findAllByType("Dropdown" as any)
     .find(d => d.props.placeholder === "Subcategory")!;
@@ -584,21 +591,27 @@ test("Remove background replaces a shoe photo, Undo brings it back, and Save sto
   const photo = (tree: ReactTestRenderer) =>
     tree.root.findByType("ImageViewer" as any).props.imageUrl;
   // Already cut out: no button
-  expect(button(edit("cut"), "Remove background")).toBeUndefined();
+  expect(photoAction(edit("cut"), "Remove background")).toBeUndefined();
   const tree = edit("shoe");
   mockRemoveBackground.mockResolvedValueOnce({ error: "noSubject" });
-  await act(async () => button(tree, "Remove background")!.props.onPress());
+  await act(async () =>
+    photoAction(tree, "Remove background")!.props.onPress(),
+  );
   expect(photo(tree)).toBe("/9j/photo");
   expect(JSON.stringify(tree.toJSON())).toContain("No garment found");
   mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
-  await act(async () => button(tree, "Remove background")!.props.onPress());
+  await act(async () =>
+    photoAction(tree, "Remove background")!.props.onPress(),
+  );
   expect(mockRemoveBackground).toHaveBeenLastCalledWith("/9j/photo");
   expect(mockIsolateGarment).not.toHaveBeenCalled();
   expect(photo(tree)).toBe("UklGRnew");
-  act(() => button(tree, "Undo")!.props.onPress());
+  act(() => photoAction(tree, "Undo")!.props.onPress());
   expect(photo(tree)).toBe("/9j/photo");
   mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
-  await act(async () => button(tree, "Remove background")!.props.onPress());
+  await act(async () =>
+    photoAction(tree, "Remove background")!.props.onPress(),
+  );
   act(() => button(tree, "Save")!.props.onPress());
   expect(mockDispatch).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -642,10 +655,10 @@ describe("Keep only the garment", () => {
   test("tops keep the upper garment, and earlier cutouts of bottoms can be redone", async () => {
     mockState.itemsList.items = items();
     let tree = edit("fleece");
-    expect(button(tree, "Remove background")).toBeUndefined();
+    expect(photoAction(tree, "Remove background")).toBeUndefined();
     mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRtop" });
     await act(async () =>
-      button(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Keep only the garment")!.props.onPress(),
     );
     expect(mockIsolateGarment).toHaveBeenLastCalledWith("/9j/photo", "upper");
     expect(mockRemoveBackground).not.toHaveBeenCalled();
@@ -655,7 +668,7 @@ describe("Keep only the garment", () => {
     tree = edit("jeans");
     mockIsolateGarment.mockResolvedValueOnce({ error: "noSubject" });
     await act(async () =>
-      button(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Keep only the garment")!.props.onPress(),
     );
     expect(mockIsolateGarment).toHaveBeenLastCalledWith("UklGRold", "lower");
     expect(JSON.stringify(tree.toJSON())).toContain("No garment found");
@@ -666,7 +679,7 @@ describe("Keep only the garment", () => {
     mockGarmentModel.present = false;
     const tree = edit("fleece");
     await act(async () =>
-      button(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Keep only the garment")!.props.onPress(),
     );
     expect(modelDialog(tree).props.visible).toBe(true);
     expect(modelDialog(tree).props.message).toContain("176 MB");
@@ -683,13 +696,13 @@ describe("Keep only the garment", () => {
       modelDialog(tree).props.onConfirm();
     });
     expect(
-      button(tree, "Downloading the garment model… 42%")!.props.disabled,
+      photoAction(tree, "Downloading the garment model… 42%")!.props.disabled,
     ).toBe(true);
     mockGarmentModel.present = true;
     mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRtop" });
     await act(async () => finish(true));
     expect(mockIsolateGarment).toHaveBeenCalledWith("/9j/photo", "upper");
-    expect(button(tree, "Undo")).toBeDefined();
+    expect(photoAction(tree, "Undo")).toBeDefined();
   });
 
   test("a failed download says so and changes nothing", async () => {
@@ -698,7 +711,7 @@ describe("Keep only the garment", () => {
     mockGarmentModel.download.mockResolvedValueOnce(false);
     const tree = edit("fleece");
     await act(async () =>
-      button(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Keep only the garment")!.props.onPress(),
     );
     await act(async () => modelDialog(tree).props.onConfirm());
     expect(JSON.stringify(tree.toJSON())).toContain(

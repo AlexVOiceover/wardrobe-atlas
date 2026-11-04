@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
-import { Button, Switch } from "react-native-paper";
+import { Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
 import dayjs from "dayjs";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -16,6 +16,7 @@ import {
 import { countText, localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
 import { BottomSheet } from "./BottomSheet";
+import { FilterChip } from "./FilterChip";
 import { ThemeText } from "./ThemeText";
 
 export const usageSummary = (
@@ -37,9 +38,38 @@ export const usageSummary = (
 };
 
 /**
+ * Logs one use of the garments as a single Outfits entry, named after the
+ * garment or "Outfit" for several.
+ */
+export function logGarments(
+  dispatch: Dispatch<any>,
+  garments: item[],
+  language: number,
+  when?: Date,
+) {
+  const eventId = nanoid();
+  const name =
+    garments.length === 1
+      ? garments[0].name.trim() || localization.Garment[language]
+      : localization.Outfit[language];
+  dispatch(
+    addEventLog({
+      eventId,
+      eventName: name,
+      eventDate: JSON.stringify(when ?? new Date()),
+      logTime: JSON.stringify(new Date()),
+    }),
+  );
+  garments.forEach(selected =>
+    dispatch(addLog({ selectedId: selected.id, logId: eventId })),
+  );
+  return { eventId, name };
+}
+
+/**
  * Logs one use of the given garments as a single Outfits entry. "When" starts
  * as now and can be moved to an earlier time. With one garment it also shows
- * its uses, its storage switch and Edit.
+ * its uses, its storage chip and Edit.
  */
 export function QuickLogSheet({
   garments,
@@ -69,23 +99,9 @@ export function QuickLogSheet({
   };
   const logUse = () => {
     if (garments.length === 0) return;
-    const eventId = nanoid();
-    const name = garment
-      ? garment.name.trim() || localization.Garment[language]
-      : localization.Outfit[language];
-    dispatch(
-      addEventLog({
-        eventId,
-        eventName: name,
-        eventDate: JSON.stringify(when ?? new Date()),
-        logTime: JSON.stringify(new Date()),
-      }),
-    );
-    garments.forEach(selected =>
-      dispatch(addLog({ selectedId: selected.id, logId: eventId })),
-    );
+    const log = logGarments(dispatch, garments, language, when);
     close();
-    onLogged({ eventId, name });
+    onLogged(log);
   };
   const whenLabel = when
     ? dayjs(when).format("DD/MM/YYYY · HH:mm")
@@ -131,19 +147,19 @@ export function QuickLogSheet({
               <ThemeText customStyle={[captionText, styles.usage]}>
                 {usageSummary(garment.logIds?.length ?? 0, lastUsed, language)}
               </ThemeText>
-            </View>
-          )}
-          {garment && (
-            <View style={styles.storage}>
-              <ThemeText customStyle={styles.storageLabel}>
-                {localization.InStorage[language]}
-              </ThemeText>
-              <Switch
-                accessibilityLabel={localization.InStorage[language]}
-                value={garment.stored === true}
-                onValueChange={stored => {
-                  dispatch(setGarmentsStored({ ids: [garment.id], stored }));
-                }}
+              <FilterChip
+                dense
+                icon="archive-outline"
+                label={localization.InStorage[language]}
+                selected={garment.stored === true}
+                onPress={() =>
+                  dispatch(
+                    setGarmentsStored({
+                      ids: [garment.id],
+                      stored: garment.stored !== true,
+                    }),
+                  )
+                }
               />
             </View>
           )}
@@ -253,14 +269,6 @@ const styles = StyleSheet.create({
     minHeight: theme.touch,
     justifyContent: "center",
     alignItems: "center",
-  },
-  storage: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: theme.touch,
-  },
-  storageLabel: {
-    flex: 1,
   },
   actions: {
     flexDirection: "row",

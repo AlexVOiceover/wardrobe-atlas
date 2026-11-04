@@ -191,7 +191,12 @@ test("tapping a garment opens the use log; a long press edits it", async () => {
   const sheet = () =>
     tree!.root.findByType(require("../components/QuickLogSheet").QuickLogSheet);
   expect(sheet().props.garments).toEqual([]);
+  // A single tap waits in case it's a double tap, then opens the log.
+  jest.useFakeTimers();
   await act(async () => card().props.onPress());
+  expect(sheet().props.garments).toEqual([]);
+  await act(async () => jest.advanceTimersByTime(300));
+  jest.useRealTimers();
   expect(sheet().props.garments.map((g: any) => g.id)).toEqual(["shirt"]);
   expect(mockNavigation.navigate).not.toHaveBeenCalledWith("ItemForm", {
     editingIndex: "shirt",
@@ -200,6 +205,39 @@ test("tapping a garment opens the use log; a long press edits it", async () => {
   expect(mockNavigation.navigate).toHaveBeenCalledWith("ItemForm", {
     editingIndex: "shirt",
   });
+  await act(async () => tree!.unmount());
+});
+
+test("a double tap logs a use at once, with Undo", async () => {
+  mockDispatch.mockClear();
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <HomeBottom />
+      </WardrobeProvider>,
+    );
+  });
+  const card = () =>
+    tree!.root.find(
+      x =>
+        x.props.accessibilityLabel === "Linen shirt" && !!x.props.onLongPress,
+    );
+  jest.useFakeTimers();
+  await act(async () => card().props.onPress());
+  await act(async () => card().props.onPress());
+  await act(async () => jest.advanceTimersByTime(1000));
+  jest.useRealTimers();
+  const sheet = tree!.root.findByType(
+    require("../components/QuickLogSheet").QuickLogSheet,
+  );
+  expect(sheet.props.garments).toEqual([]);
+  expect(mockDispatch.mock.calls.map(call => call[0].type)).toEqual([
+    "itemsList/addEventLog",
+    "itemsList/addLog",
+  ]);
+  expect(mockDispatch.mock.calls[1][0].payload.selectedId).toBe("shirt");
+  expect(JSON.stringify(tree!.toJSON())).toContain("Registrado: Linen shirt");
   await act(async () => tree!.unmount());
 });
 
