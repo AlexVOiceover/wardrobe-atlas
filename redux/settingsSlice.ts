@@ -83,9 +83,6 @@ const settingsSlice = createSlice({
         action.payload.collapsedSections,
       );
     },
-    setAppVer: (state, action) => {
-      state.appVer = action.payload.appVer;
-    },
   },
 });
 export const {
@@ -97,6 +94,5 @@ export const {
   setLastWardrobe,
   toggleSection,
   importSettings,
-  setAppVer,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

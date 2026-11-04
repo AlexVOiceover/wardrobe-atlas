@@ -219,7 +219,6 @@ export const localization = {
   Seasons: ["Seasons", "Temporadas"],
   Name: ["Name", "Nombre"],
   Type: ["Subcategory", "Subcategoría"],
-  Fit: ["Fit", "Ajuste"],
   Quantity: ["Quantity", "Cantidad"],
   Unit: ["Unit", "Unidad"],
   Size: ["Size", "Tamaño"],

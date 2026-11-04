@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { customCategorySprite } from "../screens/stackNav/images";
 import { clothesList } from "../utils/localization";
 
 export const BUILT_IN_CATEGORY_COUNT = 4;
@@ -69,7 +68,7 @@ const categoriesSlice = createSlice({
       state.Categories.push({
         name: bothNames(action.payload.name),
         screen: "ItemForm",
-        spriteSheet: customCategorySprite,
+        spriteSheet: null,
         index,
       } as Category);
       if (state.CategoryCustomTypes?.[index])
