@@ -62,8 +62,8 @@ import {
 import { OptionalDateField } from "../../components/OptionalDateField";
 import { FormErrors } from "../../components/FormErrors";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
-// The photo is a square at the top of the form.
-const PHOTO_SIZE = 112;
+// The photo's width; it is as tall as the fields beside it.
+const PHOTO_WIDTH = 112;
 export const ItemForm = ({
   navigation,
   route,
@@ -563,7 +563,8 @@ export const ItemForm = ({
           <View style={styles.topRow}>
             <View style={styles.photo}>
               <ImageViewer
-                size={PHOTO_SIZE}
+                width={PHOTO_WIDTH}
+                fit={isCutout(imageUrl) ? "contain" : "cover"}
                 imageUrl={imageUrl}
                 setImageModalVisible={setImageModalVisible}
               />
@@ -940,9 +941,10 @@ const styles = StyleSheet.create({
   wardrobe: {
     flex: 1,
   },
-  // Keeps the corner buttons on the photo, not under it.
+  // Stretches to the height of the fields beside it, so no space is left
+  // under the photo and the corner buttons stay on it.
   photo: {
-    alignSelf: "flex-start",
+    alignSelf: "stretch",
   },
   photoActionLeft: {
     right: undefined,
