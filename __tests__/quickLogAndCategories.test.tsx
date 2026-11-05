@@ -383,6 +383,26 @@ describe("quick use log", () => {
     );
   });
 
+  test("tapping the photo shows it larger, and again smaller", () => {
+    const tree = render(
+      <QuickLogSheet
+        garments={[{ ...shirt, image: "/9j/photo" }]}
+        language={0}
+        onClose={jest.fn()}
+        onEdit={jest.fn()}
+        onLogged={jest.fn()}
+      />,
+    );
+    const photo = (label: string) =>
+      tree.root.findAll(
+        n => n.props.accessibilityLabel === label && !!n.props.onPress,
+      )[0];
+    act(() => photo("Show the photo larger").props.onPress());
+    expect(photo("Show the photo smaller")).toBeDefined();
+    act(() => photo("Show the photo smaller").props.onPress());
+    expect(photo("Show the photo larger")).toBeDefined();
+  });
+
   test("Log use saves one Outfits entry for the garment, now", () => {
     const onLogged = jest.fn();
     const tree = sheet(onLogged);
