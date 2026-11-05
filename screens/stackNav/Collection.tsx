@@ -21,7 +21,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { ItemBox, garmentSummary } from "../../components/ItemBox";
 import { GarmentGrid, cardDensity } from "../../components/GarmentGrid";
 import { ClosetSections } from "../../components/ClosetSections";
-import { QuickLogSheet } from "../../components/QuickLogSheet";
+import { QuickLogSheet, logGarments } from "../../components/QuickLogSheet";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { CollectionNameSheet } from "../../components/CollectionNameSheet";
 
@@ -97,6 +97,14 @@ export function Collection({
     );
   const editGarment = (garment: item) =>
     navigation.navigate("ItemForm", { editingIndex: garment.id });
+  const offerUndo = (log: { eventId: string; name: string }) =>
+    setUndo({
+      message: l.Logged[language].replace("{name}", log.name),
+      run: () => {
+        dispatch(deleteLog({ selectedLogId: log.eventId }));
+        dispatch(deleteEventLog({ selectedLogId: log.eventId }));
+      },
+    });
   const loggingGarments = items.filter(garment => logging.includes(garment.id));
   if (editing)
     return (
@@ -184,10 +192,17 @@ export function Collection({
             garments={garments}
             columns={columns}
             renderGarment={garment => (
+              // Tap opens the garment sheet and a double tap logs at once,
+              // as in the Closet. There is no select mode here yet, so a long
+              // press still edits.
               <ItemBox
                 {...garmentSummary(garment)}
                 density={density}
-                onPress={() => editGarment(garment)}
+                onPress={() => setLogging([garment.id])}
+                onDoubleTap={() =>
+                  offerUndo(logGarments(dispatch, [garment], language))
+                }
+                onLongPress={() => editGarment(garment)}
               />
             )}
           />
@@ -217,15 +232,7 @@ export function Collection({
         language={language}
         onClose={() => setLogging([])}
         onEdit={editGarment}
-        onLogged={log =>
-          setUndo({
-            message: l.Logged[language].replace("{name}", log.name),
-            run: () => {
-              dispatch(deleteLog({ selectedLogId: log.eventId }));
-              dispatch(deleteEventLog({ selectedLogId: log.eventId }));
-            },
-          })
-        }
+        onLogged={offerUndo}
       />
       <CollectionNameSheet
         isOpen={isRenaming}

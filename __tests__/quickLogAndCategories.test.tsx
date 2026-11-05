@@ -383,24 +383,40 @@ describe("quick use log", () => {
     );
   });
 
-  test("tapping the photo shows it larger, and again smaller", () => {
+  test("the garment's row shows its name once and opens Edit; no Edit button or storage chip", () => {
+    const onEdit = jest.fn();
+    const onClose = jest.fn();
     const tree = render(
       <QuickLogSheet
         garments={[{ ...shirt, image: "/9j/photo" }]}
         language={0}
-        onClose={jest.fn()}
-        onEdit={jest.fn()}
+        onClose={onClose}
+        onEdit={onEdit}
         onLogged={jest.fn()}
       />,
     );
-    const photo = (label: string) =>
-      tree.root.findAll(
-        n => n.props.accessibilityLabel === label && !!n.props.onPress,
-      )[0];
-    act(() => photo("Show the photo larger").props.onPress());
-    expect(photo("Show the photo smaller")).toBeDefined();
-    act(() => photo("Show the photo smaller").props.onPress());
-    expect(photo("Show the photo larger")).toBeDefined();
+    expect(tree.root.findByType("BottomSheet" as any).props.title).toBe(
+      "Log use",
+    );
+    const text = JSON.stringify(tree.toJSON());
+    expect(text.split('"Navy shirt"')).toHaveLength(2);
+    expect(
+      tree.root.findAllByType("Button" as any).map(b => b.props.children),
+    ).toEqual(["Log use"]);
+    expect(
+      tree.root.findAll(n => n.props.accessibilityLabel === "In storage"),
+    ).toHaveLength(0);
+    act(() =>
+      tree.root
+        .find(
+          n =>
+            n.props.accessibilityLabel === "Edit Navy shirt" &&
+            !!n.props.onPress,
+        )
+        .props.onPress(),
+    );
+    expect(onClose).toHaveBeenCalled();
+    expect(onEdit).toHaveBeenCalledWith({ ...shirt, image: "/9j/photo" });
   });
 
   test("Log use saves one Outfits entry for the garment, now", () => {
@@ -426,13 +442,27 @@ describe("quick use log", () => {
     });
   });
 
-  test("a picked earlier time is saved, and Edit opens the form", () => {
-    const onEdit = jest.fn();
-    const tree = sheet(jest.fn(), onEdit);
+  test("Now · change picks an earlier time, ✕ goes back to now, and the picked time is saved", () => {
+    const tree = sheet();
+    const pressable = (label: string) =>
+      tree.root.findAll(
+        n => n.props.accessibilityLabel === label && !!n.props.onPress,
+      )[0];
+    const picker = () => tree.root.findByType("DateModal" as any);
+    expect(JSON.stringify(tree.toJSON())).toContain("Now · change");
+    expect(pressable("Back to now")).toBeUndefined();
+    act(() => pressable("When: Now").props.onPress());
+    expect(picker().props.isVisible).toBe(true);
     const earlier = new Date("2026-11-01T08:30:00.000Z");
-    act(() =>
-      tree.root.findByType("DateModal" as any).props.onConfirm(earlier),
-    );
+    act(() => picker().props.onConfirm(earlier));
+    expect(picker().props.isVisible).toBe(false);
+    expect(JSON.stringify(tree.toJSON())).not.toContain("Now · change");
+    act(() => pressable("Back to now").props.onPress());
+    expect(JSON.stringify(tree.toJSON())).toContain("Now · change");
+    // A future time counts as now.
+    act(() => picker().props.onConfirm(new Date(Date.now() + 3600000)));
+    expect(pressable("Back to now")).toBeUndefined();
+    act(() => picker().props.onConfirm(earlier));
     expect(
       tree.root.find(
         n =>
@@ -444,8 +474,6 @@ describe("quick use log", () => {
     expect(JSON.parse(mockDispatch.mock.calls[0][0].payload.eventDate)).toBe(
       earlier.toISOString(),
     );
-    act(() => button(tree, "Edit").props.onPress());
-    expect(onEdit).toHaveBeenCalledWith(shirt);
   });
 });
 
@@ -797,8 +825,8 @@ describe("storage", () => {
     ).toBeTruthy();
   });
 
-  test("logging several garments makes one Outfit entry; one garment can be stored from the sheet", () => {
-    const shirt = garment("shirt", 0, "", { name: "Shirt" });
+  test("logging several garments shows their photos and makes one Outfit entry", () => {
+    const shirt = garment("shirt", 0, "", { name: "Shirt", image: "/9j/a" });
     const jeans = garment("jeans", 1, "", { name: "Jeans" });
     const onLogged = jest.fn();
     const tree = render(
@@ -811,6 +839,14 @@ describe("storage", () => {
       />,
     );
     expect(JSON.stringify(tree.toJSON())).toContain("2 garments");
+    // A photo, or a shirt icon for a garment without one
+    expect(
+      tree.root.findAll(
+        n =>
+          ["Shirt", "Jeans"].includes(n.props.accessibilityLabel) &&
+          typeof n.type === "string",
+      ),
+    ).toHaveLength(2);
     expect(
       tree.root.findAll(
         n => n.props.accessibilityLabel === "In storage" && !!n.props.onPress,
@@ -833,26 +869,5 @@ describe("storage", () => {
       "shirt",
       "jeans",
     ]);
-    mockDispatch.mockClear();
-    const single = render(
-      <QuickLogSheet
-        garments={[shirt]}
-        language={0}
-        onClose={jest.fn()}
-        onEdit={jest.fn()}
-        onLogged={jest.fn()}
-      />,
-    );
-    act(() =>
-      single.root
-        .find(
-          n => n.props.accessibilityLabel === "In storage" && !!n.props.onPress,
-        )
-        .props.onPress(),
-    );
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: "itemsList/setGarmentsStored",
-      payload: { ids: ["shirt"], stored: true },
-    });
   });
 });

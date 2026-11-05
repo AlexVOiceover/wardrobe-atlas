@@ -45,6 +45,7 @@ import {
 import { localization, styleNames } from "../../utils/localization";
 import { categoryTypes, visibleCategories } from "../../utils/categories";
 import { ImageViewer } from "../../components/ImageViewer";
+import { PhotoView } from "../../components/PhotoView";
 import {
   cutoutColors,
   isCutout,
@@ -155,7 +156,7 @@ export const ItemForm = ({
   // The photo before its background was removed, for Undo until Save.
   const [photoBeforeCutout, setPhotoBeforeCutout] = useState<string>();
   const [cutoutStatus, setCutoutStatus] = useState<
-    "" | "working" | BackgroundError | "noModel" | "downloadFailed"
+    "" | "working" | "done" | BackgroundError | "noModel" | "downloadFailed"
   >("");
   // Download progress of the garment model, while it downloads.
   const [modelProgress, setModelProgress] = useState<number>();
@@ -204,12 +205,16 @@ export const ItemForm = ({
   const dispatch = useDispatch();
   const [visible, setVisible] = useState(false);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  // The photo on the whole screen, with its actions.
+  const [photoViewVisible, setPhotoViewVisible] = useState(false);
   // Tops and bottoms keep only the garment; shoes and accessories only lose
   // the background.
   const part = garmentPart(category);
   const cutOut = async () => {
     const original = imageUrl;
     if (part && !(await hasGarmentModel())) {
+      // The question can't show over the full-screen photo.
+      setPhotoViewVisible(false);
       setModelPromptVisible(true);
       return;
     }
@@ -220,8 +225,20 @@ export const ItemForm = ({
     if ("image" in result) {
       setPhotoBeforeCutout(original);
       changePhoto(result.image);
-      setCutoutStatus("");
+      setCutoutStatus("done");
     } else setCutoutStatus(result.error);
+  };
+  const undoCutout = () => {
+    if (!photoBeforeCutout) return;
+    changePhoto(photoBeforeCutout);
+    setPhotoBeforeCutout(undefined);
+    setCutoutStatus("");
+  };
+  const removePhoto = () => {
+    setImageUrl("");
+    setPhotoBeforeCutout(undefined);
+    setCutoutStatus("");
+    setPhotoViewVisible(false);
   };
   const downloadModel = async () => {
     setCutoutStatus("");
@@ -232,6 +249,13 @@ export const ItemForm = ({
     else setCutoutStatus("downloadFailed");
   };
   const cutoutBusy = cutoutStatus === "working" || modelProgress !== undefined;
+  // Earlier cutouts of tops and bottoms may still show the person.
+  const canCutout =
+    !!imageUrl && (!!part || !isCutout(imageUrl) || !!photoBeforeCutout);
+  const cutoutError =
+    cutoutStatus !== "" && cutoutStatus !== "working" && cutoutStatus !== "done"
+      ? cutoutMessages[cutoutStatus][storedSettings.language]
+      : undefined;
   // The photo's corner button: its label says what it does.
   const cutoutLabel = (
     photoBeforeCutout
@@ -507,6 +531,31 @@ export const ItemForm = ({
         ].replace("{mb}", String(GARMENT_MODEL.megabytes))}
         onConfirm={downloadModel}
       />
+      <PhotoView
+        visible={photoViewVisible && !!imageUrl}
+        image={imageUrl}
+        language={storedSettings.language}
+        cutoutLabel={cutoutLabel}
+        busy={cutoutBusy}
+        message={cutoutError}
+        onCutout={
+          canCutout ? (photoBeforeCutout ? undoCutout : cutOut) : undefined
+        }
+        onFix={
+          isCutout(imageUrl)
+            ? () => {
+                setPhotoViewVisible(false);
+                setEditorVisible(true);
+              }
+            : undefined
+        }
+        onChange={() => {
+          setPhotoViewVisible(false);
+          setImageModalVisible(true);
+        }}
+        onRemove={removePhoto}
+        onClose={() => setPhotoViewVisible(false)}
+      />
       {isCutout(imageUrl) && (
         <CutoutEditor
           visible={editorVisible}
@@ -541,9 +590,6 @@ export const ItemForm = ({
           <Button mode="outlined" onPress={() => handleImagePicker(0)}>
             {localization.import_from_device[storedSettings.language]}
           </Button>
-          <Button mode="outlined" onPress={() => setImageUrl("")}>
-            {localization.Reset_Image[storedSettings.language]}
-          </Button>
         </View>
       </CustomModal>
       <ThemeView>
@@ -566,7 +612,11 @@ export const ItemForm = ({
                 width={PHOTO_WIDTH}
                 fit={isCutout(imageUrl) ? "contain" : "cover"}
                 imageUrl={imageUrl}
-                setImageModalVisible={setImageModalVisible}
+                onPress={() =>
+                  imageUrl
+                    ? setPhotoViewVisible(true)
+                    : setImageModalVisible(true)
+                }
               />
               {cutoutBusy && (
                 <View pointerEvents="none" style={styles.photoBusy}>
@@ -578,32 +628,23 @@ export const ItemForm = ({
                   )}
                 </View>
               )}
-              {/* Earlier cutouts of tops and bottoms may still show the person. */}
-              {!!imageUrl &&
-                (!!part || !isCutout(imageUrl) || photoBeforeCutout) && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={cutoutLabel}
-                    accessibilityState={{ disabled: cutoutBusy }}
-                    disabled={cutoutBusy}
-                    hitSlop={6}
-                    onPress={
-                      photoBeforeCutout
-                        ? () => {
-                            changePhoto(photoBeforeCutout);
-                            setPhotoBeforeCutout(undefined);
-                          }
-                        : cutOut
-                    }
-                    style={styles.photoAction}
-                  >
-                    <Icon
-                      name={photoBeforeCutout ? "arrow-undo" : "cut"}
-                      size={20}
-                      color={theme.colors.text}
-                    />
-                  </Pressable>
-                )}
+              {canCutout && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={cutoutLabel}
+                  accessibilityState={{ disabled: cutoutBusy }}
+                  disabled={cutoutBusy}
+                  hitSlop={6}
+                  onPress={photoBeforeCutout ? undoCutout : cutOut}
+                  style={styles.photoAction}
+                >
+                  <Icon
+                    name={photoBeforeCutout ? "arrow-undo" : "cut"}
+                    size={20}
+                    color={theme.colors.text}
+                  />
+                </Pressable>
+              )}
               {isCutout(imageUrl) && !cutoutBusy && (
                 <Pressable
                   accessibilityRole="button"
@@ -653,13 +694,26 @@ export const ItemForm = ({
               />
             </View>
           </View>
-          {cutoutStatus !== "" && cutoutStatus !== "working" && (
+          {!!cutoutError && (
             <ThemeText
               accessibilityLiveRegion="polite"
-              customStyle={captionText}
+              customStyle={styles.cutoutError}
             >
-              {cutoutMessages[cutoutStatus][storedSettings.language]}
+              {cutoutError}
             </ThemeText>
+          )}
+          {cutoutStatus === "done" && photoBeforeCutout && (
+            <View style={styles.cutoutDone}>
+              <ThemeText
+                accessibilityLiveRegion="polite"
+                customStyle={captionText}
+              >
+                {localization.BackgroundRemoved[storedSettings.language]}
+              </ThemeText>
+              <Button compact onPress={undoCutout}>
+                {localization.Undo[storedSettings.language]}
+              </Button>
+            </View>
           )}
           <View style={styles.pairRow}>
             <View style={styles.pairField}>
@@ -968,6 +1022,15 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     backgroundColor: "rgba(0,0,0,0.35)",
     justifyContent: "center",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+  },
+  cutoutError: {
+    color: theme.colors.danger,
+    fontSize: theme.type.caption,
+  },
+  cutoutDone: {
+    flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.xs,
   },

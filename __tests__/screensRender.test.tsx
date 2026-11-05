@@ -179,7 +179,7 @@ test("Closet groups garments by category and type, shows each once and keeps the
   await act(async () => tree!.unmount());
 });
 
-test("tapping a garment opens the use log; a long press edits it", async () => {
+test("tapping a garment opens the use log; a long press starts selecting with it ticked", async () => {
   let tree: ReactTestRenderer;
   await act(async () => {
     tree = create(
@@ -206,7 +206,18 @@ test("tapping a garment opens the use log; a long press edits it", async () => {
   expect(mockNavigation.navigate).not.toHaveBeenCalledWith("ItemForm", {
     editingIndex: "shirt",
   });
+  await act(async () => sheet().props.onClose());
   await act(async () => card().props.onLongPress());
+  expect(mockNavigation.navigate).not.toHaveBeenCalledWith("ItemForm", {
+    editingIndex: "shirt",
+  });
+  const bar = tree!.root.findByType(
+    require("../components/SelectionBar").SelectionBar,
+  );
+  expect(bar.props.count).toBe(1);
+  expect(card().props.accessibilityState).toEqual({ selected: true });
+  // The sheet's garment row is the way to Edit.
+  await act(async () => sheet().props.onEdit({ id: "shirt" }));
   expect(mockNavigation.navigate).toHaveBeenCalledWith("ItemForm", {
     editingIndex: "shirt",
   });

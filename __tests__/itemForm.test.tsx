@@ -2,6 +2,7 @@ import React from "react";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
 import { ScrollView } from "react-native";
 import { ItemForm } from "../screens/stackNav/ItemForm";
+import { PhotoView } from "../components/PhotoView";
 
 const mockDispatch = jest.fn();
 const mockState = {
@@ -36,7 +37,10 @@ jest.mock("../components/WardrobeSelector", () => ({
   WardrobeSelector: "WardrobeSelector",
   useWardrobeView: () => ({ selected: "home" }),
 }));
-jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
+jest.mock("../components/PageHeader", () => ({
+  PageHeader: "PageHeader",
+  HeaderIcon: "HeaderIcon",
+}));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/ColorModal", () => "ColorModal");
 jest.mock("../components/CustomModal", () => "CustomModal");
@@ -837,5 +841,129 @@ describe("Fix the cut-out", () => {
     const tree = edit("trousers");
     act(() => photoAction(tree, "Fix the cut-out")!.props.onPress());
     expect(editor(tree).props.original).toBeUndefined();
+  });
+});
+
+describe("the photo", () => {
+  const items = () => [
+    {
+      id: "shoe",
+      name: "Shoe",
+      type: "Sneakers",
+      category: 2,
+      image: "/9j/photo",
+      collection: [],
+    },
+  ];
+  const viewer = (tree: ReactTestRenderer) =>
+    tree.root.findByType("ImageViewer" as any);
+  const view = (tree: ReactTestRenderer) => tree.root.findByType(PhotoView);
+  const sourceDialog = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAllByType("CustomModal" as any)
+      .find(m => m.props.label === "Import image")!;
+  const viewButtons = (tree: ReactTestRenderer) =>
+    view(tree)
+      .findAllByType("Button" as any)
+      .map(b => b.props.children);
+  const pressInView = (tree: ReactTestRenderer, label: string) =>
+    view(tree)
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === label)!
+      .props.onPress();
+  beforeEach(() => {
+    mockRemoveBackground.mockReset();
+    mockCutoutColors.mockReset();
+  });
+
+  test("without a photo, a tap goes straight to camera or gallery, with nothing to reset", () => {
+    const tree = render();
+    expect(viewer(tree).props.imageUrl).toBe("");
+    act(() => viewer(tree).props.onPress());
+    expect(sourceDialog(tree).props.visible).toBe(true);
+    expect(view(tree).props.visible).toBe(false);
+    expect(
+      sourceDialog(tree)
+        .findAllByType("Button" as any)
+        .map(b => b.props.children),
+    ).toEqual(["Use Camera", "Import from device"]);
+  });
+
+  test("a tap shows the photo with labelled actions, and Change photo opens the source choice", () => {
+    mockState.itemsList.items = items();
+    const tree = edit("shoe");
+    act(() => viewer(tree).props.onPress());
+    expect(view(tree).props.visible).toBe(true);
+    expect(sourceDialog(tree).props.visible).toBe(false);
+    expect(viewButtons(tree)).toEqual([
+      "Change photo",
+      "Remove background",
+      "Remove photo",
+    ]);
+    act(() => pressInView(tree, "Change photo"));
+    expect(view(tree).props.visible).toBe(false);
+    expect(sourceDialog(tree).props.visible).toBe(true);
+  });
+
+  test("the view removes the background, offers Undo and Fix, and Fix opens the editor", async () => {
+    mockState.itemsList.items = items();
+    const tree = edit("shoe");
+    act(() => viewer(tree).props.onPress());
+    mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+    await act(async () => pressInView(tree, "Remove background"));
+    expect(viewer(tree).props.imageUrl).toBe("UklGRnew");
+    expect(view(tree).props.visible).toBe(true);
+    expect(viewButtons(tree)).toEqual([
+      "Change photo",
+      "Undo",
+      "Fix the cut-out",
+      "Remove photo",
+    ]);
+    // Under the photo too, with its own Undo
+    expect(JSON.stringify(tree.toJSON())).toContain("Background removed");
+    act(() => pressInView(tree, "Fix the cut-out"));
+    expect(view(tree).props.visible).toBe(false);
+    expect(tree.root.findByType("CutoutEditor" as any).props.visible).toBe(
+      true,
+    );
+    act(() => button(tree, "Undo")!.props.onPress());
+    expect(viewer(tree).props.imageUrl).toBe("/9j/photo");
+    expect(JSON.stringify(tree.toJSON())).not.toContain("Background removed");
+  });
+
+  test("a cut-out error shows in red, in the view and under the photo", async () => {
+    mockState.itemsList.items = items();
+    const tree = edit("shoe");
+    act(() => viewer(tree).props.onPress());
+    mockRemoveBackground.mockResolvedValueOnce({ error: "noSubject" });
+    await act(async () => pressInView(tree, "Remove background"));
+    expect(view(tree).props.message).toBe("No garment found in this photo.");
+    const errors = tree.root.findAll(
+      n =>
+        n.props.children === "No garment found in this photo." &&
+        n.props.customStyle?.color === "#b3261e",
+    );
+    expect(errors.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test("Remove photo clears the photo and its original, and closes the view", async () => {
+    mockState.itemsList.items = items();
+    const tree = edit("shoe");
+    act(() => viewer(tree).props.onPress());
+    mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+    await act(async () => pressInView(tree, "Remove background"));
+    act(() => pressInView(tree, "Remove photo"));
+    expect(viewer(tree).props.imageUrl).toBe("");
+    expect(view(tree).props.visible).toBe(false);
+    // No Undo back to the old photo
+    expect(photoAction(tree, "Undo")).toBeUndefined();
+    expect(button(tree, "Undo")).toBeUndefined();
+    act(() => button(tree, "Save")!.props.onPress());
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "itemsList/updateItem",
+        payload: expect.objectContaining({ id: "shoe", image: "" }),
+      }),
+    );
   });
 });

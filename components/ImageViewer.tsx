@@ -1,19 +1,17 @@
 import { localization } from "../utils/localization";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
-import { Dispatch, SetStateAction, useState } from "react";
 import { Image, Pressable, StyleSheet } from "react-native";
-import CustomModal from "./CustomModal";
-import useWidthScreen from "../hooks/useWidthScreen";
 import { theme } from "../utils/theme";
 import { ThemeText } from "./ThemeText";
 /**
  * The garment's photo. It is `width` wide and fills the height its parent
- * gives it, never shorter than a square.
+ * gives it, never shorter than a square. A tap adds a photo, or opens the
+ * one there.
  */
 export const ImageViewer = ({
   imageUrl,
-  setImageModalVisible,
+  onPress,
   width = 160,
   fit = "cover",
 }: {
@@ -21,54 +19,38 @@ export const ImageViewer = ({
   // "contain" shows the whole image, for cut-outs on a plain background.
   fit?: "cover" | "contain";
   imageUrl: string;
-  setImageModalVisible: Dispatch<SetStateAction<boolean>>;
+  onPress: () => void;
 }) => {
-  const [showImageFull, setShowImageFull] = useState(false);
   const language = useSelector((s: RootState) => s.settings.language);
-  const screenWidth = useWidthScreen();
   return (
-    <>
-      <CustomModal
-        setVisible={setShowImageFull}
-        visible={showImageFull}
-        maxHeight={screenWidth}
-      >
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={
+        imageUrl !== ""
+          ? localization.ViewPhoto[language]
+          : localization.ChoosePhoto[language]
+      }
+      onPress={onPress}
+      style={{
+        width,
+        flexGrow: 1,
+        minHeight: width,
+        borderRadius: theme.radius.sm,
+        overflow: "hidden",
+        backgroundColor: theme.colors.surface,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {imageUrl !== "" ? (
+        // Out of the layout, so the photo's own size can't stretch the frame.
         <Image
-          accessibilityLabel={localization.Photo[language]}
           source={{ uri: `data:image/*;base64,${imageUrl}` }}
-          style={{
-            width: "100%",
-            height: screenWidth * 0.7,
-            resizeMode: "contain",
-          }}
+          style={[StyleSheet.absoluteFill, { resizeMode: fit }]}
         />
-      </CustomModal>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={localization.ChoosePhoto[language]}
-        onLongPress={() => imageUrl !== "" && setShowImageFull(true)}
-        onPress={() => setImageModalVisible(true)}
-        style={{
-          width,
-          flexGrow: 1,
-          minHeight: width,
-          borderRadius: theme.radius.sm,
-          overflow: "hidden",
-          backgroundColor: theme.colors.surface,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        {imageUrl !== "" ? (
-          // Out of the layout, so the photo's own size can't stretch the frame.
-          <Image
-            source={{ uri: `data:image/*;base64,${imageUrl}` }}
-            style={[StyleSheet.absoluteFill, { resizeMode: fit }]}
-          />
-        ) : (
-          <ThemeText>{localization.AddPhoto[language]}</ThemeText>
-        )}
-      </Pressable>
-    </>
+      ) : (
+        <ThemeText>{localization.AddPhoto[language]}</ThemeText>
+      )}
+    </Pressable>
   );
 };
