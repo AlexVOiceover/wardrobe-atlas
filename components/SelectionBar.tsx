@@ -26,7 +26,8 @@ const Action = ({
     style={[styles.action, disabled && styles.disabled]}
   >
     <Icon name={icon} size={22} color={theme.colors.onBar} />
-    <ThemeText numberOfLines={1} customStyle={styles.actionLabel}>
+    {/* Two lines at most, so a long Spanish label never gets cut. */}
+    <ThemeText numberOfLines={2} customStyle={styles.actionLabel}>
       {label}
     </ThemeText>
   </Pressable>
@@ -36,26 +37,29 @@ const Action = ({
 export function SelectionBar({
   count,
   language,
-  canStore,
-  canUnstore,
+  storing,
+  allSelected,
   onClose,
   onSelectAll,
   onStore,
-  onUnstore,
   onLog,
   onMove,
 }: {
   count: number;
   language: number;
-  canStore: boolean;
-  canUnstore: boolean;
+  // One button: Store while any ticked garment is in use, else Unstore.
+  storing: boolean;
+  // Every visible garment is ticked, so the link deselects them.
+  allSelected: boolean;
   onClose: () => void;
   onSelectAll: () => void;
   onStore: () => void;
-  onUnstore: () => void;
   onLog: () => void;
   onMove: () => void;
 }) {
+  const selectAllLabel = allSelected
+    ? localization.DeselectAll[language]
+    : localization.SelectAll[language];
   return (
     <View style={styles.bar}>
       <View style={styles.top}>
@@ -72,27 +76,25 @@ export function SelectionBar({
         </ThemeText>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={localization.SelectAll[language]}
+          accessibilityLabel={selectAllLabel}
           onPress={onSelectAll}
           style={styles.selectAll}
         >
           <ThemeText customStyle={styles.selectAllLabel}>
-            {localization.SelectAll[language]}
+            {selectAllLabel}
           </ThemeText>
         </Pressable>
       </View>
       <View style={styles.actions}>
         <Action
-          icon="archive-outline"
-          label={localization.Store[language]}
-          disabled={!canStore}
+          icon={storing ? "archive-outline" : "shirt-outline"}
+          label={
+            storing
+              ? localization.Store[language]
+              : localization.Unstore[language]
+          }
+          disabled={count === 0}
           onPress={onStore}
-        />
-        <Action
-          icon="shirt-outline"
-          label={localization.Unstore[language]}
-          disabled={!canUnstore}
-          onPress={onUnstore}
         />
         <Action
           icon="checkmark-done-outline"
@@ -149,6 +151,7 @@ const styles = StyleSheet.create({
   },
   action: {
     flex: 1,
+    paddingHorizontal: theme.spacing.xs,
     minHeight: 56,
     justifyContent: "center",
     alignItems: "center",
@@ -157,6 +160,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     color: theme.colors.onBar,
     fontSize: theme.type.caption,
+    textAlign: "center",
   },
   disabled: {
     opacity: 0.4,

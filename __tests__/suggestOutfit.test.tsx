@@ -173,7 +173,7 @@ describe("Suggest outfit screen", () => {
     press(tree, "Summer");
     expect(text(tree)).toContain("New tee");
     expect(text(tree)).toContain("never worn");
-    expect(text(tree)).toContain("last 30/09/2026");
+    expect(text(tree)).toContain("last 30 Sep 2026");
     // No accessory unless asked for
     expect(text(tree)).not.toContain("Watch");
     press(tree, "Another option: Top");
@@ -181,9 +181,13 @@ describe("Suggest outfit screen", () => {
     expect(text(tree)).not.toContain("New tee");
     act(() =>
       tree.root
-        .findAllByType("Switch" as any)
-        .find(s => s.props.accessibilityLabel === "Include an accessory")!
-        .props.onValueChange(true),
+        .findAll(
+          n =>
+            n.props.accessibilityRole === "switch" &&
+            n.props.accessibilityLabel === "Include an accessory" &&
+            !!n.props.onPress,
+        )[0]
+        .props.onPress(),
     );
     // Changing a choice starts again from the first candidate
     expect(text(tree)).toContain("New tee");

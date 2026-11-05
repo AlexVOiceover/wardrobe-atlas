@@ -42,7 +42,10 @@ import {
   lastUseDates,
   visibleCategories,
 } from "../../utils/categories";
-import { ClosetSections } from "../../components/ClosetSections";
+import {
+  ClosetSections,
+  visibleGarments,
+} from "../../components/ClosetSections";
 import { QuickLogSheet, logGarments } from "../../components/QuickLogSheet";
 import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { EmptyState } from "../../components/EmptyState";
@@ -50,9 +53,11 @@ import { cardDensity } from "../../components/GarmentGrid";
 import { ActiveFilters } from "../../components/ActiveFilters";
 import {
   normalizeGridColumns,
+  setClosetSortValue,
   setGridColumns,
   toggleSection,
 } from "../../redux/settingsSlice";
+import { normalizeClosetSort } from "../../utils/sorts";
 import { theme } from "../../utils/theme";
 export function HomeBottom({ route }: { route?: any } = {}) {
   //this is the main page
@@ -68,13 +73,18 @@ export function HomeBottom({ route }: { route?: any } = {}) {
   }, [activeWardrobe, selected, select]);
   const [search, setSearch] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [sortValue, setSortValue] = useState("LA");
   const [categoriesFilter, setCategoriesFilter] = useState<any[]>([]);
   const [TypeFilter, setTypeFilter] = useState<string[]>([]);
   const [seasonFilter, setSeasonFilter] = useState<string[]>([]);
   const [colorFilter, setColorFilter] = useState<string[]>([]);
   const [collectionFilter, setCollectionFilter] = useState<string[]>([]);
   const [storageFilter, setStorageFilter] = useState("");
+  const storedSettings = useSelector((state: RootState) => state.settings);
+  const dispatch = useDispatch();
+  // Remembered across restarts, like the Collections order.
+  const sortValue = normalizeClosetSort(storedSettings.closetSortValue);
+  const setSortValue = (value: string) =>
+    dispatch(setClosetSortValue({ sortValue: value }));
   const filterState: HomeFilterState = {
     sortValue,
     seasonFilter,
@@ -93,7 +103,6 @@ export function HomeBottom({ route }: { route?: any } = {}) {
     setCollectionFilter,
     setStorageFilter,
   };
-  const storedSettings = useSelector((state: RootState) => state.settings);
   const categoryState = useSelector((state: RootState) => state.CategoryList);
   const language = storedSettings.language;
   const CategoriesList = visibleCategories(categoryState, language).map(
@@ -141,7 +150,19 @@ export function HomeBottom({ route }: { route?: any } = {}) {
     );
     return () => subscription.remove();
   }, [selecting]);
-  const dispatch = useDispatch();
+  // Back closes the search field first, as it ends select mode.
+  useEffect(() => {
+    if (!isSearchVisible) return;
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        setIsSearchVisible(false);
+        setSearch("");
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [isSearchVisible]);
   const columns = normalizeGridColumns(storedSettings.gridColumns);
   const density = cardDensity(columns);
   const offerUndo = (log: { eventId: string; name: string }) =>
@@ -203,11 +224,15 @@ export function HomeBottom({ route }: { route?: any } = {}) {
       false,
     );
     return closetSections(
-      filterItemsBySearch(garments, search),
+      filterItemsBySearch(garments, search, {
+        categoryState,
+        collectionTags: itemsState.collectionTags,
+      }),
       categoryState,
       language,
     );
   }, [
+    itemsState.collectionTags,
     activeWardrobe,
     itemsState.items,
     categoriesFilter,
@@ -266,6 +291,23 @@ export function HomeBottom({ route }: { route?: any } = {}) {
   }, [categoriesFilter]);
   const filterCount = activeFilterCount(filterState);
   const isEmpty = sections.length === 0;
+  // A chosen wardrobe with nothing in it while other wardrobes have clothes.
+  const emptyWardrobe =
+    isEmpty &&
+    activeWardrobe !== undefined &&
+    filterCount === 0 &&
+    !search &&
+    itemsState.items.length > 0 &&
+    filterByWardrobe(itemsState.items, activeWardrobe).length === 0;
+  const wardrobeName =
+    activeWardrobe === ""
+      ? l.Unassigned[language]
+      : itemsState.wardrobes.find(w => w.id === activeWardrobe)?.name ?? "";
+  const collapsed = storedSettings.collapsedSections ?? [];
+  // Select all ticks only what can be seen: folded sections are left out.
+  const visibleIds = visibleGarments(sections, collapsed).map(g => g.id);
+  const allVisiblePicked =
+    visibleIds.length > 0 && visibleIds.every(id => picked.includes(id));
   const addGarment = () => navigation.navigate("Category");
   return (
     <ThemeView>
@@ -321,7 +363,13 @@ export function HomeBottom({ route }: { route?: any } = {}) {
         ]}
       >
         {isEmpty &&
-          (filterCount > 0 || search ? (
+          (emptyWardrobe ? (
+            <EmptyState
+              message={l.NoClothesIn[language].replace("{name}", wardrobeName)}
+              action={l.ShowAllWardrobes[language]}
+              onAction={() => select(undefined)}
+            />
+          ) : filterCount > 0 || search ? (
             <EmptyState
               message={l.NoWardrobeItems[language]}
               action={l.ClearWardrobeFilters[language]}
@@ -339,7 +387,7 @@ export function HomeBottom({ route }: { route?: any } = {}) {
           ))}
         <ClosetSections
           sections={sections}
-          collapsed={storedSettings.collapsedSections ?? []}
+          collapsed={collapsed}
           onToggle={key => dispatch(toggleSection({ key }))}
           columns={columns}
           renderGarment={renderGarment}
@@ -349,21 +397,24 @@ export function HomeBottom({ route }: { route?: any } = {}) {
         <SelectionBar
           count={pickedGarments.length}
           language={language}
-          canStore={pickedGarments.some(g => !g.stored)}
-          canUnstore={pickedGarments.some(g => g.stored)}
+          // Store while any ticked garment is in use, else take them out.
+          storing={
+            pickedGarments.length === 0 || pickedGarments.some(g => !g.stored)
+          }
+          allSelected={allVisiblePicked}
           onClose={stopSelecting}
           onSelectAll={() =>
-            setPicked(current => [
-              ...current,
-              ...sections
-                .flatMap(section => section.types)
-                .flatMap(group => group.garments)
-                .map(garment => garment.id)
-                .filter(id => !current.includes(id)),
-            ])
+            setPicked(current =>
+              allVisiblePicked
+                ? current.filter(id => !visibleIds.includes(id))
+                : [...current, ...visibleIds.filter(id => !current.includes(id))],
+            )
           }
-          onStore={() => storePicked(true)}
-          onUnstore={() => storePicked(false)}
+          onStore={() =>
+            storePicked(
+              pickedGarments.length === 0 || pickedGarments.some(g => !g.stored),
+            )
+          }
           onLog={() => setLogging(pickedGarments.map(g => g.id))}
           onMove={() => setIsMoveOpen(true)}
         />

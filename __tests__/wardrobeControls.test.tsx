@@ -7,6 +7,7 @@ import {
   useWardrobeView,
 } from "../components/WardrobeSelector";
 import { Wardrobes } from "../screens/stackNav/Wardrobes";
+import { TextNameSheet } from "../components/TextNameSheet";
 
 const mockDispatch = jest.fn();
 const mockState = {
@@ -20,7 +21,10 @@ jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select(mockState),
   useDispatch: () => mockDispatch,
 }));
-jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
+jest.mock("../components/PageHeader", () => ({
+  PageHeader: "PageHeader",
+  HeaderIcon: "HeaderIcon",
+}));
 jest.mock("../components/ThemeView", () => ({ ThemeView: "ThemeView" }));
 jest.mock("nanoid", () => ({ nanoid: () => "new" }));
 jest.mock("../components/ConfirmationDialog", () => ({
@@ -92,7 +96,7 @@ test("navigation context shares a selected wardrobe with creation and resets on 
   expect(view!.selected).toBeUndefined();
 });
 
-test("management validates blank names and cancellation never dispatches changes", () => {
+test("adding uses a name sheet that validates, and its Cancel just closes", () => {
   mockDispatch.mockClear();
   let tree: ReactTestRenderer;
   act(() => {
@@ -102,19 +106,31 @@ test("management validates blank names and cancellation never dispatches changes
     tree!.root
       .findAllByType("Button" as any)
       .find(x => x.props.children === label)!;
+  const sheet = () => tree!.root.findByType(TextNameSheet);
+  expect(sheet().props.isOpen).toBe(false);
   act(() => button("Añadir armario").props.onPress());
-  // An empty form leaves without asking; a typed name asks first.
+  expect(sheet().props.isOpen).toBe(true);
+  expect(sheet().props.title).toBe("Añadir armario");
+  // The page no longer guards leaving: Back closes the sheet first.
   expect(mockGuard.prevent).toBe(false);
   act(() => button("Guardar").props.onPress());
   expect(mockDispatch).not.toHaveBeenCalled();
-  act(() =>
-    tree!.root.findByType("TextInput" as any).props.onChangeText("Viajes"),
+  expect(JSON.stringify(tree!.toJSON())).toContain(
+    "Introduce un nombre para el armario",
   );
-  expect(mockGuard.prevent).toBe(true);
+  act(() =>
+    tree!.root.findByType("TextInput" as any).props.onChangeText("casa"),
+  );
+  act(() => button("Guardar").props.onPress());
+  expect(JSON.stringify(tree!.toJSON())).toContain(
+    "Ya existe un armario con este nombre",
+  );
   act(() => button("Cancelar").props.onPress());
-  expect(mockGuard.prevent).toBe(false);
+  expect(sheet().props.isOpen).toBe(false);
   expect(mockDispatch).not.toHaveBeenCalled();
   act(() => button("Añadir armario").props.onPress());
+  // Opening again starts empty.
+  expect(tree!.root.findByType("TextInput" as any).props.value).toBe("");
   act(() =>
     tree!.root.findByType("TextInput" as any).props.onChangeText("Viajes"),
   );
@@ -123,9 +139,10 @@ test("management validates blank names and cancellation never dispatches changes
     type: "itemsList/addWardrobe",
     payload: { name: "Viajes" },
   });
+  expect(sheet().props.isOpen).toBe(false);
 });
 
-test("renaming asks only once the name changes, and delete asks in the app's dialog", () => {
+test("renaming opens the sheet with the name, and delete asks in the app's dialog", () => {
   mockDispatch.mockClear();
   let tree: ReactTestRenderer;
   act(() => {
@@ -135,12 +152,27 @@ test("renaming asks only once the name changes, and delete asks in the app's dia
     tree!.root.find(
       n => n.props.accessibilityLabel === label && !!n.props.onPress,
     );
-  act(() => pressable("Editar: Casa").props.onPress());
-  expect(mockGuard.prevent).toBe(false);
+  // Its row says how many garments it holds.
+  expect(JSON.stringify(tree!.toJSON())).toContain("1 prenda");
+  act(() => pressable("Renombrar: Casa").props.onPress());
+  const sheet = () => tree!.root.findByType(TextNameSheet);
+  expect(sheet().props.title).toBe("Renombrar");
+  expect(tree!.root.findByType("TextInput" as any).props.value).toBe("Casa");
+  // Keeping its own name is allowed.
   act(() =>
     tree!.root.findByType("TextInput" as any).props.onChangeText("Casa 2"),
   );
-  expect(mockGuard.prevent).toBe(true);
+  act(() =>
+    tree!.root
+      .findAllByType("Button" as any)
+      .find(x => x.props.children === "Guardar")!
+      .props.onPress(),
+  );
+  expect(mockDispatch).toHaveBeenLastCalledWith({
+    type: "itemsList/renameWardrobe",
+    payload: { id: "all", name: "Casa 2" },
+  });
+  mockDispatch.mockClear();
   const dialog = () =>
     tree!.root
       .findAllByType("ConfirmationDialog" as any)
@@ -155,6 +187,4 @@ test("renaming asks only once the name changes, and delete asks in the app's dia
     type: "itemsList/deleteWardrobe",
     payload: { id: "all" },
   });
-  // The open rename of the deleted wardrobe closes with it.
-  expect(tree!.root.findAllByType("TextInput" as any)).toHaveLength(0);
 });

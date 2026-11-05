@@ -16,6 +16,12 @@ import { FilterChip } from "../../components/FilterChip";
 import { EmptyState } from "../../components/EmptyState";
 import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { theme } from "../../utils/theme";
+import { setOutfitSortValue } from "../../redux/settingsSlice";
+import {
+  SORT_ICON,
+  normalizeOutfitSort,
+  outfitSortOptions,
+} from "../../utils/sorts";
 import { Button, Snackbar } from "react-native-paper";
 export const OutfitLog = () => {
   const navigation = useNavigation<any>();
@@ -26,8 +32,9 @@ export const OutfitLog = () => {
   const dispatch = useDispatch();
   // The last logged or deleted outfit, while Undo is offered.
   const [undo, setUndo] = useState<{ message: string; run: () => void }>();
-  // Newest worn first.
-  const [sortValue, setSortValue] = useState("DD");
+  const storedSettings = useSelector((state: RootState) => state.settings);
+  // Newest worn first unless another order was chosen; remembered.
+  const sortValue = normalizeOutfitSort(storedSettings.outfitSortValue);
   const [isOpen, setIsOpen] = useState(false);
   const handleOpenDrawer = () => {
     // Open or close the filter panel.
@@ -37,15 +44,8 @@ export const OutfitLog = () => {
   const filteredLogs = useMemo(() => {
     return LogFilter(sortValue, logsState, search);
   }, [logsState, search, sortValue]);
-  const storedSettings = useSelector((state: RootState) => state.settings);
   const language = storedSettings.language;
-  const sortOptions = [
-    { label: localization.Date_Desc[language], value: "DD" },
-    { label: localization.Date_Asc[language], value: "DA" },
-    { label: localization.Name_Asc[language], value: "NA" },
-    { label: localization.Name_Desc[language], value: "ND" },
-    { label: localization.Last_Added[language], value: "LA" },
-  ];
+  const sortOptions = outfitSortOptions(language);
   const logOutfit = () => navigation.navigate("ItemSelector");
   // Logging, editing and Suggest come back here with what to offer Undo for.
   const notice: OutfitNotice | undefined = route?.params?.notice;
@@ -82,7 +82,9 @@ export const OutfitLog = () => {
               key={option.value}
               label={option.label}
               selected={sortValue === option.value}
-              onPress={() => setSortValue(option.value)}
+              onPress={() =>
+                dispatch(setOutfitSortValue({ sortValue: option.value }))
+              }
             />
           ))}
         </View>
@@ -101,7 +103,7 @@ export const OutfitLog = () => {
               }}
             />
             <HeaderIcon
-              name="swap-vertical-outline"
+              name={SORT_ICON}
               label={localization.Sort[language]}
               onPress={handleOpenDrawer}
             />

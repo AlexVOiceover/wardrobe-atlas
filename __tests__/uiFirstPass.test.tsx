@@ -65,7 +65,16 @@ test("choosing a category goes straight to the form, or to bulk entry when switc
   expect(mockNavigate).toHaveBeenLastCalledWith("ItemForm", {
     selectedCategory: 2,
   });
-  act(() => tree.root.findByType("Switch" as any).props.onValueChange(true));
+  const bulk = tree.root.find(
+    x => x.props.accessibilityRole === "switch" && !!x.props.onPress,
+  );
+  expect(bulk.props.accessibilityState).toEqual({ checked: false });
+  act(() => bulk.props.onPress());
+  expect(
+    tree.root.find(
+      x => x.props.accessibilityRole === "switch" && !!x.props.onPress,
+    ).props.accessibilityState,
+  ).toEqual({ checked: true });
   act(() => pressable(tree, "Hats").props.onPress());
   expect(mockNavigate).toHaveBeenLastCalledWith("BulkModeForm", {
     selectedCategory: 4,
@@ -77,7 +86,7 @@ test("More reaches every management screen", () => {
   ["Armarios", "Categorías", "Información del armario"].forEach(label =>
     act(() => pressable(tree, label).props.onPress()),
   );
-  act(() => pressable(tree, "Configuración").props.onPress());
+  act(() => pressable(tree, "Ajustes").props.onPress());
   expect(mockNavigate.mock.calls.map(call => call[0])).toEqual([
     "Wardrobes",
     "ManageCategories",

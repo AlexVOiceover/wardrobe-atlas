@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import dayjs from "dayjs";
+import { formatDateTime } from "../utils/dates";
 import {
   deleteEventLog,
   deleteLog,
@@ -90,7 +90,7 @@ export const LogComponent = ({
         {eventName}
       </ThemeText>
       <ThemeText customStyle={captionText}>
-        {dayjs(eventDate).format("DD/MM/YYYY · HH:mm")}
+        {formatDateTime(eventDate, language)}
       </ThemeText>
       {!!notes && (
         <ThemeText numberOfLines={1} customStyle={captionText}>

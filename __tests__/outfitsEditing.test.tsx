@@ -262,7 +262,7 @@ describe("Outfits list", () => {
       sort
         .findAll(x => x.props.label && x.props.selected !== undefined)
         .map(x => x.props.label),
-    ).toEqual(["Date ↓", "Date ↑", "Name ↑", "Name ↓", "Last Added"]);
+    ).toEqual(["Date ↓", "Date ↑", "Name ↑", "Name ↓", "Last added"]);
     act(() => tree.unmount());
   });
 

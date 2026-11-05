@@ -1,6 +1,6 @@
 # Usability pass
 
-Status: owner chose all batches (A–E) for implementation on 2026-11-05, one PR each in order A, B, C, D+E. Four UX reviews (Closet, garment form, Outfits & Collections, whole-app consistency) read the code; nothing was run on a phone. Findings were checked against the code by the reviewers and merged here. The owner chooses the batches and answers the open decisions before anything is built.
+Status: A–E implemented (pending phone check). Owner chose all batches (A–E) on 2026-11-05, one PR each in order A, B, C, D+E. Four UX reviews (Closet, garment form, Outfits & Collections, whole-app consistency) read the code; nothing was run on a phone before building.
 
 Prompted by: "the flow is confusing, pressing on the image shows some kind of preview, similar but different to edit."
 
@@ -199,6 +199,39 @@ Prompted by: "the flow is confusing, pressing on the image shows some kind of pr
 - One date format helper (localized month names, 24-hour time).
 - Sort remembered on Closet and Outfits like Collections; one sort icon.
 - Chip outlines darker (today ~1.3:1 contrast); touch size 44 → 48.
+
+**Implemented** (branch `feature/usability-de`):
+
+- **Search** (`filterItemsBySearch` in `utils/filters.ts`, used by the Closet and the outfit garment picker) matches the name, brand, the subcategory as shown in English *and* Spanish (`typeNamesOf`, so renames count) and the names of the garment's collections. Android Back closes the search field and clears it (like select mode).
+- **Empty wardrobe**: with a wardrobe (or Unassigned) chosen, no filters or search, nothing in it but garments elsewhere: "No clothes in {wardrobe}" / "No hay ropa en {wardrobe}" with **Show all wardrobes** / **Ver todos los armarios**. Otherwise the old empty states.
+- **Select all** ticks only garments visible under open headings (`visibleGarments` in `ClosetSections.tsx`, same rules as the folding: a folded category or subcategory heading hides its garments; uncategorized garments have no subcategory heading). When every visible garment is ticked it reads **Deselect all** / **Deseleccionar todo** and unticks them (ticks under folded headings stay).
+- **Selection bar**: one button, **Store** while any ticked garment is in use, else **Unstore** (icon changes too); Spanish "Almacenar" / "Sacar del almacén". Three actions (Store/Unstore, Log use, Move) share the row; labels may wrap to two centred lines so long Spanish never truncates at 360dp. Disabled with nothing ticked.
+- **View & filters** order: Category, Subcategory, Season, Storage, Color, Collections, then Sort, then Grid size, then Reset. A sort other than Last added shows first in the chip row (e.g. "Last used ↓"), spoken "Reset sort: …"; removing it goes back to Last added. Decision: **Clear all** now also resets the sort, since it is one of the chips.
+- **Sort remembered**: new settings `closetSortValue` (default "LA") and `outfitSortValue` (default "DD"), set with `setClosetSortValue` / `setOutfitSortValue`. `utils/sorts.ts` holds the values, labels and defaults. Backward compatible: `normalizeWardrobe` (run on every rehydrate as the persist `migrate`, and on import/export) and `importSettings` turn a missing or unknown value into the default; backups now include both. No version bump. Sort icon is `swap-vertical-outline` (`SORT_ICON`) on Outfits and Collections; the Closet keeps its `options-outline` View & filters icon because that panel is filters plus sort.
+- **Settings**: "Your name" is gone (and its `userNameSetter`); the stored `name` stays in the store and backups, unused. Order: Language, Display, Backup, Photo tools (Remove all backgrounds), Updates. `ListRow` takes `switchValue` + `onSwitch`: the whole row toggles, role "switch", checked state, the switch itself only shows the state. Its spoken name is "title, subtitle" for every row. Used in Settings, Choose a category (Add several at once), Suggest outfit (Prefer least worn, Include an accessory) and bulk add (Remove backgrounds).
+- **Closet info**: follows the wardrobe chosen in the Closet, with a caption "All wardrobes" or "Wardrobe: London". Counts: garments in it, outfits that include one of them, collections holding one of them, and categories. "Top 5, last 30 days" ranks by uses whose outfit date is within the last 30 days (`topUsed` in `utils/closetStats.ts`); "Top 5 overall" by all uses. "Events" is now "Outfits". Decision: a garment opens its **edit page** (no log context here).
+- **Wardrobes**: Add and the pencil (now "Rename: {name}") open a name sheet (`components/TextNameSheet.tsx`, the single-name sheet `CollectionNameSheet` now wraps) titled "Add wardrobe" / "Rename", with the same `wardrobeNameError` checks shown in the sheet. Cancel, a tap outside or Back just close it; the page's "Discard changes?" guard from Batch B is gone (the sheet is on top, so Back closes it first). Rows say "3 garments" instead of "3 garment records".
+- **Dates** (`utils/dates.ts`): `formatDate` "5 Nov 2026" / "5 nov 2026", `formatDateTime` "Thu 5 Nov 2026 · 14:05" / "jue 5 nov 2026 · 14:05", `formatTime` "14:05"; dayjs `es` locale imported there and applied per call (no global locale). Used on outfit cards, the log sheet (usage line and When), the outfit edit page (`DatePicker`: date and 24-hour time, spoken "When: …"), `OptionalDateField` (purchase date) and Suggest outfit. The pickers ask for 24-hour time (`is24Hour`). Outfits has no section headers, so nothing to change there.
+- **Glossary** (wording only): sentence case ("Last added", "Purchase date", "Use camera", "Add new category", "Select date", "Camera error"); "Please enter a garment name"; Spanish "Último añadido", "Añadir nueva categoría", "Elige un color", Settings "Ajustes" (matches "ajustes" elsewhere), clearing uses "Quitar" ("Quitar todo", "Quitar filtros", "Quitar fecha") so "Borrar"/"Eliminar" never mean clear; wardrobe delete message talks of garments and outfits. Removed unused Profile, Your_Name, Photos, GarmentRecords. Built-in subcategory names ("Tank Top") were left as they are, since they also make automatic garment names.
+- **Bottom sheet**: `BottomSheet` is now anchored to the bottom, full width, 16dp rounded top corners, max 85% high with scrolling, padded by the bottom safe-area inset (at least 8dp), with a ✕ (`HeaderIcon name="close"`, new `color` prop) in its header instead of the Close text. Tap outside and Back still close. Keyboard: the sheet sits in a `KeyboardAvoidingView` (padding). If Android resizes the modal for the keyboard (adjustResize), the overlap is 0 and nothing changes; if the modal draws under the keyboard (Android 15+ edge-to-edge), it lifts the sheet by the covered part. Not verified on a phone.
+- **Visuals**: unselected `FilterChip` border uses new `theme.colors.outline` #8a8a8a (3.4:1 on white); `theme.touch` 48; header badge 18dp with 12sp text.
+- Not done: dense grid-size chips stay 40dp high; the Closet's View & filters icon is not the sort icon (see above).
+
+**Acceptance checks (Batch E):**
+
+- [ ] Closet search: a brand, a subcategory in either language ("camisa"/"shirt") and a collection name find the garment; Back closes the search and shows everything.
+- [ ] Choose an empty wardrobe: "No clothes in London · Show all wardrobes"; the button shows all.
+- [ ] Select mode: fold a section, Select all ticks only open ones and reads Deselect all; Deselect all unticks them.
+- [ ] Selection bar fits one row at 360dp in Spanish; Store becomes Unstore ("Sacar del almacén") when all ticked are stored.
+- [ ] View & filters: filters, then Sort, then Grid size. Choose Last used ↓: a chip shows; ✕ on it goes back to Last added.
+- [ ] Restart the app: the Closet and Outfits sorts are kept; Outfits and Collections use the same sort icon.
+- [ ] Settings: no Your name; Language, Display, Backup, Photo tools, Updates; tapping anywhere on Show recent usage toggles it; TalkBack says "switch", the title and on/off.
+- [ ] Closet info with London chosen: caption "Wardrobe: London", counts for London, "Top 5, last 30 days"; tapping a garment opens Edit.
+- [ ] Wardrobes: Add and Rename open a sheet; empty or duplicate names show the error in it; Cancel closes without asking.
+- [ ] Dates: outfit card "Thu 5 Nov 2026 · 14:05", Spanish "jue 5 nov 2026 · 14:05"; log sheet, outfit edit, purchase date use the same style; time pickers are 24-hour.
+- [ ] Every sheet (filters, garment sheet, name sheets, wardrobe selector, sort/order, move) comes up from the bottom with a ✕, above the navigation bar; name sheets stay above the keyboard (Android 15+ and older).
+- [ ] Chip outlines are clearly visible; Spanish screens read "conjunto", "prenda", "Eliminar", "Ajustes".
+- [x] `npx tsc --noEmit`, `npm run lint`, `npm test` pass (278 tests).
 
 ## Storage and migration
 

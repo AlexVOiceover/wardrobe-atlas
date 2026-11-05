@@ -164,9 +164,10 @@ test("a prefix numbers the names, and Remove backgrounds cuts out each photo", a
       .findAll(
         n =>
           n.props.accessibilityLabel === "Remove backgrounds" &&
-          n.props.onValueChange,
+          n.props.accessibilityRole === "switch" &&
+          n.props.onPress,
       )[0]
-      .props.onValueChange(true),
+      .props.onPress(),
   );
   await press(tree, "Choose photos");
   expect(mockRemoveBackground).toHaveBeenCalledTimes(2);

@@ -3,6 +3,12 @@ import {
   COLLECTION_SORT_VALUES,
   type CollectionSortValue,
 } from "../utils/collectionOrder";
+import {
+  DEFAULT_CLOSET_SORT,
+  DEFAULT_OUTFIT_SORT,
+  normalizeClosetSort,
+  normalizeOutfitSort,
+} from "../utils/sorts";
 export const GRID_COLUMN_OPTIONS = [1, 2, 3, 4, 5, 6];
 export const DEFAULT_GRID_COLUMNS = 2;
 // Stored settings and backups from before the grid size setting have no value.
@@ -17,6 +23,7 @@ export const normalizeCollapsedSections = (value: unknown) =>
     : [];
 export type SettingsType = {
   language: number;
+  // No longer shown; kept so older stores and backups round-trip.
   name: string;
   enableHeatMap: boolean;
   appVer: string;
@@ -26,6 +33,9 @@ export type SettingsType = {
   lastWardrobeId: string;
   // Closet category and type sections the user folded.
   collapsedSections: string[];
+  // Last chosen sort orders; older stores have none and get the defaults.
+  closetSortValue: string;
+  outfitSortValue: string;
 };
 const initialState: SettingsType = {
   language: 0,
@@ -36,6 +46,8 @@ const initialState: SettingsType = {
   gridColumns: DEFAULT_GRID_COLUMNS,
   lastWardrobeId: "",
   collapsedSections: [],
+  closetSortValue: DEFAULT_CLOSET_SORT,
+  outfitSortValue: DEFAULT_OUTFIT_SORT,
 };
 const settingsSlice = createSlice({
   name: "settings",
@@ -44,15 +56,18 @@ const settingsSlice = createSlice({
     changeLanguage: (state, action) => {
       state.language = action.payload.lang === 1 ? 1 : 0;
     },
-    userNameSetter: (state, action) => {
-      state.name = action.payload.name;
-    },
     setHeatMap: (state, action) => {
       state.enableHeatMap = action.payload.enableHeatMap;
     },
     setCollectionSortValue: (state, action) => {
       state.collectionSortValue =
         action.payload.collectionSortValue ?? COLLECTION_SORT_VALUES.CUSTOM;
+    },
+    setClosetSortValue: (state, action) => {
+      state.closetSortValue = normalizeClosetSort(action.payload.sortValue);
+    },
+    setOutfitSortValue: (state, action) => {
+      state.outfitSortValue = normalizeOutfitSort(action.payload.sortValue);
     },
     setGridColumns: (state, action) => {
       state.gridColumns = normalizeGridColumns(action.payload.gridColumns);
@@ -82,14 +97,21 @@ const settingsSlice = createSlice({
       state.collapsedSections = normalizeCollapsedSections(
         action.payload.collapsedSections,
       );
+      state.closetSortValue = normalizeClosetSort(
+        action.payload.closetSortValue,
+      );
+      state.outfitSortValue = normalizeOutfitSort(
+        action.payload.outfitSortValue,
+      );
     },
   },
 });
 export const {
   changeLanguage,
-  userNameSetter,
   setHeatMap,
   setCollectionSortValue,
+  setClosetSortValue,
+  setOutfitSortValue,
   setGridColumns,
   setLastWardrobe,
   toggleSection,

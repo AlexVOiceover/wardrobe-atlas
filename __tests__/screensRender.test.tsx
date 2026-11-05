@@ -300,8 +300,15 @@ test("select mode ticks garments and stores, moves or logs them together", async
   });
   await press("Seleccionar todo");
   expect(bar().props.count).toBe(2);
-  expect(bar().props.canStore).toBe(true);
-  expect(bar().props.canUnstore).toBe(false);
+  // One Store/Unstore button: Store while any ticked garment is in use.
+  expect(bar().props.storing).toBe(true);
+  expect(
+    tree!.root.findAll(x => x.props.accessibilityLabel === "Sacar del almacén"),
+  ).toHaveLength(0);
+  // With everything visible ticked, the link deselects it.
+  await press("Deseleccionar todo");
+  expect(bar().props.count).toBe(0);
+  await press("Seleccionar todo");
   await press("Almacenar");
   expect(mockDispatch).toHaveBeenLastCalledWith({
     type: "itemsList/setGarmentsStored",
@@ -341,6 +348,147 @@ test("select mode ticks garments and stores, moves or logs them together", async
     tree!.root.findAll(x => x.props.accessibilityLabel === "Añadir prenda"),
   ).not.toHaveLength(0);
   await act(async () => tree!.unmount());
+});
+
+test("Select all skips folded sections, and Unstore shows when all ticked are stored", async () => {
+  const before = mockState.settings.collapsedSections;
+  const items = mockState.itemsList.items;
+  mockState.settings.collapsedSections = ["c:other"];
+  mockState.itemsList.items = items.map((g: any) => ({ ...g, stored: true }));
+  mockDispatch.mockClear();
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <HomeBottom />
+      </WardrobeProvider>,
+    );
+  });
+  const press = (label: string) =>
+    act(async () =>
+      tree!.root
+        .find(x => x.props.accessibilityLabel === label && !!x.props.onPress)
+        .props.onPress(),
+    );
+  const bar = () =>
+    tree!.root.findByType(require("../components/SelectionBar").SelectionBar);
+  await press("Seleccionar prendas");
+  await press("Seleccionar todo");
+  // The coat is in the folded "Otros" section, so only the shirt is ticked.
+  expect(bar().props.count).toBe(1);
+  expect(bar().props.allSelected).toBe(true);
+  expect(bar().props.storing).toBe(false);
+  await press("Sacar del almacén");
+  expect(mockDispatch).toHaveBeenLastCalledWith({
+    type: "itemsList/setGarmentsStored",
+    payload: { ids: ["shirt"], stored: false },
+  });
+  await act(async () => tree!.unmount());
+  mockState.settings.collapsedSections = before;
+  mockState.itemsList.items = items;
+});
+
+test("an empty wardrobe offers all wardrobes, and the sort is remembered", async () => {
+  mockDispatch.mockClear();
+  let view: any;
+  const Probe = () => {
+    view = require("../components/WardrobeSelector").useWardrobeView();
+    return null;
+  };
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <Probe />
+        <HomeBottom />
+      </WardrobeProvider>,
+    );
+  });
+  await act(async () => view.select("home"));
+  const text = JSON.stringify(tree!.toJSON());
+  expect(text).toContain("No hay ropa en Casa");
+  await act(async () =>
+    tree!.root
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === "Ver todos los armarios")!
+      .props.onPress(),
+  );
+  expect(view.selected).toBeUndefined();
+  expect(JSON.stringify(tree!.toJSON())).toContain("Linen shirt");
+  // Choosing a sort is stored in settings.
+  await act(async () =>
+    tree!.root
+      .find(
+        x =>
+          x.props.accessibilityLabel === "Vista y filtros" && !!x.props.onPress,
+      )
+      .props.onPress(),
+  );
+  await act(async () =>
+    tree!.root
+      .findAll(
+        x => x.props.accessibilityLabel === "Último uso ↓" && !!x.props.onPress,
+      )[0]
+      .props.onPress(),
+  );
+  expect(mockDispatch).toHaveBeenLastCalledWith({
+    type: "settings/setClosetSortValue",
+    payload: { sortValue: "LUD" },
+  });
+  await act(async () => tree!.unmount());
+});
+
+test("Closet search matches brand, subcategory in either language and collection; Back closes it", async () => {
+  const { BackHandler } = require("react-native");
+  const listen = jest.spyOn(BackHandler, "addEventListener");
+  const items = mockState.itemsList.items;
+  mockState.itemsList.items = [
+    { ...garment, brand: "Zara" },
+    { ...garment, id: "coat", name: "Coat", category: 9, collection: [] },
+  ];
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <HomeBottom />
+      </WardrobeProvider>,
+    );
+  });
+  await act(async () =>
+    tree!.root
+      .find(x => x.props.accessibilityLabel === "Buscar" && !!x.props.onPress)
+      .props.onPress(),
+  );
+  const search = (value: string) =>
+    act(async () =>
+      tree!.root
+        .findByType(require("../components/SearchField").SearchField)
+        .props.onChangeText(value),
+    );
+  const shown = () => {
+    const text = JSON.stringify(tree!.toJSON());
+    return ["Linen shirt", "Coat"].filter(name => text.includes(name));
+  };
+  for (const query of ["zara", "camisa", "shirt", "verano"]) {
+    await search(query);
+    expect(shown()).toEqual(["Linen shirt"]);
+  }
+  await search("coat");
+  expect(shown()).toEqual(["Coat"]);
+  // Android Back closes the search and shows everything again.
+  const back = listen.mock.calls[listen.mock.calls.length - 1][1] as any;
+  let handled = false;
+  await act(async () => {
+    handled = back();
+  });
+  expect(handled).toBe(true);
+  expect(
+    tree!.root.findAllByType(require("../components/SearchField").SearchField),
+  ).toHaveLength(0);
+  expect(shown()).toEqual(["Linen shirt", "Coat"]);
+  listen.mockRestore();
+  await act(async () => tree!.unmount());
+  mockState.itemsList.items = items;
 });
 
 test("Closet shows where a new garment was saved, without Undo, and clears the param", async () => {

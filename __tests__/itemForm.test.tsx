@@ -946,7 +946,7 @@ describe("the photo", () => {
       sourceDialog(tree)
         .findAllByType("Button" as any)
         .map(b => b.props.children),
-    ).toEqual(["Use Camera", "Import from device"]);
+    ).toEqual(["Use camera", "Import from device"]);
   });
 
   test("a tap shows the photo with labelled actions, and Change photo opens the source choice", () => {
@@ -1162,7 +1162,7 @@ describe("Batch D: garment form", () => {
       "Size",
       "Unit",
       "Collection",
-      "Purchase Date",
+      "Purchase date",
       "Quantity",
     ]);
     // Beside the photo: the same row as the image

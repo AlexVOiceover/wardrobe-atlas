@@ -155,7 +155,7 @@ test("Restore default categories sits after Add and asks first", () => {
   const tree = render(<ManageCategories />);
   const labels = buttons(tree).map(b => b.props.children);
   expect(labels.indexOf("Restore default categories")).toBeGreaterThan(
-    labels.indexOf("Add New Category"),
+    labels.indexOf("Add new category"),
   );
   act(() =>
     buttons(tree)

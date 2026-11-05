@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import dayjs from "dayjs";
+import { formatDate } from "../utils/dates";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -26,9 +26,7 @@ export const OptionalDateField = ({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${
-          date
-            ? dayjs(date).format("DD/MM/YYYY")
-            : localization.NotSet[language]
+          date ? formatDate(date, language) : localization.NotSet[language]
         }`}
         onPress={() => setOpen(true)}
         style={styles.value}
@@ -37,7 +35,7 @@ export const OptionalDateField = ({
           {label}
         </ThemeText>
         <ThemeText numberOfLines={1}>
-          {date ? dayjs(date).format("DD/MM/YYYY") : "—"}
+          {date ? formatDate(date, language) : "—"}
         </ThemeText>
       </Pressable>
       {date && (

@@ -1,6 +1,7 @@
 import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
 import { ScrollView, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { closetInfo, localization } from "../../utils/localization";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
@@ -11,50 +12,68 @@ import { GarmentGrid } from "../../components/GarmentGrid";
 import { ListRow } from "../../components/ListRow";
 import { SectionHeading } from "../../components/SectionHeading";
 import { ThemeText } from "../../components/ThemeText";
-import { item } from "../../redux/itemsSlice";
-import { theme } from "../../utils/theme";
+import { useWardrobeView } from "../../components/WardrobeSelector";
+import { filterByWardrobe } from "../../utils/wardrobes";
+import { RECENT_DAYS, daysAgo, topUsed } from "../../utils/closetStats";
+import { captionText, theme } from "../../utils/theme";
+/**
+ * Counts and most used garments, for the wardrobe chosen in the Closet (or
+ * all of them). A garment opens its edit page, as there is nothing to log
+ * from here.
+ */
 export const ClosetInfo = ({}) => {
+  const navigation = useNavigation<any>();
   const storedSettings = useSelector((state: RootState) => state.settings);
   const storedItems = useSelector((state: RootState) => state.itemsList.items);
   const storedEvents = useSelector((state: RootState) => state.itemsList.logs);
+  const wardrobes = useSelector(
+    (state: RootState) => state.itemsList.wardrobes ?? [],
+  );
   const storedCollections = useSelector(
     (state: RootState) => state.itemsList.collectionTags,
   );
+  const language = storedSettings.language;
   const storedCategories = visibleCategories(
     useSelector((state: RootState) => state.CategoryList),
-    storedSettings.language,
+    language,
+  );
+  const { selected } = useWardrobeView();
+  const wardrobe =
+    selected === "" || wardrobes.some(w => w.id === selected)
+      ? selected
+      : undefined;
+  const scopeLabel =
+    wardrobe === undefined
+      ? localization.AllWardrobes[language]
+      : `${localization.Wardrobe[language]}: ${
+          wardrobe === ""
+            ? localization.Unassigned[language]
+            : wardrobes.find(w => w.id === wardrobe)?.name ?? ""
+        }`;
+  const garments = useMemo(
+    () => filterByWardrobe(storedItems, wardrobe),
+    [storedItems, wardrobe],
   );
   const data = useMemo(() => {
-    const sortedItems = [...storedItems].sort(
-      (a, b) => (b.logIds?.length || 0) - (a.logIds?.length || 0),
-    );
-    const currentDate = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(currentDate.getMonth() - 1);
-    const filteredEventsLastMonth = storedEvents.filter(x => {
-      const eventDate = new Date(JSON.parse(x.eventDate));
-      return eventDate >= oneMonthAgo && eventDate <= currentDate;
-    });
-    const top5LastMonth = sortedItems
-      .filter(x => {
-        return x.logIds?.some(logId =>
-          filteredEventsLastMonth.some(event => event.eventId === logId),
-        );
-      })
-      .slice(0, 5);
-    const top5 = sortedItems
-      .filter(x => x.logIds && x.logIds.length > 0)
-      .slice(0, 5);
-    let info: [number, number, number, item[], item[]] = [
-      storedItems.length,
-      storedEvents.length,
-      storedCollections.length,
-      top5LastMonth,
-      top5,
-    ];
-    return info;
-  }, [storedItems, storedEvents, storedCollections]);
-  const language = storedSettings.language;
+    const logIds = new Set(garments.flatMap(g => g.logIds ?? []));
+    const outfits =
+      wardrobe === undefined
+        ? storedEvents.length
+        : storedEvents.filter(event => logIds.has(event.eventId)).length;
+    const collections =
+      wardrobe === undefined
+        ? storedCollections.length
+        : storedCollections.filter(tag =>
+            garments.some(g => g.collection?.includes(tag.value)),
+          ).length;
+    return {
+      counts: [garments.length, outfits, collections],
+      recent: topUsed(garments, storedEvents, {
+        since: daysAgo(RECENT_DAYS),
+      }),
+      overall: topUsed(garments, storedEvents),
+    };
+  }, [garments, storedEvents, storedCollections, wardrobe]);
   const titles = closetInfo[language];
   const count = (value: number) => <ThemeText>{String(value)}</ThemeText>;
   return (
@@ -67,12 +86,13 @@ export const ClosetInfo = ({}) => {
           paddingBottom: theme.spacing.lg,
         }}
       >
-        {[0, 1, 2].map(index => (
-          <ListRow
-            key={index}
-            title={titles[index]}
-            right={count(data[index] as number)}
-          />
+        <ThemeText
+          customStyle={[captionText, { marginTop: theme.spacing.sm }]}
+        >
+          {scopeLabel}
+        </ThemeText>
+        {data.counts.map((value, index) => (
+          <ListRow key={index} title={titles[index]} right={count(value)} />
         ))}
         <View style={{ marginTop: theme.spacing.md }}>
           <SectionHeading title={localization.Categories[language]} />
@@ -81,19 +101,26 @@ export const ClosetInfo = ({}) => {
               key={category.index}
               title={category.label}
               right={count(
-                storedItems.filter(it => it.category === category.index).length,
+                garments.filter(it => it.category === category.index).length,
               )}
             />
           ))}
         </View>
-        {[3, 4].map(index =>
-          (data[index] as item[]).length > 0 ? (
+        {[data.recent, data.overall].map((top, index) =>
+          top.length > 0 ? (
             <View key={index} style={{ marginTop: theme.spacing.md }}>
-              <SectionHeading title={titles[index]} />
+              <SectionHeading title={titles[3 + index]} />
               <GarmentGrid
-                garments={data[index] as item[]}
+                garments={top}
                 renderGarment={garment => (
-                  <ItemBox {...garmentSummary(garment)} />
+                  <ItemBox
+                    {...garmentSummary(garment)}
+                    onPress={() =>
+                      navigation.navigate("ItemForm", {
+                        editingIndex: garment.id,
+                      })
+                    }
+                  />
                 )}
               />
             </View>

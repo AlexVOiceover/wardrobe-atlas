@@ -1,11 +1,7 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { Button, TextInput } from "react-native-paper";
+import { Dispatch, SetStateAction } from "react";
 import type { CollectionTag } from "../redux/itemsSlice";
 import { localization } from "../utils/localization";
-import { theme } from "../utils/theme";
-import { BottomSheet } from "./BottomSheet";
-import { FormErrors } from "./FormErrors";
+import { TextNameSheet } from "./TextNameSheet";
 
 /** Why a collection name can't be used; renaming may keep its own name. */
 export const collectionNameError = (
@@ -40,69 +36,23 @@ export function CollectionNameSheet({
   initial?: string;
   onSave: (name: string) => void;
 }) {
-  const [name, setName] = useState(initial);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    if (!isOpen) return;
-    setName(initial);
-    setError("");
-  }, [isOpen, initial]);
-  const save = () => {
-    const problem = collectionNameError(
-      collections,
-      name,
-      initial || undefined,
-    );
-    if (problem) {
-      setError(localization[problem][language]);
-      return;
-    }
-    onSave(name.trim());
-    setIsOpen(false);
-  };
   return (
-    <BottomSheet isOpen={isOpen} setIsOpen={setIsOpen} title={title}>
-      <View style={styles.content}>
-        <TextInput
-          mode="outlined"
-          dense
-          autoFocus
-          label={localization.Collection_name[language]}
-          accessibilityLabel={localization.Collection_name[language]}
-          value={name}
-          onChangeText={text => {
-            setName(text);
-            setError("");
-          }}
-          onSubmitEditing={save}
-        />
-        <FormErrors errors={error ? [error] : []} />
-        <View style={styles.actions}>
-          <Button
-            mode="outlined"
-            style={styles.action}
-            onPress={() => setIsOpen(false)}
-          >
-            {localization.Cancel[language]}
-          </Button>
-          <Button mode="contained" style={styles.action} onPress={save}>
-            {localization.Save[language]}
-          </Button>
-        </View>
-      </View>
-    </BottomSheet>
+    <TextNameSheet
+      isOpen={isOpen}
+      setIsOpen={setIsOpen}
+      title={title}
+      label={localization.Collection_name[language]}
+      language={language}
+      initial={initial}
+      validate={name => {
+        const problem = collectionNameError(
+          collections,
+          name,
+          initial || undefined,
+        );
+        return problem ? localization[problem][language] : undefined;
+      }}
+      onSave={onSave}
+    />
   );
 }
-const styles = StyleSheet.create({
-  content: {
-    gap: theme.spacing.sm,
-  },
-  actions: {
-    flexDirection: "row",
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
-  },
-  action: {
-    flex: 1,
-  },
-});

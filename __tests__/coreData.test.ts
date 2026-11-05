@@ -12,8 +12,9 @@ import {
 import { languagesList, seasonList } from "../utils/data";
 import settingsReducer, {
   importSettings,
+  setClosetSortValue,
   setGridColumns,
-  userNameSetter,
+  setOutfitSortValue,
 } from "../redux/settingsSlice";
 import itemsReducer, { addItem, addLog, deleteLog } from "../redux/itemsSlice";
 
@@ -90,6 +91,7 @@ test("normalization keeps wardrobe content and only the current schema", () => {
   expect(JSON.stringify(mockWardrobe)).not.toContain('"obsolete"');
   expect(Object.keys(mockWardrobe.settings).sort()).toEqual([
     "appVer",
+    "closetSortValue",
     "collapsedSections",
     "collectionSortValue",
     "enableHeatMap",
@@ -97,6 +99,7 @@ test("normalization keeps wardrobe content and only the current schema", () => {
     "language",
     "lastWardrobeId",
     "name",
+    "outfitSortValue",
   ]);
   // Older stored settings and backups have no grid size
   expect(mockWardrobe.settings.gridColumns).toBe(2);
@@ -186,15 +189,42 @@ test("all shipped language choices, strings and clothing lists have exactly two 
   );
 });
 
-test("long usernames are stored without truncation", () => {
+test("a stored name from the removed setting survives backups harmlessly", () => {
   const name = "Alexandria de la Cruz, a much longer display name";
-  const changed = settingsReducer(undefined, userNameSetter({ name }));
-  expect(changed.name).toBe(name);
+  const settings = { ...settingsReducer(undefined, { type: "init" }), name };
   expect(
-    readWardrobeBackup(
-      createWardrobeBackup({ ...mockWardrobe, settings: changed }),
-    ).settings.name,
+    readWardrobeBackup(createWardrobeBackup({ ...mockWardrobe, settings }))
+      .settings.name,
   ).toBe(name);
+});
+
+test("Closet and Outfits sorts are remembered and older stores get the defaults", () => {
+  const initial = settingsReducer(undefined, { type: "init" });
+  expect(initial.closetSortValue).toBe("LA");
+  expect(initial.outfitSortValue).toBe("DD");
+  let state = settingsReducer(
+    initial,
+    setClosetSortValue({ sortValue: "LUD" }),
+  );
+  state = settingsReducer(state, setOutfitSortValue({ sortValue: "NA" }));
+  expect(state.closetSortValue).toBe("LUD");
+  expect(state.outfitSortValue).toBe("NA");
+  // Unknown values fall back to the default.
+  expect(
+    settingsReducer(state, setClosetSortValue({ sortValue: "bogus" }))
+      .closetSortValue,
+  ).toBe("LA");
+  // Backups keep the choice; stores and backups from before have none.
+  const restored = readWardrobeBackup(
+    createWardrobeBackup({ ...mockWardrobe, settings: state }),
+  );
+  expect(restored.settings.closetSortValue).toBe("LUD");
+  expect(restored.settings.outfitSortValue).toBe("NA");
+  const old = normalizeWardrobe(previous);
+  expect(old.settings.closetSortValue).toBe("LA");
+  expect(old.settings.outfitSortValue).toBe("DD");
+  const imported = settingsReducer(state, importSettings(old.settings));
+  expect(imported.closetSortValue).toBe("LA");
 });
 
 test("core garment creation and outfit logging remain intact", () => {

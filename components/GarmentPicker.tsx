@@ -37,7 +37,9 @@ export function GarmentPicker({
   onBack?: () => void;
   footer: ReactNode;
 }) {
-  const { items, wardrobes } = useSelector((s: RootState) => s.itemsList);
+  const { items, wardrobes, collectionTags } = useSelector(
+    (s: RootState) => s.itemsList,
+  );
   const settings = useSelector((s: RootState) => s.settings);
   const categoryState = useSelector((s: RootState) => s.CategoryList);
   const language = settings.language;
@@ -68,11 +70,20 @@ export function GarmentPicker({
         showStored || garment.stored !== true || picked.includes(garment.id),
     );
     return closetSections(
-      filterItemsBySearch(shown, search),
+      // Same matching as the Closet's search.
+      filterItemsBySearch(shown, search, { categoryState, collectionTags }),
       categoryState,
       language,
     );
-  }, [inView, showStored, picked, search, categoryState, language]);
+  }, [
+    inView,
+    showStored,
+    picked,
+    search,
+    categoryState,
+    collectionTags,
+    language,
+  ]);
   const toggle = (id: string) =>
     setPicked(current =>
       current.includes(id)

@@ -3,7 +3,7 @@ import {
   useWardrobeView,
 } from "../../components/WardrobeSelector";
 import { validWardrobeId } from "../../utils/wardrobes";
-import { Button, Switch } from "react-native-paper";
+import { Button } from "react-native-paper";
 import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
 import { CustomInput } from "../../components/CustomInput";
@@ -252,14 +252,8 @@ export const BulkModeForm = ({
 
           <ListRow
             title={localization.RemoveBackgrounds[language]}
-            onPress={() => setRemoveBackgrounds(!removeBackgrounds)}
-            right={
-              <Switch
-                accessibilityLabel={localization.RemoveBackgrounds[language]}
-                value={removeBackgrounds}
-                onValueChange={setRemoveBackgrounds}
-              />
-            }
+            switchValue={removeBackgrounds}
+            onSwitch={setRemoveBackgrounds}
           />
 
           <ThemeText customStyle={captionText}>

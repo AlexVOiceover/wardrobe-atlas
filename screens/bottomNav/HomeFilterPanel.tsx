@@ -10,6 +10,7 @@ import type { CategoryList } from "../../redux/categoriesSlice";
 import { seasonList } from "../../utils/data";
 import { GRID_COLUMN_OPTIONS } from "../../redux/settingsSlice";
 import { theme } from "../../utils/theme";
+import { DEFAULT_CLOSET_SORT, closetSortOptions } from "../../utils/sorts";
 type SetString = React.Dispatch<React.SetStateAction<string>>;
 type SetArray<T> = React.Dispatch<React.SetStateAction<T[]>>;
 export type HomeFilterState = {
@@ -23,7 +24,8 @@ export type HomeFilterState = {
   storageFilter: string;
 };
 export type HomeFilterActions = {
-  setSortValue: SetString;
+  // The sort is remembered in settings.
+  setSortValue: (value: string) => void;
   setSeasonFilter: SetArray<string>;
   setCategoriesFilter: SetArray<any>;
   setTypeFilter: SetArray<string>;
@@ -43,7 +45,7 @@ type Props = {
   onColumnsChange: (columns: number) => void;
 };
 export const resetHomeFilters = (actions: HomeFilterActions) => {
-  actions.setSortValue("LA");
+  actions.setSortValue(DEFAULT_CLOSET_SORT);
   actions.setSeasonFilter([]);
   actions.setCategoriesFilter([]);
   actions.setTypeFilter([]);
@@ -83,48 +85,13 @@ const HomeFilterPanel = ({
     setCollectionFilter,
     setStorageFilter,
   } = filterActions;
-  const sortOptions = [
-    { label: localization.Last_Added[language], value: "LA" },
-    { label: localization.Name_Asc[language], value: "NA" },
-    { label: localization.Name_Desc[language], value: "ND" },
-    { label: localization.PurchaseDateAsc[language], value: "PDA" },
-    { label: localization.PurchaseDateDesc[language], value: "PDD" },
-    { label: localization.LastUsedAsc[language], value: "LUA" },
-    { label: localization.LastUsedDesc[language], value: "LUD" },
-  ];
+  const sortOptions = closetSortOptions(language);
   const typeOptions: { label: string; value: string }[] =
     categoriesFilter.length === 1
       ? categoryTypes(categoryState, categoriesFilter[0], language)
       : [];
   return (
     <View>
-      <SectionHeading title={localization.GridSize[language]} />
-      <View style={styles.chips}>
-        {GRID_COLUMN_OPTIONS.map(option => (
-          <FilterChip
-            key={option}
-            dense
-            label={String(option)}
-            accessibilityLabel={localization.Columns[language].replace(
-              "{n}",
-              String(option),
-            )}
-            selected={option === columns}
-            onPress={() => onColumnsChange(option)}
-          />
-        ))}
-      </View>
-      <SectionHeading title={localization.Sort[language]} />
-      <View style={styles.chips}>
-        {sortOptions.map(option => (
-          <FilterChip
-            key={option.value}
-            label={option.label}
-            selected={sortValue === option.value}
-            onPress={() => setSortValue(option.value)}
-          />
-        ))}
-      </View>
       <SectionHeading title={localization.Category[language]} />
       <View style={styles.chips}>
         {CategoriesList.map(option => (
@@ -201,6 +168,33 @@ const HomeFilterPanel = ({
           </View>
         </>
       )}
+      <SectionHeading title={localization.Sort[language]} />
+      <View style={styles.chips}>
+        {sortOptions.map(option => (
+          <FilterChip
+            key={option.value}
+            label={option.label}
+            selected={sortValue === option.value}
+            onPress={() => setSortValue(option.value)}
+          />
+        ))}
+      </View>
+      <SectionHeading title={localization.GridSize[language]} />
+      <View style={styles.chips}>
+        {GRID_COLUMN_OPTIONS.map(option => (
+          <FilterChip
+            key={option}
+            dense
+            label={String(option)}
+            accessibilityLabel={localization.Columns[language].replace(
+              "{n}",
+              String(option),
+            )}
+            selected={option === columns}
+            onPress={() => onColumnsChange(option)}
+          />
+        ))}
+      </View>
       <Button
         mode="outlined"
         style={styles.resetButton}

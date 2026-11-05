@@ -43,6 +43,18 @@ const Heading = ({
   </Pressable>
 );
 
+/** The garments ClosetSections shows: none from folded headings. */
+export const visibleGarments = (
+  sections: ClosetSection[],
+  collapsed: string[],
+): item[] =>
+  sections
+    .filter(section => !collapsed.includes(section.key))
+    .flatMap(section => section.types)
+    // Uncategorized garments have no type heading to fold.
+    .filter(group => !group.label || !collapsed.includes(group.key))
+    .flatMap(group => group.garments);
+
 /** Closet garments grouped by category, then type, with foldable headings. */
 export function ClosetSections({
   sections,

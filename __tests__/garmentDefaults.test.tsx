@@ -49,7 +49,7 @@ test("sorting by purchase date puts garments without a date last", () => {
   expect(sorted("PDD")).toEqual(["late", "early", "none", "empty"]);
 });
 
-test("active filters show as removable chips, and Clear all keeps the sort", () => {
+test("active filters and a non-default sort show as removable chips; Clear all resets both", () => {
   const actions = {
     setSortValue: jest.fn(),
     setSeasonFilter: jest.fn(),
@@ -98,6 +98,7 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
         n.parent?.props.accessibilityRole !== "button",
     );
   expect(buttons().map(b => b.props.accessibilityLabel)).toEqual([
+    "Reset sort: Name ↑",
     "Remove filter: Hats",
     "Remove filter: Linen hat",
     "Remove filter: Summer",
@@ -106,27 +107,30 @@ test("active filters show as removable chips, and Clear all keeps the sort", () 
     "Remove filter: Work",
     "Clear all",
   ]);
-  act(() => buttons()[3].props.onPress());
+  act(() => buttons()[0].props.onPress());
+  expect(actions.setSortValue).toHaveBeenLastCalledWith("LA");
+  act(() => buttons()[4].props.onPress());
   expect(actions.setColorFilter.mock.calls[0][0](["navy", "red"])).toEqual([
     "red",
   ]);
-  act(() => buttons()[6].props.onPress());
+  actions.setSortValue.mockClear();
+  act(() => buttons()[7].props.onPress());
   expect(actions.setCategoriesFilter).toHaveBeenCalledWith([]);
   expect(actions.setTypeFilter).toHaveBeenCalledWith([]);
   expect(actions.setSeasonFilter).toHaveBeenCalledWith([]);
   expect(actions.setColorFilter).toHaveBeenLastCalledWith([]);
   expect(actions.setCollectionFilter).toHaveBeenCalledWith([]);
   expect(actions.setStorageFilter).toHaveBeenCalledWith("");
-  expect(actions.setSortValue).not.toHaveBeenCalled();
+  expect(actions.setSortValue).toHaveBeenCalledWith("LA");
 });
 
-test("no chips when no filter is active", () => {
+test("no chips when no filter is active and the sort is the default", () => {
   let tree!: ReactTestRenderer;
   act(() => {
     tree = create(
       <ActiveFilters
         filterState={{
-          sortValue: "NA",
+          sortValue: "LA",
           seasonFilter: [],
           categoriesFilter: [],
           TypeFilter: [],
@@ -152,7 +156,7 @@ test("the optional date shows a dash until picked, and can be cleared", () => {
     act(() => {
       tree = create(
         <OptionalDateField
-          label="Purchase Date"
+          label="Purchase date"
           date={date}
           onChange={onChange}
         />,
@@ -169,12 +173,12 @@ test("the optional date shows a dash until picked, and can be cleared", () => {
       )
       .map(n => n.props.accessibilityLabel);
   const empty = field();
-  expect(labels(empty)).toEqual(["Purchase Date: Not set"]);
+  expect(labels(empty)).toEqual(["Purchase date: Not set"]);
   const picker = empty.root.findByType("DateTimePickerModal" as any);
   act(() => picker.props.onConfirm(new Date(2026, 9, 1)));
   expect(onChange).toHaveBeenCalledWith(new Date(2026, 9, 1));
   const set = field(new Date(2026, 9, 1));
-  expect(labels(set)).toEqual(["Purchase Date: 01/10/2026", "Clear date"]);
+  expect(labels(set)).toEqual(["Purchase date: 1 Oct 2026", "Clear date"]);
   act(() =>
     set.root
       .findAll(

@@ -52,9 +52,9 @@ test("Settings retains working JSON backup actions and update controls after tex
   expect(tree!.root.findByType("UpdateControls" as any).props.settings).toBe(
     true,
   );
-  expect(
-    tree!.root.findAllByType("BulkBackgroundRemoval" as any),
-  ).toHaveLength(1);
+  expect(tree!.root.findAllByType("BulkBackgroundRemoval" as any)).toHaveLength(
+    1,
+  );
   await act(async () => {
     await buttons()[0].props.onPress();
   });
@@ -114,3 +114,48 @@ test("Import offers Export first, then asks again; a bad file shows an error", a
   });
   expect(tree!.root.findByType("Snackbar" as any).props.visible).toBe(false);
 });
+
+test("Settings has no name field, keeps its groups in order, and the whole row toggles the switch", async () => {
+  mockDispatch.mockClear();
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(<Settings />);
+  });
+  expect(tree!.root.findAllByType("CustomInput" as any)).toHaveLength(0);
+  expect(JSON.stringify(tree!.toJSON())).not.toContain("Your name");
+  const headings = tree!.root
+    .findAll(
+      n =>
+        n.props.numberOfLines === 2 &&
+        typeof n.props.children === "string" &&
+        n.type === ("Text" as any) &&
+        StyleSheetFlattenWeight(n.props.style) === "600",
+    )
+    .map(n => n.props.children);
+  expect(headings).toEqual([
+    "Language",
+    "Display",
+    "Backup",
+    "Photo tools",
+    "Updates",
+  ]);
+  const row = tree!.root.find(
+    n => n.props.accessibilityRole === "switch" && !!n.props.onPress,
+  );
+  expect(row.props.accessibilityLabel).toBe(
+    "Show recent usage, Show whether a garment was used this week or this month.",
+  );
+  expect(row.props.accessibilityState).toEqual({ checked: false });
+  act(() => row.props.onPress());
+  expect(mockDispatch).toHaveBeenLastCalledWith({
+    type: "settings/setHeatMap",
+    payload: { enableHeatMap: true },
+  });
+  expect(
+    tree!.root.find(
+      n => n.props.accessibilityRole === "switch" && !!n.props.onPress,
+    ).props.accessibilityState,
+  ).toEqual({ checked: true });
+});
+const StyleSheetFlattenWeight = (style: unknown) =>
+  require("react-native").StyleSheet.flatten(style)?.fontWeight;

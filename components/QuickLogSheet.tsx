@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
-import dayjs from "dayjs";
+import { formatDate, formatDateTime } from "../utils/dates";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useDispatch } from "react-redux";
 import "react-native-get-random-values";
@@ -27,7 +27,7 @@ export const usageSummary = (
   return lastUsed
     ? `${count} · ${localization.LastUsedOn[language].replace(
         "{date}",
-        dayjs(lastUsed).format("DD/MM/YYYY"),
+        formatDate(lastUsed, language),
       )}`
     : count;
 };
@@ -191,7 +191,7 @@ export function WhenControl({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const whenLabel = when
-    ? dayjs(when).format("DD/MM/YYYY · HH:mm")
+    ? formatDateTime(when, language)
     : localization.Now[language];
   return (
     <>
@@ -222,6 +222,7 @@ export function WhenControl({
         mode="datetime"
         date={when ?? new Date()}
         maximumDate={new Date()}
+        is24Hour
         onConfirm={date => {
           setPickerOpen(false);
           // Uses can't be logged in the future.
