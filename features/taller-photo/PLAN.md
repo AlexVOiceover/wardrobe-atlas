@@ -21,6 +21,11 @@ Status: Owner asked on 2026-11-04 to remove the empty space under the photo ("ma
 - `components/ImageViewer.tsx`: `size` becomes `width`; the frame grows to its parent's height with a square as the minimum; new `fit` prop (`cover` or `contain`).
 - `screens/stackNav/ItemForm.tsx`: the photo stretches to the row's height and passes `fit="contain"` for cut-outs.
 
+## Follow-up (2026-11-05)
+
+- On the phone the first version made the photo as tall as the image itself, pushing Brand and Purchase date far apart. The image is now laid over the frame instead of sizing it, so the frame follows the fields.
+- Owner asked that tapping the photo in the garment sheet (opened from the Closet or a collection) do something: it now shows the photo larger across the sheet, and a second tap shrinks it *(Claude: an in-place enlargement rather than a second full-screen modal on top of the sheet)*. Closing the sheet resets it.
+
 ## Storage and migration
 
 - None.
@@ -32,5 +37,6 @@ Status: Owner asked on 2026-11-04 to remove the empty space under the photo ("ma
 
 ## Validation
 
-- `npx tsc --noEmit`, `npm run lint` and `npm test` pass; the garment form test checks `fit` for a photo and a cut-out.
+- `npx tsc --noEmit`, `npm run lint` and `npm test` (211 tests) pass; the garment form test checks `fit` for a photo and a cut-out, and the sheet test checks the larger and smaller photo.
+- Unit tests can't measure layout, which is how the first version's bug slipped through; the photo height needs a phone check.
 - Not yet checked on a phone.

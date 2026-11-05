@@ -2,7 +2,7 @@ import { localization } from "../utils/localization";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
 import { Dispatch, SetStateAction, useState } from "react";
-import { Image, Pressable } from "react-native";
+import { Image, Pressable, StyleSheet } from "react-native";
 import CustomModal from "./CustomModal";
 import useWidthScreen from "../hooks/useWidthScreen";
 import { theme } from "../utils/theme";
@@ -60,9 +60,10 @@ export const ImageViewer = ({
         }}
       >
         {imageUrl !== "" ? (
+          // Out of the layout, so the photo's own size can't stretch the frame.
           <Image
             source={{ uri: `data:image/*;base64,${imageUrl}` }}
-            style={{ width: "100%", height: "100%", resizeMode: fit }}
+            style={[StyleSheet.absoluteFill, { resizeMode: fit }]}
           />
         ) : (
           <ThemeText>{localization.AddPhoto[language]}</ThemeText>

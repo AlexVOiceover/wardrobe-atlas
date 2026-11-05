@@ -90,8 +90,10 @@ export function QuickLogSheet({
   const garment = garments.length === 1 ? garments[0] : undefined;
   const [when, setWhen] = useState<Date>();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [photoLarge, setPhotoLarge] = useState(false);
   const close = () => {
     setWhen(undefined);
+    setPhotoLarge(false);
     onClose();
   };
   const setOpen: Dispatch<SetStateAction<boolean>> = value => {
@@ -131,10 +133,23 @@ export function QuickLogSheet({
           {garment && (
             <View style={styles.summary}>
               {garment.image ? (
-                <Image
-                  source={{ uri: `data:image/*;base64,${garment.image}` }}
-                  style={styles.photo}
-                />
+                // Tap to see the photo larger, tap again to shrink it.
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    photoLarge
+                      ? localization.ShowSmallerPhoto[language]
+                      : localization.ShowLargerPhoto[language]
+                  }
+                  onPress={() => setPhotoLarge(!photoLarge)}
+                  style={[styles.photo, photoLarge && styles.photoLarge]}
+                >
+                  <Image
+                    source={{ uri: `data:image/*;base64,${garment.image}` }}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode={photoLarge ? "contain" : "cover"}
+                  />
+                </Pressable>
               ) : (
                 <View style={[styles.photo, styles.placeholder]}>
                   <Icon
@@ -232,8 +247,10 @@ const styles = StyleSheet.create({
   content: {
     gap: theme.spacing.md,
   },
+  // Wraps so the large photo takes the whole first line.
   summary: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: theme.spacing.md,
   },
@@ -242,6 +259,11 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: theme.radius.sm,
     backgroundColor: theme.colors.surface,
+    overflow: "hidden",
+  },
+  photoLarge: {
+    width: "100%",
+    height: 280,
   },
   placeholder: {
     justifyContent: "center",

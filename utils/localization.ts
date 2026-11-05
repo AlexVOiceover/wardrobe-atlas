@@ -24,6 +24,8 @@ export const localization = {
   ConfirmDeleteCategory: ["Are you sure you want to delete this category?", "¿Estás seguro de que quieres borrar esta categoría?"],
   ChoosePhoto: ["Choose photo; hold to preview", "Elegir foto; mantén pulsado para previsualizar"],
   Photo: ["Photo", "Foto"],
+  ShowLargerPhoto: ["Show the photo larger", "Ver la foto más grande"],
+  ShowSmallerPhoto: ["Show the photo smaller", "Ver la foto más pequeña"],
   SelectDate: ["Select Date", "Seleccionar fecha"],
   InvalidHex: ["Enter a valid HEX color like #D30047 or #F00.", "Introduce un color HEX válido, como #D30047 o #F00."],
   ErrorTitle: ["Error", "Error"],
