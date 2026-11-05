@@ -1,40 +1,64 @@
 import { ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { Switch } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
 import { captionText, theme } from "../utils/theme";
 import { ThemeText } from "./ThemeText";
+/**
+ * A row with a title and an optional subtitle. With `onPress` it is a button;
+ * with `switchValue` and `onSwitch` the whole row is a switch.
+ */
 export const ListRow = ({
   title,
   subtitle,
   icon,
   right,
   onPress,
+  switchValue,
+  onSwitch,
 }: {
   title: string;
   subtitle?: string;
   icon?: string;
   right?: ReactNode;
   onPress?: () => void;
-}) => (
-  <Pressable
-    accessible={!!onPress}
-    accessibilityRole={onPress ? "button" : undefined}
-    accessibilityLabel={title}
-    disabled={!onPress}
-    onPress={onPress}
-    style={styles.row}
-  >
-    {icon && <Icon name={icon} size={22} color={theme.colors.text} />}
-    <View style={styles.text}>
-      <ThemeText numberOfLines={2}>{title}</ThemeText>
-      {subtitle && <ThemeText customStyle={captionText}>{subtitle}</ThemeText>}
-    </View>
-    {right}
-    {onPress && !right && (
-      <Icon name="chevron-forward" size={18} color={theme.colors.muted} />
-    )}
-  </Pressable>
-);
+  switchValue?: boolean;
+  onSwitch?: (value: boolean) => void;
+}) => {
+  const isSwitch = switchValue !== undefined && !!onSwitch;
+  const press = isSwitch ? () => onSwitch(!switchValue) : onPress;
+  return (
+    <Pressable
+      accessible={!!press}
+      accessibilityRole={isSwitch ? "switch" : press ? "button" : undefined}
+      accessibilityState={isSwitch ? { checked: switchValue } : undefined}
+      accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
+      disabled={!press}
+      onPress={press}
+      style={styles.row}
+    >
+      {icon && <Icon name={icon} size={22} color={theme.colors.text} />}
+      <View style={styles.text}>
+        <ThemeText numberOfLines={2}>{title}</ThemeText>
+        {subtitle && <ThemeText customStyle={captionText}>{subtitle}</ThemeText>}
+      </View>
+      {isSwitch ? (
+        // The row takes the tap, so the switch only shows the state.
+        <View
+          pointerEvents="none"
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Switch value={switchValue} />
+        </View>
+      ) : (
+        right
+      )}
+      {onPress && !right && !isSwitch && (
+        <Icon name="chevron-forward" size={18} color={theme.colors.muted} />
+      )}
+    </Pressable>
+  );
+};
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",

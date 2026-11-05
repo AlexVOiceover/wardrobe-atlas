@@ -376,10 +376,10 @@ describe("quick use log", () => {
   test("shows uses and last use", () => {
     expect(usageSummary(0, undefined, 0)).toBe("Not used yet");
     expect(usageSummary(1, "2026-10-28T10:00:00.000Z", 1)).toBe(
-      "Usada una vez · última 28/10/2026",
+      "Usada una vez · última 28 oct 2026",
     );
     expect(JSON.stringify(sheet().toJSON())).toContain(
-      "Used 2 times · last 28/10/2026",
+      "Used 2 times · last 28 Oct 2026",
     );
   });
 
@@ -467,7 +467,7 @@ describe("quick use log", () => {
       tree.root.find(
         n =>
           typeof n.props.accessibilityLabel === "string" &&
-          n.props.accessibilityLabel.startsWith("When: 01/11/2026"),
+          n.props.accessibilityLabel.startsWith("When: Sun 1 Nov 2026"),
       ),
     ).toBeTruthy();
     act(() => button(tree, "Log use").props.onPress());
@@ -564,7 +564,7 @@ describe("Categories page and names in both languages", () => {
   test("adding copies the name when translation isn't available, and never overwrites a typed field", async () => {
     mockState.itemsList.items = [];
     const tree = render(<ManageCategories />);
-    button(tree, "Add New Category");
+    button(tree, "Add new category");
     mockTranslate.mockResolvedValue(undefined);
     await type(tree, "English", "Hats");
     expect(field(tree, "Español").props.value).toBe("Hats");

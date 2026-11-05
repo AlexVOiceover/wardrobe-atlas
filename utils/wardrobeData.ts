@@ -9,6 +9,7 @@ import {
   COLLECTION_SORT_VALUES,
   normalizeCollectionTags,
 } from "./collectionOrder";
+import { normalizeClosetSort, normalizeOutfitSort } from "./sorts";
 
 import { normalizeWardrobes, validWardrobeId } from "./wardrobes";
 import { SEASONS } from "./data";
@@ -73,6 +74,8 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
           : COLLECTION_SORT_VALUES.CUSTOM,
       gridColumns: normalizeGridColumns(settings.gridColumns),
       collapsedSections: normalizeCollapsedSections(settings.collapsedSections),
+      closetSortValue: normalizeClosetSort(settings.closetSortValue),
+      outfitSortValue: normalizeOutfitSort(settings.outfitSortValue),
       lastWardrobeId:
         validWardrobeId(
           wardrobes,

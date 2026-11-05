@@ -9,10 +9,20 @@ import { categoryTypes } from "../utils/categories";
 import type { CategoryList } from "../redux/categoriesSlice";
 import { seasonList } from "../utils/data";
 import { theme } from "../utils/theme";
+import { DEFAULT_CLOSET_SORT, sortLabel } from "../utils/sorts";
 
-type Chip = { key: string; label: string; remove: () => void };
+type Chip = {
+  key: string;
+  label: string;
+  remove: () => void;
+  // What removing it does, when it isn't removing a filter.
+  removeLabel?: string;
+};
 
-/** Removable chips for the filters that hide garments, shown above the list. */
+/**
+ * Removable chips for the filters that hide garments, and for a sort other
+ * than the default, shown above the list.
+ */
 export const ActiveFilters = ({
   filterState,
   filterActions,
@@ -29,6 +39,7 @@ export const ActiveFilters = ({
   language: number;
 }) => {
   const {
+    sortValue,
     seasonFilter,
     categoriesFilter,
     TypeFilter,
@@ -42,6 +53,16 @@ export const ActiveFilters = ({
       ? categoryTypes(categoryState, categoriesFilter[0], language)
       : [];
   const chips: Chip[] = [
+    ...(sortValue !== DEFAULT_CLOSET_SORT
+      ? [
+          {
+            key: "sort",
+            label: sortLabel(sortValue, language),
+            remove: () => filterActions.setSortValue(DEFAULT_CLOSET_SORT),
+            removeLabel: localization.ResetSort[language],
+          },
+        ]
+      : []),
     ...categoriesFilter.map(value => ({
       key: `category-${value}`,
       label:
@@ -113,7 +134,9 @@ export const ActiveFilters = ({
         <Pressable
           key={chip.key}
           accessibilityRole="button"
-          accessibilityLabel={`${localization.RemoveFilter[language]}: ${chip.label}`}
+          accessibilityLabel={`${
+            chip.removeLabel ?? localization.RemoveFilter[language]
+          }: ${chip.label}`}
           onPress={chip.remove}
           hitSlop={4}
           style={styles.chip}
@@ -125,8 +148,9 @@ export const ActiveFilters = ({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={localization.ClearAll[language]}
-        // Clears what the chips show; sort order stays as chosen.
+        // Clears what the chips show, the sort included.
         onPress={() => {
+          filterActions.setSortValue(DEFAULT_CLOSET_SORT);
           filterActions.setCategoriesFilter([]);
           filterActions.setTypeFilter([]);
           filterActions.setSeasonFilter([]);

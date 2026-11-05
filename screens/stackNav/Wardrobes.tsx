@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Button, TextInput } from "react-native-paper";
+import { Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
@@ -11,51 +11,27 @@ import {
   type Wardrobe,
 } from "../../redux/itemsSlice";
 import { wardrobeNameError } from "../../utils/wardrobes";
-import { localization as l } from "../../utils/localization";
+import { countText, localization as l } from "../../utils/localization";
 import { theme } from "../../utils/theme";
 import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
-import { FormErrors } from "../../components/FormErrors";
 import { ListRow } from "../../components/ListRow";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
-import { useDiscardGuard } from "../../hooks/useDiscardGuard";
+import { TextNameSheet } from "../../components/TextNameSheet";
+/**
+ * Every wardrobe with its garment count. Adding and renaming use a name sheet,
+ * like collections; its Cancel, a tap outside or Back just close it.
+ */
 export function Wardrobes() {
   const { wardrobes, items } = useSelector((s: RootState) => s.itemsList);
   const { language } = useSelector((s: RootState) => s.settings);
   const dispatch = useDispatch();
+  // The wardrobe being renamed, "" while adding one, null when closed.
   const [editing, setEditing] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<Wardrobe>();
-  // Leaving with a typed name that wasn't saved asks first.
-  const { dialog } = useDiscardGuard(
-    editing !== null &&
-      name !== (wardrobes.find(w => w.id === editing)?.name ?? ""),
-    language,
-  );
-  const cancel = () => {
-    setEditing(null);
-    setName("");
-    setError("");
-  };
-  const save = () => {
-    const invalid = wardrobeNameError(wardrobes, name, editing || undefined);
-    if (invalid) {
-      setError(l[invalid][language]);
-      return;
-    }
-    if (editing && !wardrobes.some(w => w.id === editing)) {
-      cancel();
-      return;
-    }
-    dispatch(
-      editing ? renameWardrobe({ id: editing, name }) : addWardrobe({ name }),
-    );
-    cancel();
-  };
+  const renaming = wardrobes.find(w => w.id === editing);
   return (
     <ThemeView>
-      {dialog}
       <ConfirmationDialog
         visible={!!deleting}
         setVisible={shown => !shown && setDeleting(undefined)}
@@ -64,7 +40,31 @@ export function Wardrobes() {
         onConfirm={() => {
           if (!deleting) return;
           dispatch(deleteWardrobe({ id: deleting.id }));
-          if (editing === deleting.id) cancel();
+          if (editing === deleting.id) setEditing(null);
+        }}
+      />
+      <TextNameSheet
+        isOpen={editing !== null}
+        setIsOpen={open => {
+          if (!(typeof open === "function" ? open(true) : open))
+            setEditing(null);
+        }}
+        title={renaming ? l.Rename[language] : l.AddWardrobe[language]}
+        label={l.Name[language]}
+        language={language}
+        initial={renaming?.name ?? ""}
+        validate={name => {
+          const invalid = wardrobeNameError(wardrobes, name, editing || undefined);
+          return invalid ? l[invalid][language] : undefined;
+        }}
+        onSave={name => {
+          // A wardrobe deleted meanwhile isn't brought back.
+          if (editing && !renaming) return;
+          dispatch(
+            renaming
+              ? renameWardrobe({ id: renaming.id, name })
+              : addWardrobe({ name }),
+          );
         }}
       />
       <PageHeader title={l.Wardrobes[language]} />
@@ -76,20 +76,19 @@ export function Wardrobes() {
           <ListRow
             key={w.id}
             title={w.name}
-            subtitle={`${
-              items.filter(item => item.wardrobeId === w.id).length
-            } ${l.GarmentRecords[language]}`}
+            subtitle={countText(
+              l.GarmentCount,
+              l.GarmentsCount,
+              items.filter(item => item.wardrobeId === w.id).length,
+              language,
+            )}
             right={
               <View style={styles.actions}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`${l.Edit[language]}: ${w.name}`}
+                  accessibilityLabel={`${l.Rename[language]}: ${w.name}`}
                   style={styles.action}
-                  onPress={() => {
-                    setEditing(w.id);
-                    setName(w.name);
-                    setError("");
-                  }}
+                  onPress={() => setEditing(w.id)}
                 >
                   <Icon
                     name="create-outline"
@@ -113,32 +112,9 @@ export function Wardrobes() {
             }
           />
         ))}
-        {editing === null ? (
-          <Button
-            mode="outlined"
-            onPress={() => {
-              setEditing("");
-              setName("");
-            }}
-          >
-            {l.AddWardrobe[language]}
-          </Button>
-        ) : (
-          <View style={styles.form}>
-            <TextInput
-              mode="outlined"
-              label={l.Name[language]}
-              value={name}
-              onChangeText={setName}
-              autoFocus
-            />
-            <FormErrors errors={error ? [error] : []} />
-            <Button mode="contained" onPress={save}>
-              {l.Save[language]}
-            </Button>
-            <Button onPress={cancel}>{l.Cancel[language]}</Button>
-          </View>
-        )}
+        <Button mode="outlined" onPress={() => setEditing("")}>
+          {l.AddWardrobe[language]}
+        </Button>
       </ScrollView>
     </ThemeView>
   );
@@ -156,8 +132,5 @@ const styles = StyleSheet.create({
     height: theme.touch,
     justifyContent: "center",
     alignItems: "center",
-  },
-  form: {
-    gap: theme.spacing.sm,
   },
 });

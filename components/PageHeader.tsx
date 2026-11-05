@@ -12,11 +12,14 @@ export const HeaderIcon = ({
   label,
   onPress,
   badge = 0,
+  color = theme.colors.onBar,
 }: {
   name: string;
   label: string;
   onPress: () => void;
   badge?: number;
+  // White on the header bar; dark on a light surface such as a sheet.
+  color?: string;
 }) => (
   <Pressable
     accessibilityRole="button"
@@ -24,7 +27,7 @@ export const HeaderIcon = ({
     onPress={onPress}
     style={styles.icon}
   >
-    <Icon name={name} size={24} color={theme.colors.onBar} />
+    <Icon name={name} size={24} color={color} />
     {badge > 0 && (
       <View style={styles.badge}>
         <Text style={styles.badgeText}>{badge}</Text>
@@ -93,17 +96,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 4,
     right: 2,
-    minWidth: 16,
-    height: 16,
-    paddingHorizontal: 3,
-    borderRadius: 8,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
     backgroundColor: theme.colors.onBar,
     justifyContent: "center",
     alignItems: "center",
   },
   badgeText: {
     color: theme.colors.bar,
-    fontSize: 10,
+    fontSize: 12,
+    lineHeight: 14,
     fontWeight: "600",
   },
 });

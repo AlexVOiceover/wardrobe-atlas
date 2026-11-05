@@ -1,5 +1,7 @@
 import { item, logsType } from "../redux/itemsSlice";
+import type { CategoryList } from "../redux/categoriesSlice";
 import { categorizeColor, NO_COLOR } from "./colors";
+import { typeNamesOf } from "./categories";
 
 function desc(array: any[], sub: string) {
   array.sort((a, b) => {
@@ -222,8 +224,33 @@ export function filterCollectionsBySearch(array: item[][], search: string) {
   );
 }
 
-export function filterItemsBySearch(array: item[], search: string) {
-  if (!search) return array;
-  const searchLower = search.toLowerCase();
-  return array.filter(x => x.name.toLowerCase().includes(searchLower));
+/** Names a search also looks in besides the garment's own name and brand. */
+export type SearchContext = {
+  categoryState?: CategoryList;
+  collectionTags?: { label: string; value: string }[];
+};
+/**
+ * Garments whose name, brand, subcategory (in both languages, as shown) or
+ * collection names contain the search text.
+ */
+export function filterItemsBySearch(
+  array: item[],
+  search: string,
+  context: SearchContext = {},
+) {
+  const searchLower = search.trim().toLowerCase();
+  if (!searchLower) return array;
+  const { categoryState, collectionTags = [] } = context;
+  return array.filter(garment =>
+    [
+      garment.name,
+      garment.brand,
+      ...(categoryState
+        ? typeNamesOf(categoryState, garment.category, garment.type)
+        : [garment.type]),
+      ...(garment.collection ?? []).map(
+        value => collectionTags.find(tag => tag.value === value)?.label,
+      ),
+    ].some(text => !!text && text.toLowerCase().includes(searchLower)),
+  );
 }

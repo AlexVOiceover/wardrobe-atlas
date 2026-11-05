@@ -7,19 +7,23 @@ import { Button } from "react-native-paper";
 import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
 import { CustomInput } from "../../components/CustomInput";
+import { ListRow } from "../../components/ListRow";
 import { View, StyleSheet, ScrollView, Keyboard, Alert } from "react-native";
 import { RootState } from "../../redux/store";
 import { useDispatch, useSelector } from "react-redux";
 import React, { useState, useMemo } from "react";
 import { ThemeText } from "../../components/ThemeText";
 import { FormErrors } from "../../components/FormErrors";
-import { handleNumberChange } from "../../utils/validators";
 import { addItem } from "../../redux/itemsSlice";
+import { setLastWardrobe } from "../../redux/settingsSlice";
 import DropDownPicker, { ThemeNameType } from "react-native-dropdown-picker";
 import { localization } from "../../utils/localization";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
 import { categoryTypes } from "../../utils/categories";
 import { SEASONS } from "../../utils/data";
+import { garmentName } from "../../utils/garmentName";
+import { extractColors } from "../../utils/extractColors";
+import { removeBackground } from "../../utils/backgroundRemoval";
 import { launchImageLibrary, launchCamera } from "react-native-image-picker";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
@@ -27,6 +31,8 @@ import {
   getCollectionSortValue,
   getOrderedCollectionTags,
 } from "../../utils/collectionOrder";
+// The most photos added in one go.
+export const MAX_BULK_PHOTOS = 30;
 export const BulkModeForm = ({
   navigation,
   route,
@@ -37,9 +43,13 @@ export const BulkModeForm = ({
   const { selectedCategory } = route.params;
   const { selected } = useWardrobeView();
   const wardrobes = useSelector((s: RootState) => s.itemsList.wardrobes);
-  const [wardrobeId, setWardrobeId] = useState<string | undefined>(selected);
+  const storedSettings = useSelector((state: RootState) => state.settings);
+  // Like a single new garment: the wardrobe of the last garment saved.
+  const [wardrobeId, setWardrobeId] = useState<string | undefined>(
+    validWardrobeId(wardrobes, storedSettings.lastWardrobeId) ?? selected,
+  );
   const [prefix, setPrefix] = useState("");
-  const [imageNum, setImageNum] = useState(2);
+  const [removeBackgrounds, setRemoveBackgrounds] = useState(false);
   const [openType, setOpenType] = useState(false);
   const [openCollection, setOpenCollection] = useState(false);
   const colorScheme = String("LIGHT") as ThemeNameType;
@@ -47,7 +57,8 @@ export const BulkModeForm = ({
   const [type, setType] = useState("");
   const dispatch = useDispatch();
   const [errorsList, setErrorsList] = useState<string[]>([]);
-  const storedSettings = useSelector((state: RootState) => state.settings);
+  // Photos done and in total, while garments are being added.
+  const [progress, setProgress] = useState<{ done: number; total: number }>();
   const collectionState = useSelector(
     (state: RootState) => state.itemsList.collectionTags,
   );
@@ -61,7 +72,11 @@ export const BulkModeForm = ({
     () => categoryTypes(categoryState, selectedCategory, language),
     [categoryState, selectedCategory, language],
   );
+  const typeLabel =
+    combiningTypesData.find(option => option.value === type)?.label ?? type;
   const createItemsFromUris = async (uris: string[]) => {
+    const savedWardrobe = validWardrobeId(wardrobes, wardrobeId);
+    setProgress({ done: 0, total: uris.length });
     try {
       for (let i = 0; i < uris.length; i++) {
         const response = await ImageResizer.createResizedImage(
@@ -72,14 +87,24 @@ export const BulkModeForm = ({
           40,
           0,
         );
-        const imgBase64 = await ReactNativeBlobUtil.fs.readFile(
+        let image = await ReactNativeBlobUtil.fs.readFile(
           response.uri,
           "base64",
         );
+        if (removeBackgrounds) {
+          // A photo that can't be cut out keeps its background.
+          const cutout = await removeBackground(image);
+          if ("image" in cutout) image = cutout.image;
+        }
+        const colors = await extractColors(image);
+        const name = prefix.trim()
+          ? `${prefix.trim()} ${i + 1}`
+          : garmentName({ primaryColor: colors[0], typeLabel, language }) ||
+            `${localization.Garment[language]} ${i + 1}`;
         dispatch(
           addItem({
-            wardrobeId: validWardrobeId(wardrobes, wardrobeId),
-            name: prefix + ` ${i + 1}`,
+            wardrobeId: savedWardrobe,
+            name,
             collection: collection,
             category: selectedCategory,
             type: type,
@@ -89,17 +114,28 @@ export const BulkModeForm = ({
             sizeUnit: "",
             quantity: 1,
             purchaseDate: "",
-            image: imgBase64,
-            automaticColor: false,
-            primaryColor: "",
-            secondaryColor: "",
-            tertiaryColor: "",
+            image,
+            automaticColor: true,
+            primaryColor: colors[0] ?? "",
+            secondaryColor: colors[1] ?? "",
+            tertiaryColor: colors[2] ?? "",
           }),
         );
+        setProgress({ done: i + 1, total: uris.length });
       }
-      navigation.popToTop();
+      dispatch(setLastWardrobe({ wardrobeId: savedWardrobe }));
+      const wardrobe = wardrobes.find(w => w.id === savedWardrobe);
+      navigation.popTo("StackNavHome", {
+        screen: "Closet",
+        params: {
+          saved: wardrobe
+            ? localization.SavedTo[language].replace("{name}", wardrobe.name)
+            : localization.Saved[language],
+        },
+      });
     } catch (error) {
       console.error("Bulk item creation error:", error);
+      setProgress(undefined);
       Alert.alert(
         localization.ErrorTitle[language],
         `${localization.ImagesError[language]}: ${error}`,
@@ -111,19 +147,21 @@ export const BulkModeForm = ({
       try {
         const response = await launchImageLibrary({
           mediaType: "photo",
-          selectionLimit: imageNum,
+          selectionLimit: MAX_BULK_PHOTOS,
         });
         if (response.didCancel || !response.assets) return;
         const uris = response.assets
           .map(asset => asset.uri)
-          .filter((uri): uri is string => !!uri);
-        createItemsFromUris(uris);
+          .filter((uri): uri is string => !!uri)
+          .slice(0, MAX_BULK_PHOTOS);
+        if (uris.length > 0) await createItemsFromUris(uris);
       } catch (error) {
         console.error("Gallery picker error:", error);
       }
     } else {
+      // One photo after another until the camera is closed.
       const uris: string[] = [];
-      for (let i = 0; i < imageNum; i++) {
+      while (uris.length < MAX_BULK_PHOTOS) {
         try {
           const result = await launchCamera({ mediaType: "photo" });
           if (result.didCancel) break;
@@ -136,33 +174,25 @@ export const BulkModeForm = ({
           }
           if (result.assets?.[0]?.uri) {
             uris.push(result.assets[0].uri);
-          }
+          } else break;
         } catch (error) {
           console.error("Camera capture error:", error);
           break;
         }
       }
       if (uris.length > 0) {
-        createItemsFromUris(uris);
+        await createItemsFromUris(uris);
       }
     }
   };
   const addItemHandler = (mode: number) => {
     Keyboard.dismiss();
-    const errors = [];
     if (wardrobeId && !validWardrobeId(wardrobes, wardrobeId)) {
       setErrorsList([localization.WardrobeUnavailable[language]]);
       return;
     }
-    if (prefix.trim().length <= 0) {
-      errors.push(localization.PrefixRequired[language]);
-    }
-    if (errors.length > 0) {
-      setErrorsList(errors);
-      return;
-    }
     setErrorsList([]);
-    handleImagePicker(mode);
+    return handleImagePicker(mode);
   };
   return (
     <ThemeView>
@@ -174,60 +204,56 @@ export const BulkModeForm = ({
       >
         <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
         <View style={styles.formContainer}>
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            label={localization.Prefix[language]}
-            value={prefix}
-            onChangeText={setPrefix}
-          />
-
-          {combiningTypesData?.length > 0 && (
-            <View style={{ zIndex: 2 }}>
-              <DropDownPicker
-                open={openType}
-                value={type}
-                items={combiningTypesData}
-                setOpen={setOpenType}
-                setValue={setType}
-                mode="SIMPLE"
-                listMode="MODAL"
-                placeholder={localization.Type[language]}
-                style={pickerStyle}
-                dropDownContainerStyle={pickerStyle}
-                theme={colorScheme}
-              />
-            </View>
-          )}
-
-          <View style={{ zIndex: 1 }}>
-            <DropDownPicker
-              open={openCollection}
-              value={collection}
-              items={collectionOptions}
-              setOpen={setOpenCollection}
-              setValue={setCollection}
-              multiple={true}
-              theme={colorScheme}
-              showBadgeDot={false}
-              badgeTextStyle={{ color: theme.colors.text }}
-              mode="BADGE"
-              listMode="SCROLLVIEW"
-              placeholder={localization.Collection[language]}
-              style={pickerStyle}
-              dropDownContainerStyle={pickerStyle}
+          <View style={styles.field}>
+            <CustomInput
+              mode="outlined"
+              textContentType="name"
+              label={localization.Prefix[language]}
+              value={prefix}
+              onChangeText={setPrefix}
             />
+            <ThemeText customStyle={captionText}>
+              {localization.PrefixHint[language]}
+            </ThemeText>
           </View>
 
-          <CustomInput
-            mode="outlined"
-            label={localization.NumberOfItems[language]}
-            value={imageNum.toString()}
-            onChangeText={text =>
-              handleNumberChange(() => setImageNum(Number(text)), text, 0, 30)
-            }
-            keyboardType="numeric"
-            style={{ zIndex: 0 }}
+          {combiningTypesData?.length > 0 && (
+            <DropDownPicker
+              open={openType}
+              value={type}
+              items={combiningTypesData}
+              setOpen={setOpenType}
+              setValue={setType}
+              mode="SIMPLE"
+              listMode="MODAL"
+              placeholder={localization.Type[language]}
+              style={pickerStyle}
+              dropDownContainerStyle={pickerStyle}
+              theme={colorScheme}
+            />
+          )}
+
+          <DropDownPicker
+            open={openCollection}
+            value={collection}
+            items={collectionOptions}
+            setOpen={setOpenCollection}
+            setValue={setCollection}
+            multiple={true}
+            theme={colorScheme}
+            showBadgeDot={false}
+            badgeTextStyle={{ color: theme.colors.text }}
+            mode="BADGE"
+            listMode="MODAL"
+            placeholder={localization.Collection[language]}
+            style={pickerStyle}
+            dropDownContainerStyle={pickerStyle}
+          />
+
+          <ListRow
+            title={localization.RemoveBackgrounds[language]}
+            switchValue={removeBackgrounds}
+            onSwitch={setRemoveBackgrounds}
           />
 
           <ThemeText customStyle={captionText}>
@@ -236,15 +262,23 @@ export const BulkModeForm = ({
 
           <FormErrors errors={errorsList} />
 
-          <View style={styles.buttonGroup}>
-            <Button mode="contained" onPress={() => addItemHandler(0)}>
-              {localization.startLocalImages[language]}
-            </Button>
+          {progress ? (
+            <ThemeText accessibilityLiveRegion="polite">
+              {localization.AddingGarments[language]
+                .replace("{done}", String(progress.done))
+                .replace("{total}", String(progress.total))}
+            </ThemeText>
+          ) : (
+            <View style={styles.buttonGroup}>
+              <Button mode="contained" onPress={() => addItemHandler(0)}>
+                {localization.startLocalImages[language]}
+              </Button>
 
-            <Button mode="outlined" onPress={() => addItemHandler(1)}>
-              {localization.startWCamera[language]}
-            </Button>
-          </View>
+              <Button mode="outlined" onPress={() => addItemHandler(1)}>
+                {localization.startWCamera[language]}
+              </Button>
+            </View>
+          )}
         </View>
       </ScrollView>
     </ThemeView>
@@ -257,6 +291,9 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     gap: theme.spacing.md,
+  },
+  field: {
+    gap: theme.spacing.xs,
   },
   buttonGroup: {
     gap: theme.spacing.sm,

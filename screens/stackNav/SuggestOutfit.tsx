@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Button, Switch } from "react-native-paper";
+import { Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
-import dayjs from "dayjs";
+import { formatDate } from "../../utils/dates";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
@@ -130,23 +130,13 @@ export function SuggestOutfit() {
         </View>
         <ListRow
           title={localization.PreferLeastWorn[language]}
-          right={
-            <Switch
-              accessibilityLabel={localization.PreferLeastWorn[language]}
-              value={preferLeastWorn}
-              onValueChange={setPreferLeastWorn}
-            />
-          }
+          switchValue={preferLeastWorn}
+          onSwitch={setPreferLeastWorn}
         />
         <ListRow
           title={localization.IncludeAccessory[language]}
-          right={
-            <Switch
-              accessibilityLabel={localization.IncludeAccessory[language]}
-              value={withAccessory}
-              onValueChange={setWithAccessory}
-            />
-          }
+          switchValue={withAccessory}
+          onSwitch={setWithAccessory}
         />
         <View style={styles.pieces}>
           {chosen.map(({ piece, count, garment }) => {
@@ -188,7 +178,7 @@ export function SuggestOutfit() {
                         {lastUsed[garment.id]
                           ? localization.LastUsedOn[language].replace(
                               "{date}",
-                              dayjs(lastUsed[garment.id]).format("DD/MM/YYYY"),
+                              formatDate(lastUsed[garment.id], language),
                             )
                           : localization.NeverWorn[language]}
                       </ThemeText>

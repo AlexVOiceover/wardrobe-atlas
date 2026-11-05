@@ -1,6 +1,6 @@
 import { Pressable } from "react-native";
 import { ThemeText } from "./ThemeText";
-import dayjs from "dayjs";
+import { formatDate, formatDateTime, formatTime } from "../utils/dates";
 import { Dispatch, SetStateAction } from "react";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
@@ -34,7 +34,9 @@ export const DatePicker = ({
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={title}
+        accessibilityLabel={
+          date ? `${title}: ${formatDateTime(date, language)}` : title
+        }
         onPress={() => {
           setDatePickerVisibility(true);
         }}
@@ -55,11 +57,11 @@ export const DatePicker = ({
         ]}
       >
         <ThemeText>{title}</ThemeText>
-        <ThemeText>{date ? dayjs(date).format("DD/MM/YYYY") : ""}</ThemeText>
+        <ThemeText>{date ? formatDate(date, language) : ""}</ThemeText>
         {(type === "time" || type === "both") && (
           <ThemeText>
             {date
-              ? dayjs(date).format("h:mm a")
+              ? formatTime(date)
               : localization.SelectDate[language]}
           </ThemeText>
         )}
@@ -72,6 +74,7 @@ export const DatePicker = ({
         }
         mode={type === "both" ? "datetime" : type === "date" ? "date" : "time"}
         maximumDate={maximumDate}
+        is24Hour
         onConfirm={(picked: Date) => {
           setDatePickerVisibility(false);
           setDate(maximumDate && picked > maximumDate ? maximumDate : picked);

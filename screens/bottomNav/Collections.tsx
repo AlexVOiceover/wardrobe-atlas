@@ -17,6 +17,7 @@ import {
 import { defaultCollectionColor } from "../../utils/colors";
 import { countText, localization as l } from "../../utils/localization";
 import { captionText, theme } from "../../utils/theme";
+import { SORT_ICON } from "../../utils/sorts";
 import { ThemeView } from "../../components/ThemeView";
 import { HeaderIcon, PageHeader } from "../../components/PageHeader";
 import { ListRow } from "../../components/ListRow";
@@ -57,7 +58,7 @@ export const Collections = ({ navigation }: { navigation: any }) => {
         actions={
           collections.length > 1 && (
             <HeaderIcon
-              name="swap-vertical"
+              name={SORT_ICON}
               label={l.Order[language]}
               onPress={() => setIsOrderOpen(true)}
             />

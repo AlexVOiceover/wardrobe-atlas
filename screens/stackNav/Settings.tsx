@@ -6,13 +6,8 @@ import { useState } from "react";
 import { languagesList } from "../../utils/data";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { CustomInput } from "../../components/CustomInput";
-import {
-  changeLanguage,
-  setHeatMap,
-  userNameSetter,
-} from "../../redux/settingsSlice";
-import { Button, Snackbar, Switch } from "react-native-paper";
+import { changeLanguage, setHeatMap } from "../../redux/settingsSlice";
+import { Button, Snackbar } from "react-native-paper";
 import { exportStoreToJson } from "../../utils/exportStoreToJson";
 import { importStoreFromJson } from "../../utils/importStoreFromJson";
 import { localization } from "../../utils/localization";
@@ -24,7 +19,7 @@ import { BulkBackgroundRemoval } from "../../components/BulkBackgroundRemoval";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 export const Settings = () => {
   const storedSettings = useSelector((state: RootState) => state.settings);
-  const { language, name, enableHeatMap } = storedSettings;
+  const { language, enableHeatMap } = storedSettings;
   const dispatch = useDispatch();
   // What the snackbar says after an export or import.
   const [notice, setNotice] = useState("");
@@ -75,16 +70,6 @@ export const Settings = () => {
         keyboardShouldPersistTaps="handled"
       >
         <View>
-          <SectionHeading title={localization.Profile[language]} />
-          <CustomInput
-            mode="outlined"
-            textContentType="name"
-            label={localization.Your_Name[language]}
-            value={name}
-            onChangeText={value => dispatch(userNameSetter({ name: value }))}
-          />
-        </View>
-        <View>
           <SectionHeading title={localization.Language[language]} />
           <View style={styles.row}>
             {languagesList.map(option => (
@@ -96,6 +81,18 @@ export const Settings = () => {
               />
             ))}
           </View>
+        </View>
+        <View>
+          <SectionHeading title={localization.Display[language]} />
+          <ListRow
+            title={localization.RecentUsage[language]}
+            subtitle={localization.RecentUsageHelp[language]}
+            switchValue={checkedHeatMap}
+            onSwitch={value => {
+              setCheckedHeatMap(value);
+              dispatch(setHeatMap({ enableHeatMap: value }));
+            }}
+          />
         </View>
         <View>
           <SectionHeading title={localization.Backup[language]} />
@@ -117,24 +114,8 @@ export const Settings = () => {
           </View>
         </View>
         <View>
-          <SectionHeading title={localization.Photos[language]} />
+          <SectionHeading title={localization.PhotoTools[language]} />
           <BulkBackgroundRemoval language={language} />
-        </View>
-        <View>
-          <SectionHeading title={localization.Display[language]} />
-          <ListRow
-            title={localization.RecentUsage[language]}
-            subtitle={localization.RecentUsageHelp[language]}
-            right={
-              <Switch
-                value={checkedHeatMap}
-                onValueChange={value => {
-                  setCheckedHeatMap(value);
-                  dispatch(setHeatMap({ enableHeatMap: value }));
-                }}
-              />
-            }
-          />
         </View>
         <View>
           <SectionHeading title={localization.Updates[language]} />

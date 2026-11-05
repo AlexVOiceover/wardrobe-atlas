@@ -34,7 +34,6 @@ const ColorModal = ({
   const [mode, setMode] = useState<"photo" | "wheel">("wheel");
   const isValidHex = HEX_COLOR_PATTERN.test(inputValue);
   const savedColor = colors[colorSelection] || "#000000";
-  const hasChanged = draftColor !== savedColor;
   useEffect(() => {
     if (visible) {
       setDraftColor(savedColor);
@@ -58,9 +57,10 @@ const ColorModal = ({
   const handleInputChange = (text: string) => {
     setInputValue(text);
   };
-  const syncHexToPicker = () => {
+  // The keyboard's Done applies a typed HEX to the wheel and the swatch.
+  const applyHex = () => {
     if (HEX_COLOR_PATTERN.test(inputValue)) {
-      setDraftColor(inputValue.toUpperCase());
+      updateDraftColor(inputValue.toUpperCase());
     }
   };
   return (
@@ -69,6 +69,7 @@ const ColorModal = ({
       setVisible={setVisible}
       label={localization.Pick_A_Color[storedSettings.language]}
       minHeight={250}
+      showClose={false}
     >
       <>
         {image && (
@@ -94,13 +95,6 @@ const ColorModal = ({
               />
               <ThemeText>{draftColor}</ThemeText>
             </View>
-            <Button
-              mode="contained"
-              disabled={!isValidHex || !hasChanged}
-              onPress={confirmColor}
-            >
-              {localization.UseColor[language]}
-            </Button>
           </View>
         ) : (
           <>
@@ -150,13 +144,9 @@ const ColorModal = ({
               autoCorrect={false}
               spellCheck={false}
               keyboardType="default"
-              right={
-                <TextInput.Icon
-                  icon="check"
-                  disabled={!isValidHex}
-                  onPress={syncHexToPicker}
-                />
-              }
+              returnKeyType="done"
+              onSubmitEditing={applyHex}
+              onBlur={applyHex}
               style={[{ margin: 8 }]}
             />
             <HelperText
@@ -165,22 +155,34 @@ const ColorModal = ({
             >
               {localization.InvalidHex[storedSettings.language]}
             </HelperText>
-            <Button
-              mode="outlined"
-              disabled={!isValidHex || !hasChanged}
-              onPress={confirmColor}
-              style={[{ margin: 8 }]}
-            >
-              {localization.Save[storedSettings.language]}
-            </Button>
           </>
         )}
+        {/* The same two buttons in both modes. */}
+        <View style={styles.actions}>
+          <Button onPress={() => setVisible(false)}>
+            {localization.Cancel[language]}
+          </Button>
+          <Button
+            mode="contained"
+            disabled={!isValidHex}
+            onPress={confirmColor}
+          >
+            {localization.UseColor[language]}
+          </Button>
+        </View>
       </>
     </CustomModal>
   );
 };
 export default ColorModal;
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
+  },
   tabs: {
     flexDirection: "row",
     gap: theme.spacing.sm,

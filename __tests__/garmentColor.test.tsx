@@ -57,7 +57,14 @@ test("garment color picker starts with the saved color and saves a new selection
     picker().props.onColorChange("#654321");
   });
   expect(picker().props.color).toBe("#654321");
-  const save = view!.root.findByType("Button" as any);
+  // One contained "Use color" and a Cancel, on the wheel too
+  expect(
+    view!.root.findAllByType("Button" as any).map(b => b.props.children),
+  ).toEqual(["Cancel", "Use color"]);
+  const save = view!.root
+    .findAllByType("Button" as any)
+    .find(b => b.props.children === "Use color")!;
+  expect(save.props.mode).toBe("contained");
   expect(save.props.disabled).toBe(false);
   await act(async () => {
     save.props.onPress();
@@ -173,5 +180,41 @@ test("without a photo the wheel shows no comparison", async () => {
   expect(
     view.root.findAll(n => n.props.testID === "wheel-swatch"),
   ).toHaveLength(0);
+  await act(async () => view.unmount());
+});
+
+test("a typed HEX applies on the keyboard's Done, and Cancel keeps the old color", async () => {
+  const setColors = jest.fn();
+  const setVisible = jest.fn();
+  let view!: ReactTestRenderer;
+  await act(async () => {
+    view = create(
+      <ColorModal
+        colors={["#123456"]}
+        setColors={setColors}
+        colorSelection={0}
+        visible={true}
+        setVisible={setVisible}
+      />,
+    );
+  });
+  const hex = () => view.root.findByType("HexInput" as any);
+  // No separate ✓ button in the field
+  expect(hex().props.right).toBeUndefined();
+  await act(async () => hex().props.onChangeText("#aa0000"));
+  await act(async () => hex().props.onSubmitEditing());
+  expect(view.root.findByType("ColorPicker" as any).props.color).toBe(
+    "#AA0000",
+  );
+  const press = (label: string) =>
+    view.root
+      .findAllByType("Button" as any)
+      .find(b => b.props.children === label)!
+      .props.onPress();
+  await act(async () => press("Cancel"));
+  expect(setVisible).toHaveBeenCalledWith(false);
+  expect(setColors).not.toHaveBeenCalled();
+  await act(async () => press("Use color"));
+  expect(setColors).toHaveBeenCalledWith(["#AA0000"]);
   await act(async () => view.unmount());
 });

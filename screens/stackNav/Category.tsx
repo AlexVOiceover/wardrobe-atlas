@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ScrollView } from "react-native";
-import { Switch } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
@@ -24,7 +23,8 @@ export function Category() {
       >
         <ListRow
           title={localization.addMultiItems[language]}
-          right={<Switch value={bulk} onValueChange={setBulk} />}
+          switchValue={bulk}
+          onSwitch={setBulk}
         />
         {categories.length === 0 && (
           <ListRow
