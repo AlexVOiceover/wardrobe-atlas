@@ -3,7 +3,11 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../redux/store";
-import { addCollection, moveCollection } from "../../redux/itemsSlice";
+import {
+  addCollection,
+  moveCollection,
+  newCollectionValue,
+} from "../../redux/itemsSlice";
 import { setCollectionSortValue } from "../../redux/settingsSlice";
 import {
   COLLECTION_SORT_VALUES,
@@ -12,7 +16,7 @@ import {
 } from "../../utils/collectionOrder";
 import { defaultCollectionColor } from "../../utils/colors";
 import { countText, localization as l } from "../../utils/localization";
-import { theme } from "../../utils/theme";
+import { captionText, theme } from "../../utils/theme";
 import { ThemeView } from "../../components/ThemeView";
 import { HeaderIcon, PageHeader } from "../../components/PageHeader";
 import { ListRow } from "../../components/ListRow";
@@ -54,7 +58,7 @@ export const Collections = ({ navigation }: { navigation: any }) => {
           collections.length > 1 && (
             <HeaderIcon
               name="swap-vertical"
-              label={l.Sort[language]}
+              label={l.Order[language]}
               onPress={() => setIsOrderOpen(true)}
             />
           )
@@ -91,14 +95,18 @@ export const Collections = ({ navigation }: { navigation: any }) => {
         title={l.NewCollection[language]}
         language={language}
         collections={collectionTags}
-        onSave={name =>
-          dispatch(addCollection({ name, color: defaultCollectionColor }))
-        }
+        onSave={name => {
+          // The id the store gives it, which may be "Name (2)".
+          const value = newCollectionValue(collectionTags, name);
+          dispatch(addCollection({ name, color: defaultCollectionColor }));
+          // Straight to choosing its garments.
+          navigation.navigate("Collection", { value, edit: true });
+        }}
       />
       <BottomSheet
         isOpen={isOrderOpen}
         setIsOpen={setIsOrderOpen}
-        title={l.Sort[language]}
+        title={l.Order[language]}
       >
         <View style={styles.chips}>
           {sortOptions.map(option => (
@@ -115,6 +123,11 @@ export const Collections = ({ navigation }: { navigation: any }) => {
           ))}
         </View>
         {/* The custom order is set here, one step at a time. */}
+        {sortValue === COLLECTION_SORT_VALUES.CUSTOM && (
+          <ThemeText customStyle={[captionText, styles.hint]}>
+            {l.CustomOrderHint[language]}
+          </ThemeText>
+        )}
         {sortValue === COLLECTION_SORT_VALUES.CUSTOM &&
           collections.map((collection, index) => (
             <View key={collection.value} style={styles.orderRow}>
@@ -169,6 +182,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.sm,
+  },
+  hint: {
+    marginBottom: theme.spacing.xs,
   },
   orderRow: {
     flexDirection: "row",

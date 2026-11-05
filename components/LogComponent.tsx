@@ -1,9 +1,7 @@
-import React, { Dispatch, SetStateAction, useMemo } from "react";
+import React, { useMemo } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { ItemBox, garmentSummary } from "./ItemBox";
 import dayjs from "dayjs";
 import {
   deleteEventLog,
@@ -12,7 +10,7 @@ import {
   type item,
   type logsType,
 } from "../redux/itemsSlice";
-import { GarmentGrid } from "./GarmentGrid";
+import { GarmentPhoto } from "./GarmentPhoto";
 import { ThemeText } from "./ThemeText";
 import { localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
@@ -40,94 +38,99 @@ export function deleteOutfit(
   dispatch(deleteEventLog({ selectedLogId: eventId }));
   return { name: logs[index].eventName, restore };
 }
-interface LogComponentProps {
-  eventName: string;
-  eventDate: Date;
-  eventId: string;
-  /** Deletes at once; the list offers Undo. */
-  onDelete: () => void;
-  setModalVisible: Dispatch<SetStateAction<boolean>>;
-  setModalEventId: Dispatch<SetStateAction<string>>;
-}
+/** What Outfits shows with Undo after another screen logged or deleted. */
+export type OutfitNotice =
+  | { kind: "logged"; eventId: string; name: string }
+  | {
+      kind: "deleted";
+      name: string;
+      restore: ReturnType<typeof restoreEventLog>;
+    };
+
+/** Goes back to the Outfits tab, which shows the notice with Undo. */
+export const returnToOutfits = (navigation: any, notice: OutfitNotice) =>
+  navigation.popTo("StackNavHome", {
+    screen: "Outfits",
+    params: { notice },
+  });
+
+/**
+ * A logged outfit: name, date, notes and small photos of its garments. A tap
+ * opens it for editing.
+ */
 export const LogComponent = ({
   eventName,
   eventDate,
   eventId,
-  onDelete,
-  setModalVisible,
-  setModalEventId,
-}: LogComponentProps) => {
+  notes,
+  onPress,
+}: {
+  eventName: string;
+  eventDate: Date;
+  eventId: string;
+  notes?: string;
+  onPress: () => void;
+}) => {
   const itemsState = useSelector((state: RootState) => state.itemsList.items);
   const language = useSelector((state: RootState) => state.settings.language);
   const associatedItems = useMemo(() => {
     return itemsState.filter(item => item.logIds?.some(id => id === eventId));
   }, [itemsState, eventId]);
-  const handlePress = () => {
-    setModalVisible(true);
-    setModalEventId(eventId);
-  };
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={eventName}
-          onPress={handlePress}
-          style={styles.eventInfo}
-        >
-          <ThemeText numberOfLines={2} customStyle={styles.eventTitle}>
-            {eventName}
-          </ThemeText>
-          <ThemeText customStyle={captionText}>
-            {dayjs(eventDate).format("DD/MM/YYYY · h:mm A")}
-          </ThemeText>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${localization.Delete[language]}: ${eventName}`}
-          onPress={onDelete}
-          style={styles.deleteButton}
-        >
-          <Icon name="trash-outline" size={22} color={theme.colors.danger} />
-        </Pressable>
-      </View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={localization.EditNamed[language].replace(
+        "{name}",
+        eventName,
+      )}
+      onPress={onPress}
+      style={styles.container}
+    >
+      <ThemeText numberOfLines={2} customStyle={styles.eventTitle}>
+        {eventName}
+      </ThemeText>
+      <ThemeText customStyle={captionText}>
+        {dayjs(eventDate).format("DD/MM/YYYY · HH:mm")}
+      </ThemeText>
+      {!!notes && (
+        <ThemeText numberOfLines={1} customStyle={captionText}>
+          {notes}
+        </ThemeText>
+      )}
       {associatedItems.length > 0 ? (
-        <GarmentGrid
-          garments={associatedItems}
-          renderGarment={garment => <ItemBox {...garmentSummary(garment)} />}
-        />
+        <View style={styles.photos}>
+          {associatedItems.map(garment => (
+            <GarmentPhoto
+              key={garment.id}
+              image={garment.image}
+              size={56}
+              label={garment.name || localization.Garment[language]}
+            />
+          ))}
+        </View>
       ) : (
         <ThemeText customStyle={captionText}>
           {localization.NoLogItems[language]}
         </ThemeText>
       )}
-    </View>
+    </Pressable>
   );
 };
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    gap: 2,
+    paddingVertical: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: theme.spacing.sm,
-  },
-  eventInfo: {
-    flex: 1,
-    minHeight: theme.touch,
-    justifyContent: "center",
   },
   eventTitle: {
     fontWeight: "600",
   },
-  deleteButton: {
-    width: theme.touch,
-    height: theme.touch,
-    justifyContent: "center",
-    alignItems: "flex-end",
+  photos: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.xs,
   },
 });

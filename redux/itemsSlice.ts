@@ -56,6 +56,16 @@ export type CollectionTag = {
   isOpen: boolean;
   arrangement: number;
 };
+/**
+ * The id a new collection with this name gets. A renamed collection keeps its
+ * old name as its id, so an id is never reused: "Trip (2)" and so on.
+ */
+export function newCollectionValue(tags: CollectionTag[], name: string) {
+  let value = name;
+  for (let n = 2; tags.some(t => t.value === value); n++)
+    value = `${name} (${n})`;
+  return value;
+}
 const initialState: itemsList = {
   wardrobes: [],
   items: [],
@@ -152,12 +162,8 @@ const itemsSlice = createSlice({
         state.items[itemIndex].seasons = action.payload.seasons;
     },
     addCollection: (state, action) => {
-      // A renamed collection keeps its old name as its id; never reuse it.
-      let value = action.payload.name;
-      for (let n = 2; state.collectionTags.some(t => t.value === value); n++)
-        value = `${action.payload.name} (${n})`;
       state.collectionTags.push({
-        value,
+        value: newCollectionValue(state.collectionTags, action.payload.name),
         label: action.payload.name,
         color: action.payload.color,
         isOpen: true,
@@ -264,6 +270,35 @@ const itemsSlice = createSlice({
         const logIds = restored.logIds ?? [];
         logIds.splice(garment.index, 0, log.eventId);
         restored.logIds = logIds;
+      });
+    },
+    // Edits a logged outfit. Given garmentIds, exactly those garments link to
+    // it afterwards; garments it keeps stay where they were in their logIds.
+    updateEventLog: (
+      state,
+      action: PayloadAction<{
+        eventId: string;
+        eventName?: string;
+        eventDate?: string;
+        additionalNotes?: string;
+        garmentIds?: string[];
+      }>,
+    ) => {
+      const { eventId, eventName, eventDate, additionalNotes, garmentIds } =
+        action.payload;
+      const log = state.logs.find(x => x.eventId === eventId);
+      if (!log) return;
+      if (eventName !== undefined) log.eventName = eventName;
+      if (eventDate !== undefined) log.eventDate = eventDate;
+      if (additionalNotes !== undefined) log.additionalNotes = additionalNotes;
+      if (!garmentIds) return;
+      state.items.forEach(garment => {
+        const linked = garment.logIds?.includes(eventId) === true;
+        const member = garmentIds.includes(garment.id);
+        if (member && !linked)
+          garment.logIds = [...(garment.logIds ?? []), eventId];
+        if (!member && linked)
+          garment.logIds = garment.logIds?.filter(id => id !== eventId);
       });
     },
     addLog: (state, action) => {
@@ -379,6 +414,7 @@ export const {
   addEventLog,
   deleteEventLog,
   restoreEventLog,
+  updateEventLog,
   setGarmentImage,
   setGarmentsStored,
   setGarmentsWardrobe,

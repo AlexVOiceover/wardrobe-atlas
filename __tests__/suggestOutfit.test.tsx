@@ -9,7 +9,11 @@ import {
 import { SuggestOutfit } from "../screens/stackNav/SuggestOutfit";
 
 const mockDispatch = jest.fn();
-const mockNavigation = { navigate: jest.fn(), goBack: jest.fn() };
+const mockNavigation = {
+  navigate: jest.fn(),
+  goBack: jest.fn(),
+  popTo: jest.fn(),
+};
 const mockState: any = {
   settings: { language: 0 },
   itemsList: { items: [], logs: [], wardrobes: [] },
@@ -49,6 +53,7 @@ const event = (eventId: string, date: string) => ({
 beforeEach(() => {
   mockDispatch.mockClear();
   mockNavigation.goBack.mockClear();
+  mockNavigation.popTo.mockClear();
 });
 
 test("subcategories give default styles; underwear is never suggested", () => {
@@ -195,7 +200,13 @@ describe("Suggest outfit screen", () => {
       "Sneakers",
       "Watch",
     ]);
-    expect(mockNavigation.goBack).toHaveBeenCalled();
+    // Back to Outfits, which offers Undo.
+    expect(mockNavigation.popTo).toHaveBeenCalledWith("StackNavHome", {
+      screen: "Outfits",
+      params: {
+        notice: { kind: "logged", eventId: "outfit-1", name: "Casual outfit" },
+      },
+    });
     act(() => tree.unmount());
   });
 

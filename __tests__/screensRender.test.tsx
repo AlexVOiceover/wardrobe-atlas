@@ -51,6 +51,8 @@ const mockNavigation = {
   navigate: jest.fn(),
   goBack: jest.fn(),
   popToTop: jest.fn(),
+  popTo: jest.fn(),
+  setParams: jest.fn(),
   dispatch: jest.fn(),
 };
 jest.mock("react-redux", () => ({
@@ -59,6 +61,7 @@ jest.mock("react-redux", () => ({
 }));
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => mockNavigation,
+  useRoute: () => ({}),
   usePreventRemove: jest.fn(),
   CommonActions: { goBack: jest.fn() },
 }));
@@ -133,7 +136,7 @@ test.each<[string, React.ReactElement]>([
   ],
   [
     "Event form",
-    <EventLogForm {...navProps} route={{ params: { selectedIDs: [] } }} />,
+    <EventLogForm {...navProps} route={{ params: { eventId: "dinner" } }} />,
   ],
   [
     "Bulk form",

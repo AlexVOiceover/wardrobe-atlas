@@ -5,10 +5,9 @@ import Icon from "react-native-vector-icons/Ionicons";
 import dayjs from "dayjs";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import "react-native-get-random-values";
-import { nanoid } from "nanoid";
 import type { RootState } from "../../redux/store";
-import { addEventLog, addLog } from "../../redux/itemsSlice";
+import { logGarments } from "../../components/QuickLogSheet";
+import { returnToOutfits } from "../../components/LogComponent";
 import { ThemeView } from "../../components/ThemeView";
 import { ThemeText } from "../../components/ThemeText";
 import { PageHeader } from "../../components/PageHeader";
@@ -91,22 +90,17 @@ export function SuggestOutfit() {
   const wear = () => {
     const worn = chosen.flatMap(c => (c.garment ? [c.garment] : []));
     if (worn.length === 0) return;
-    const eventId = nanoid();
-    dispatch(
-      addEventLog({
-        eventId,
-        eventName: localization.StyledOutfit[language].replace(
-          "{style}",
-          language === 1 ? styleLabel.toLowerCase() : styleLabel,
-        ),
-        eventDate: JSON.stringify(new Date()),
-        logTime: JSON.stringify(new Date()),
-      }),
+    const logged = logGarments(
+      dispatch,
+      worn,
+      language,
+      undefined,
+      localization.StyledOutfit[language].replace(
+        "{style}",
+        language === 1 ? styleLabel.toLowerCase() : styleLabel,
+      ),
     );
-    worn.forEach(garment =>
-      dispatch(addLog({ selectedId: garment.id, logId: eventId })),
-    );
-    navigation.goBack();
+    returnToOutfits(navigation, { kind: "logged", ...logged });
   };
   return (
     <ThemeView>

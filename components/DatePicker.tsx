@@ -14,13 +14,16 @@ export const DatePicker = ({
   setDate,
   setDatePickerVisibility,
   type = "date",
+  maximumDate,
 }: {
   title: string;
   isDatePickerVisible: boolean;
   date: Date;
-  setDate: Dispatch<SetStateAction<Date>>;
+  setDate: (date: Date) => void;
   setDatePickerVisibility: Dispatch<SetStateAction<boolean>>;
   type?: "date" | "time" | "both";
+  // Later picks are brought back to this date.
+  maximumDate?: Date;
 }) => {
   const language = useSelector((s: RootState) => s.settings.language);
   const safeDate =
@@ -30,6 +33,8 @@ export const DatePicker = ({
   return (
     <>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={title}
         onPress={() => {
           setDatePickerVisibility(true);
         }}
@@ -66,9 +71,10 @@ export const DatePicker = ({
           type === "both" ? "inline" : type === "date" ? "spinner" : "clock"
         }
         mode={type === "both" ? "datetime" : type === "date" ? "date" : "time"}
+        maximumDate={maximumDate}
         onConfirm={(picked: Date) => {
           setDatePickerVisibility(false);
-          setDate(picked);
+          setDate(maximumDate && picked > maximumDate ? maximumDate : picked);
         }}
         onCancel={() => {
           setDatePickerVisibility(false);

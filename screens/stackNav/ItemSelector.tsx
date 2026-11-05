@@ -1,134 +1,46 @@
-import { useSelector } from "react-redux";
-import { ThemeView } from "../../components/ThemeView";
-import { ScrollView, View, StyleSheet } from "react-native";
-import React, { useState, useMemo } from "react";
-import { CollectionContainer } from "../../components/CollectionContainer";
-import {
-  filterCollectionsBySearch,
-  filterItemsBySearch,
-} from "../../utils/filters";
-import {
-  getCollectionSortValue,
-  getOrderedCollectionTags,
-} from "../../utils/collectionOrder";
-import { Button, Snackbar } from "react-native-paper";
-import { RootState } from "../../redux/store";
-import { item } from "../../redux/itemsSlice";
-import { SelectionItemBox } from "../../components/SelectionItemBox";
+import { useState } from "react";
+import { Button } from "react-native-paper";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
-import { PageHeader } from "../../components/PageHeader";
-import { garmentSummary } from "../../components/ItemBox";
-import { GarmentGrid } from "../../components/GarmentGrid";
-import { SearchField } from "../../components/SearchField";
+import { RootState } from "../../redux/store";
+import { GarmentPicker } from "../../components/GarmentPicker";
+import { WhenControl, logGarments } from "../../components/QuickLogSheet";
+import { returnToOutfits } from "../../components/LogComponent";
 import { localization } from "../../utils/localization";
-import { theme } from "../../utils/theme";
+
+/**
+ * Outfits +: tick garments as in the Closet, optionally move "When" earlier,
+ * and log them as one outfit. Outfits then offers Undo.
+ */
 export const ItemSelector = () => {
-  const itemsState = useSelector((state: RootState) => state.itemsList);
-  const storedSettings = useSelector((state: RootState) => state.settings);
-  const [search, setSearch] = useState("");
-  const [selectedIdCollector, setSelectedIdCollector] = useState<string[]>([]);
   const navigation = useNavigation<any>();
-  const [visible, setVisible] = useState(false);
-  const onToggleSnackBar = () => setVisible(!visible);
-  const onDismissSnackBar = () => setVisible(false);
-  const groupedData = useMemo(() => {
-    let collections: item[][] = [];
-    let tags = getOrderedCollectionTags(
-      itemsState.collectionTags,
-      getCollectionSortValue(storedSettings.collectionSortValue),
-    );
-    let items = itemsState.items;
-    if (tags.length > 0) {
-      for (let i = 0; i < tags.length; i++) {
-        const col = items.filter(x => x.collection?.includes(tags[i].value));
-        collections.push(col);
+  const dispatch = useDispatch();
+  const { items } = useSelector((state: RootState) => state.itemsList);
+  const language = useSelector((state: RootState) => state.settings.language);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [when, setWhen] = useState<Date>();
+  const log = () => {
+    const garments = items.filter(garment => picked.includes(garment.id));
+    if (garments.length === 0) return;
+    const logged = logGarments(dispatch, garments, language, when);
+    returnToOutfits(navigation, { kind: "logged", ...logged });
+  };
+  return (
+    <GarmentPicker
+      title={localization.LogOutfit[language]}
+      picked={picked}
+      setPicked={setPicked}
+      footer={
+        <>
+          <Button mode="contained" disabled={picked.length === 0} onPress={log}>
+            {localization.LogOutfitCount[language].replace(
+              "{n}",
+              String(picked.length),
+            )}
+          </Button>
+          <WhenControl when={when} setWhen={setWhen} language={language} />
+        </>
       }
-    }
-    const nonCollected = items.filter(
-      x => !x.collection || x.collection.length === 0,
-    );
-    return {
-      tags,
-      collections: filterCollectionsBySearch(collections, search),
-      nonCollected: filterItemsBySearch(nonCollected, search),
-    };
-  }, [
-    itemsState.items,
-    itemsState.collectionTags,
-    search,
-    storedSettings.collectionSortValue,
-  ]);
-  const language = storedSettings.language;
-  const renderGarment = (garment: item) => (
-    <SelectionItemBox
-      {...garmentSummary(garment)}
-      setSelectedIdCollector={setSelectedIdCollector}
-      selectedIdCollector={selectedIdCollector}
     />
   );
-  return (
-    <ThemeView>
-      <PageHeader title={localization.SelectItems[language]} />
-      <SearchField
-        value={search}
-        placeholder={localization.SearchPlaceholder[language]}
-        onChangeText={setSearch}
-      />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {groupedData.tags.map((collection, index) => {
-          const collectionItems = groupedData.collections[index];
-          if (!collectionItems || collectionItems.length === 0) return null;
-          return (
-            <CollectionContainer
-              key={`col-${collection.value}`}
-              label={collection.label}
-            >
-              <GarmentGrid
-                garments={collectionItems}
-                renderGarment={renderGarment}
-              />
-            </CollectionContainer>
-          );
-        })}
-        {groupedData.nonCollected.length > 0 && (
-          <GarmentGrid
-            garments={groupedData.nonCollected}
-            renderGarment={renderGarment}
-          />
-        )}
-      </ScrollView>
-      <View style={styles.footer}>
-        <Button
-          mode="contained"
-          onPress={() => {
-            if (selectedIdCollector.length > 0) {
-              navigation.navigate("EventLogForm", {
-                selectedIDs: selectedIdCollector,
-              });
-            } else {
-              onToggleSnackBar();
-            }
-          }}
-        >
-          {localization.Next[language]}
-        </Button>
-      </View>
-      <Snackbar visible={visible} onDismiss={onDismissSnackBar}>
-        {localization.SelectAtLeastOneItem[language]}
-      </Snackbar>
-    </ThemeView>
-  );
 };
-const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.md,
-  },
-  footer: {
-    padding: theme.spacing.md,
-  },
-});

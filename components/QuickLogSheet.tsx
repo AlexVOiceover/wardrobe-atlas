@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
 import dayjs from "dayjs";
@@ -12,6 +12,7 @@ import { countText, localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
 import { BottomSheet } from "./BottomSheet";
 import { ThemeText } from "./ThemeText";
+import { GarmentPhoto } from "./GarmentPhoto";
 
 export const usageSummary = (
   uses: number,
@@ -33,19 +34,21 @@ export const usageSummary = (
 
 /**
  * Logs one use of the garments as a single Outfits entry, named after the
- * garment or "Outfit" for several.
+ * garment or "Outfit" for several unless a name is given.
  */
 export function logGarments(
   dispatch: Dispatch<any>,
   garments: item[],
   language: number,
   when?: Date,
+  eventName?: string,
 ) {
   const eventId = nanoid();
   const name =
-    garments.length === 1
+    eventName ||
+    (garments.length === 1
       ? garments[0].name.trim() || localization.Garment[language]
-      : localization.Outfit[language];
+      : localization.Outfit[language]);
   dispatch(
     addEventLog({
       eventId,
@@ -83,7 +86,6 @@ export function QuickLogSheet({
   const dispatch = useDispatch();
   const garment = garments.length === 1 ? garments[0] : undefined;
   const [when, setWhen] = useState<Date>();
-  const [pickerOpen, setPickerOpen] = useState(false);
   const close = () => {
     setWhen(undefined);
     onClose();
@@ -97,9 +99,6 @@ export function QuickLogSheet({
     close();
     onLogged(log);
   };
-  const whenLabel = when
-    ? dayjs(when).format("DD/MM/YYYY · HH:mm")
-    : localization.Now[language];
   const name = garment?.name || localization.Garment[language];
   return (
     <BottomSheet
@@ -170,73 +169,67 @@ export function QuickLogSheet({
             <Button mode="contained" onPress={logUse}>
               {localization.LogUse[language]}
             </Button>
-            <View style={styles.when}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${localization.When[language]}: ${whenLabel}`}
-                onPress={() => setPickerOpen(true)}
-                style={styles.whenValue}
-              >
-                <ThemeText customStyle={styles.whenText}>
-                  {when ? whenLabel : localization.NowChange[language]}
-                </ThemeText>
-              </Pressable>
-              {when && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={localization.BackToNow[language]}
-                  onPress={() => setWhen(undefined)}
-                  style={styles.icon}
-                >
-                  <Icon name="close" size={18} color={theme.colors.muted} />
-                </Pressable>
-              )}
-            </View>
+            <WhenControl when={when} setWhen={setWhen} language={language} />
           </View>
-          <DateTimePickerModal
-            isVisible={pickerOpen}
-            mode="datetime"
-            date={when ?? new Date()}
-            maximumDate={new Date()}
-            onConfirm={date => {
-              setPickerOpen(false);
-              // Uses can't be logged in the future.
-              setWhen(date > new Date() ? undefined : date);
-            }}
-            onCancel={() => setPickerOpen(false)}
-          />
         </View>
       )}
     </BottomSheet>
   );
 }
-// A garment's photo, or a shirt where it has none.
-function GarmentPhoto({
-  image,
-  size,
-  label,
+/**
+ * "Now · change" under a log button: picks an earlier time to log at; ✕ goes
+ * back to now. Future times count as now.
+ */
+export function WhenControl({
+  when,
+  setWhen,
+  language,
 }: {
-  image: string;
-  size: number;
-  label?: string;
+  when?: Date;
+  setWhen: (when?: Date) => void;
+  language: number;
 }) {
-  const frame = [styles.photo, { width: size, height: size }];
-  return image ? (
-    <View accessibilityLabel={label} style={frame}>
-      <Image
-        source={{ uri: `data:image/*;base64,${image}` }}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const whenLabel = when
+    ? dayjs(when).format("DD/MM/YYYY · HH:mm")
+    : localization.Now[language];
+  return (
+    <>
+      <View style={styles.when}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${localization.When[language]}: ${whenLabel}`}
+          onPress={() => setPickerOpen(true)}
+          style={styles.whenValue}
+        >
+          <ThemeText customStyle={styles.whenText}>
+            {when ? whenLabel : localization.NowChange[language]}
+          </ThemeText>
+        </Pressable>
+        {when && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={localization.BackToNow[language]}
+            onPress={() => setWhen(undefined)}
+            style={styles.icon}
+          >
+            <Icon name="close" size={18} color={theme.colors.muted} />
+          </Pressable>
+        )}
+      </View>
+      <DateTimePickerModal
+        isVisible={pickerOpen}
+        mode="datetime"
+        date={when ?? new Date()}
+        maximumDate={new Date()}
+        onConfirm={date => {
+          setPickerOpen(false);
+          // Uses can't be logged in the future.
+          setWhen(date > new Date() ? undefined : date);
+        }}
+        onCancel={() => setPickerOpen(false)}
       />
-    </View>
-  ) : (
-    <View accessibilityLabel={label} style={[frame, styles.placeholder]}>
-      <Icon
-        name="shirt-outline"
-        size={size * 0.45}
-        color={theme.colors.muted}
-      />
-    </View>
+    </>
   );
 }
 const styles = StyleSheet.create({
@@ -260,15 +253,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: theme.spacing.xs,
-  },
-  photo: {
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.surface,
-    overflow: "hidden",
-  },
-  placeholder: {
-    justifyContent: "center",
-    alignItems: "center",
   },
   // A small text button under Log use.
   when: {

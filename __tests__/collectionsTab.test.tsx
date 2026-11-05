@@ -131,11 +131,63 @@ test("the tab lists collections with counts, opens one and creates new ones", ()
   expect(mockDispatch).toHaveBeenCalledWith(
     addCollection({ name: "Gym", color: expect.anything() }),
   );
+  // It opens straight in "Add or remove garments".
+  expect(navigation.navigate).toHaveBeenLastCalledWith("Collection", {
+    value: "Gym",
+    edit: true,
+  });
 });
 
-test("the custom order is changed from the sort panel", () => {
+test("a new collection opens by the id the store gives it", () => {
+  const before = mockState.itemsList;
+  // "Trip" was renamed but keeps "trip" as its id, so a new "trip" is "trip (2)".
+  mockState.itemsList = itemsReducer(
+    before,
+    updateCollection({ name: "trip", newName: "Holiday" }),
+  );
   const tree = render(<Collections navigation={navigation} />);
-  act(() => pressable(tree, "Sort").props.onPress());
+  act(() => pressable(tree, "New collection").props.onPress());
+  act(() =>
+    tree.root.findByType("TextInput" as any).props.onChangeText("trip"),
+  );
+  act(() => button(tree, "Save").props.onPress());
+  const created = itemsReducer(
+    mockState.itemsList,
+    addCollection({ name: "trip" }),
+  ).collectionTags.at(-1)!.value;
+  mockState.itemsList = before;
+  expect(created).toBe("trip (2)");
+  expect(navigation.navigate).toHaveBeenLastCalledWith("Collection", {
+    value: created,
+    edit: true,
+  });
+});
+
+test("a collection opened to edit shows the closet with its garments ticked", () => {
+  const tree = render(
+    <Collection
+      navigation={navigation}
+      route={{ params: { value: "trip", edit: true } }}
+    />,
+  );
+  const selected = (label: string) =>
+    pressable(tree, label).props.accessibilityState.selected;
+  expect(selected("Linen shirt")).toBe(true);
+  expect(selected("Shorts")).toBe(false);
+  act(() => pressable(tree, "Shorts").props.onPress());
+  act(() => pressable(tree, "Save").props.onPress());
+  expect(mockDispatch).toHaveBeenCalledWith(
+    setCollectionGarments({ value: "trip", ids: ["shirt", "shorts"] }),
+  );
+});
+
+test("the custom order is changed from the Order sheet", () => {
+  const tree = render(<Collections navigation={navigation} />);
+  act(() => pressable(tree, "Order").props.onPress());
+  expect(tree.root.findByProps({ title: "Order" })).toBeTruthy();
+  expect(JSON.stringify(tree.toJSON())).toContain(
+    "Custom is the order you set here with the arrows.",
+  );
   act(() => pressable(tree, "Move down: Trip").props.onPress());
   expect(mockDispatch).toHaveBeenCalledWith({
     type: "itemsList/moveCollection",
@@ -185,7 +237,7 @@ test("Log as outfit logs every garment in the collection", () => {
   expect(sheet().props.garments.map((g: any) => g.id)).toEqual(["shirt"]);
 });
 
-test("tapping a garment opens its sheet, a double tap logs it with Undo, and a long press edits it", () => {
+test("tapping a garment opens its sheet, a double tap logs it with Undo, and a long press selects it", () => {
   const tree = render(
     <Collection
       navigation={navigation}
@@ -222,9 +274,40 @@ test("tapping a garment opens its sheet, a double tap logs it with Undo, and a l
     "itemsList/deleteEventLog",
   ]);
   act(() => card().props.onLongPress());
-  expect(navigation.navigate).toHaveBeenCalledWith("ItemForm", {
-    editingIndex: "shirt",
+  expect(navigation.navigate).not.toHaveBeenCalled();
+  expect(card().props.accessibilityState).toEqual({ selected: true });
+});
+
+test("select mode logs only the ticked garments; Cancel ends it", () => {
+  const before = mockState.itemsList;
+  mockState.itemsList = {
+    ...before,
+    items: before.items.map((g: any) => ({ ...g, collection: ["trip"] })),
+  };
+  const tree = render(
+    <Collection
+      navigation={navigation}
+      route={{ params: { value: "trip" } }}
+    />,
+  );
+  const sheet = () => tree.root.findByType("QuickLogSheet" as any);
+  act(() => pressable(tree, "Shorts").props.onLongPress());
+  expect(pressable(tree, "Shorts").props.accessibilityState).toEqual({
+    selected: true,
   });
+  expect(pressable(tree, "Linen shirt").props.accessibilityState).toEqual({
+    selected: false,
+  });
+  expect(button(tree, "Add or remove garments")).toBeUndefined();
+  act(() => button(tree, "Log outfit (1)").props.onPress());
+  expect(sheet().props.garments.map((g: any) => g.id)).toEqual(["shorts"]);
+  act(() => sheet().props.onLogged({ eventId: "e1", name: "Shorts" }));
+  // Logging ends select mode.
+  expect(button(tree, "Log as outfit")).toBeTruthy();
+  act(() => pressable(tree, "Linen shirt").props.onLongPress());
+  act(() => pressable(tree, "Cancel").props.onPress());
+  expect(button(tree, "Log as outfit")).toBeTruthy();
+  mockState.itemsList = before;
 });
 
 test("deleting asks first, then removes the collection and goes back", () => {
