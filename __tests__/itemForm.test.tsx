@@ -1,6 +1,6 @@
 import React from "react";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
-import { ScrollView } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { ItemForm } from "../screens/stackNav/ItemForm";
 import { PhotoView } from "../components/PhotoView";
 
@@ -36,7 +36,11 @@ jest.mock("@react-navigation/native", () => ({
 }));
 jest.mock("nanoid", () => ({ nanoid: () => "new" }));
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
-jest.mock("react-native-paper", () => ({ Button: "Button", Switch: "Switch" }));
+jest.mock("react-native-paper", () => ({
+  Button: "Button",
+  Switch: "Switch",
+  Snackbar: "Snackbar",
+}));
 jest.mock("react-native-dropdown-picker", () => "Dropdown");
 jest.mock("react-native-image-picker", () => ({}));
 jest.mock("@somesoap/react-native-image-palette", () => ({}));
@@ -84,12 +88,17 @@ jest.mock("../utils/garmentIsolation", () => ({
 beforeEach(() => {
   mockDispatch.mockClear();
   navigation.popToTop.mockClear();
+  navigation.popTo.mockClear();
   navigation.dispatch.mockClear();
   mockState.itemsList.items = [];
   mockState.settings.lastWardrobeId = "";
 });
 
-const mockNavigation = { popToTop: jest.fn(), dispatch: jest.fn() };
+const mockNavigation = {
+  popToTop: jest.fn(),
+  popTo: jest.fn(),
+  dispatch: jest.fn(),
+};
 const navigation = mockNavigation;
 // The outermost element carrying an accessibility label (not its host copies)
 const labelled = (tree: ReactTestRenderer, label: string) =>
@@ -104,6 +113,12 @@ const autoColors = (tree: ReactTestRenderer) =>
     .find(s => s.props.accessibilityLabel === "Automatic color selection")!;
 const setAutoColors = (tree: ReactTestRenderer, on: boolean) =>
   act(() => autoColors(tree).props.onValueChange(on));
+// The rendered tree as text, without the header's ✓ element (it links back
+// into the tree).
+const shown = (tree: ReactTestRenderer) =>
+  JSON.stringify(tree.toJSON(), (key, value) =>
+    key === "actions" ? undefined : value,
+  );
 const purchaseDate = (tree: ReactTestRenderer) =>
   tree.root.findByType("OptionalDateField" as any);
 function render(editingIndex?: string) {
@@ -163,7 +178,7 @@ test("new item saves typed name, chosen type and wardrobe without generated name
   act(() => name.props.onChange({ nativeEvent: { text: "My blue shirt" } }));
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Subcategory")!;
+    .find(d => d.props.placeholder === "Subcategory *")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root
@@ -171,7 +186,12 @@ test("new item saves typed name, chosen type and wardrobe without generated name
       .find(b => b.props.children === "Save")!
       .props.onPress(),
   );
-  expect(navigation.popToTop).toHaveBeenCalledTimes(1);
+  // Back to the Closet, which says where the garment went
+  expect(navigation.popTo).toHaveBeenCalledWith("StackNavHome", {
+    screen: "Closet",
+    params: { saved: "Saved to Home" },
+  });
+  expect(navigation.popToTop).not.toHaveBeenCalled();
   expect(navigation.dispatch).not.toHaveBeenCalled();
   expect(mockDispatch).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -195,7 +215,7 @@ test("long garment names save without a length limit", () => {
   act(() => name.props.onChange({ nativeEvent: { text: longName } }));
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Subcategory")!;
+    .find(d => d.props.placeholder === "Subcategory *")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root
@@ -364,7 +384,7 @@ const input = (tree: ReactTestRenderer, label: string) =>
 const chooseFirstType = (tree: ReactTestRenderer) => {
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Subcategory")!;
+    .find(d => d.props.placeholder === "Subcategory *")!;
   act(() => type.props.setValue(type.props.items[0].value));
   return type.props.items[0].label as string;
 };
@@ -451,15 +471,45 @@ test("picking a purchase date saves it, and clearing it saves none", () => {
   expect(savedPayload().purchaseDate).toBe("");
 });
 
-test("tapping a color swatch with automatic colors on switches to manual and opens the sheet", () => {
+test("tapping a swatch opens the sheet with automatic colors still on; confirming a color turns them off", () => {
   const tree = render();
+  const caption = () => shown(tree).includes("From the photo");
   expect(autoColors(tree).props.value).toBe(true);
+  expect(caption()).toBe(true);
   expect(tree.root.findByType("ColorModal" as any).props.visible).toBe(false);
   act(() => labelled(tree, "Primary color")[0].props.onPress());
+  const modal = () => tree.root.findByType("ColorModal" as any);
+  expect(modal().props.visible).toBe(true);
+  expect(modal().props.colorSelection).toBe(0);
+  expect(autoColors(tree).props.value).toBe(true);
+  // Closing without a color keeps them automatic
+  act(() => modal().props.setVisible(false));
+  expect(autoColors(tree).props.value).toBe(true);
+  act(() => modal().props.setColors(["#1F2A44", "", ""]));
   expect(autoColors(tree).props.value).toBe(false);
-  const modal = tree.root.findByType("ColorModal" as any);
-  expect(modal.props.visible).toBe(true);
-  expect(modal.props.colorSelection).toBe(0);
+  expect(caption()).toBe(false);
+});
+
+test("with automatic colors on, + adds a color by hand and turns them off", () => {
+  const tree = render();
+  act(() =>
+    tree.root
+      .findByType("ColorModal" as any)
+      .props.setColors(["#1F2A44", "", ""]),
+  );
+  setAutoColors(tree, true);
+  expect(addColor(tree, "Add secondary color")!.props.disabled).toBe(false);
+  act(() => addColor(tree, "Add secondary color")!.props.onPress());
+  expect(autoColors(tree).props.value).toBe(false);
+  expect(colorRows(tree)).toEqual(["Primary color", "Secondary color"]);
+  // The remove × is 24dp with a 12dp hitSlop
+  const remove = tree.root.findAll(
+    n =>
+      n.props.accessibilityLabel === "Remove color: Secondary color" &&
+      !!n.props.onPress,
+  )[0];
+  expect(remove.props.hitSlop).toBe(12);
+  expect(remove.props.style).toMatchObject({ width: 24, height: 24 });
 });
 
 test("editing keeps the name, brand, color setting and purchase date", () => {
@@ -510,8 +560,8 @@ test("the category picker moves a garment and clears its type; no collection hin
   ]);
   act(() => dropdown("Category").props.setValue(() => 2));
   expect(dropdown("Category").props.value).toBe(2);
-  expect(dropdown("Subcategory").props.value).toBe("");
-  act(() => dropdown("Subcategory").props.setValue("Sneakers"));
+  expect(dropdown("Subcategory *").props.value).toBe("");
+  act(() => dropdown("Subcategory *").props.setValue("Sneakers"));
   act(() =>
     tree.root
       .findAllByType("Button" as any)
@@ -524,7 +574,7 @@ test("the category picker moves a garment and clears its type; no collection hin
       payload: expect.objectContaining({ category: 2, type: "Sneakers" }),
     }),
   );
-  expect(JSON.stringify(tree.toJSON())).not.toContain("under a collection");
+  expect(shown(tree)).not.toContain("under a collection");
 });
 
 test("season chips start all on and save only the chosen seasons", () => {
@@ -542,7 +592,7 @@ test("season chips start all on and save only the chosen seasons", () => {
   expect(chip("Summer").props.accessibilityState.selected).toBe(false);
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Subcategory")!;
+    .find(d => d.props.placeholder === "Subcategory *")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root
@@ -572,7 +622,7 @@ test("In storage starts off for new garments and is saved when switched on", () 
   expect(storage().props.accessibilityState.selected).toBe(true);
   const type = tree.root
     .findAllByType("Dropdown" as any)
-    .find(d => d.props.placeholder === "Subcategory")!;
+    .find(d => d.props.placeholder === "Subcategory *")!;
   act(() => type.props.setValue(type.props.items[0].value));
   act(() =>
     tree.root
@@ -617,7 +667,7 @@ test("Remove background replaces a shoe photo, Undo brings it back, and Save sto
     photoAction(tree, "Remove background")!.props.onPress(),
   );
   expect(photo(tree)).toBe("/9j/photo");
-  expect(JSON.stringify(tree.toJSON())).toContain("No garment found");
+  expect(shown(tree)).toContain("No garment found");
   mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
   await act(async () =>
     photoAction(tree, "Remove background")!.props.onPress(),
@@ -690,7 +740,7 @@ describe("Keep only the garment", () => {
       photoAction(tree, "Keep only the garment")!.props.onPress(),
     );
     expect(mockIsolateGarment).toHaveBeenLastCalledWith("UklGRold", "lower");
-    expect(JSON.stringify(tree.toJSON())).toContain("No garment found");
+    expect(shown(tree)).toContain("No garment found");
   });
 
   test("asks before downloading the model, shows progress, then isolates", async () => {
@@ -733,9 +783,7 @@ describe("Keep only the garment", () => {
       photoAction(tree, "Keep only the garment")!.props.onPress(),
     );
     await act(async () => modelDialog(tree).props.onConfirm());
-    expect(JSON.stringify(tree.toJSON())).toContain(
-      "Couldn't download the garment model",
-    );
+    expect(shown(tree)).toContain("Couldn't download the garment model");
     expect(mockIsolateGarment).not.toHaveBeenCalled();
     expect(tree.root.findByType("ImageViewer" as any).props.imageUrl).toBe(
       "/9j/photo",
@@ -756,7 +804,7 @@ test("styles follow the subcategory until a chip is tapped; editing keeps saved 
   const type = () =>
     tree.root
       .findAllByType("Dropdown" as any)
-      .find(d => d.props.placeholder === "Subcategory")!;
+      .find(d => d.props.placeholder === "Subcategory *")!;
   act(() => type().props.setValue("Blazer"));
   expect(selected(tree)).toEqual(["Elegant", "Formal"]);
   act(() => type().props.setValue("Hoodie"));
@@ -932,7 +980,7 @@ describe("the photo", () => {
       "Remove photo",
     ]);
     // Under the photo too, with its own Undo
-    expect(JSON.stringify(tree.toJSON())).toContain("Background removed");
+    expect(shown(tree)).toContain("Background removed");
     act(() => pressInView(tree, "Fix the cut-out"));
     expect(view(tree).props.visible).toBe(false);
     expect(tree.root.findByType("CutoutEditor" as any).props.visible).toBe(
@@ -940,7 +988,7 @@ describe("the photo", () => {
     );
     act(() => button(tree, "Undo")!.props.onPress());
     expect(viewer(tree).props.imageUrl).toBe("/9j/photo");
-    expect(JSON.stringify(tree.toJSON())).not.toContain("Background removed");
+    expect(shown(tree)).not.toContain("Background removed");
   });
 
   test("a cut-out error shows in red, in the view and under the photo", async () => {
@@ -1040,13 +1088,13 @@ describe("leaving a changed form", () => {
     );
     const type = tree.root
       .findAllByType("Dropdown" as any)
-      .find(d => d.props.placeholder === "Subcategory")!;
+      .find(d => d.props.placeholder === "Subcategory *")!;
     act(() => type.props.setValue(type.props.items[0].value));
     expect(mockGuard.prevent).toBe(true);
     press(tree, "Save");
     // The guard is off before the screen closes.
     expect(mockGuard.prevent).toBe(false);
-    expect(navigation.popToTop).toHaveBeenCalledTimes(1);
+    expect(navigation.popTo).toHaveBeenCalledTimes(1);
     act(() => tree.unmount());
 
     mockState.itemsList.items = [
@@ -1065,6 +1113,273 @@ describe("leaving a changed form", () => {
         .props.onConfirm(),
     );
     expect(mockGuard.prevent).toBe(false);
-    expect(navigation.popToTop).toHaveBeenCalledTimes(2);
+    expect(navigation.popToTop).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Batch D: garment form", () => {
+  afterEach(() => {
+    mockState.settings.language = 0;
+  });
+  const dropdown = (tree: ReactTestRenderer, placeholder: string) =>
+    tree.root
+      .findAllByType("Dropdown" as any)
+      .find(d => d.props.placeholder === placeholder)!;
+
+  test("fields are ordered by use, with Category, Subcategory and Brand beside the photo", () => {
+    const tree = render();
+    const order = tree.root
+      .findAll(
+        n =>
+          ["Dropdown", "CustomInput", "OptionalDateField"].includes(
+            n.type as any,
+          ) ||
+          n.type === ("WardrobeSelector" as any) ||
+          (n.props.accessibilityLabel === "Automatic color selection" &&
+            n.type === ("Switch" as any)) ||
+          (typeof n.props.children === "string" &&
+            ["Seasons", "Styles", "Details"].includes(n.props.children) &&
+            typeof n.type !== "string"),
+      )
+      .map(n =>
+        n.type === ("WardrobeSelector" as any)
+          ? "Wardrobe"
+          : n.type === ("Switch" as any)
+          ? "Colors"
+          : n.props.placeholder ?? n.props.label ?? n.props.children,
+      )
+      .filter((label, index, all) => all.indexOf(label) === index);
+    expect(order).toEqual([
+      "Category",
+      "Subcategory *",
+      "Brand",
+      "Colors",
+      "Name",
+      "Seasons",
+      "Styles",
+      "Details",
+      "Wardrobe",
+      "Size",
+      "Unit",
+      "Collection",
+      "Purchase Date",
+      "Quantity",
+    ]);
+    // Beside the photo: the same row as the image
+    let row = tree.root.findByType("ImageViewer" as any).parent!;
+    while (row.findAllByType("Dropdown" as any).length === 0) row = row.parent!;
+    expect(
+      row.findAllByType("Dropdown" as any).map(d => d.props.placeholder),
+    ).toEqual(["Category", "Subcategory *"]);
+    expect(
+      row.findAllByType("CustomInput" as any).map(i => i.props.label),
+    ).toEqual(["Brand"]);
+    // Pickers beside the photo open as modals
+    row
+      .findAllByType("Dropdown" as any)
+      .forEach(d => expect(d.props.listMode).toBe("MODAL"));
+  });
+
+  test("titles name the garment, and the header ✓ saves like the bottom Save", () => {
+    const tree = render();
+    const header = tree.root.findByType("PageHeader" as any);
+    expect(header.props.title).toBe("New garment");
+    expect(header.props.actions.props).toMatchObject({
+      name: "checkmark",
+      label: "Save",
+    });
+    chooseFirstType(tree);
+    act(() => header.props.actions.props.onPress());
+    expect(savedPayload()).toBeDefined();
+    expect(navigation.popTo).toHaveBeenCalledTimes(1);
+    mockState.itemsList.items = [
+      { id: "a", name: "Coat", type: "T-Shirt", collection: [], category: 0 },
+    ];
+    expect(render("a").root.findByType("PageHeader" as any).props.title).toBe(
+      "Edit garment",
+    );
+  });
+
+  test("Save without a subcategory marks the picker red with the message under it", () => {
+    const tree = render();
+    save(tree);
+    expect(mockDispatch).not.toHaveBeenCalled();
+    const picker = dropdown(tree, "Subcategory *");
+    expect(StyleSheet.flatten(picker.props.style).borderColor).toBe("#b3261e");
+    // The message sits right under the picker
+    const under = picker.parent!.findAll(
+      n =>
+        n.props.children === "Please choose a subcategory" &&
+        typeof n.type !== "string",
+    );
+    expect(under.length).toBeGreaterThan(0);
+    chooseFirstType(tree);
+    expect(
+      StyleSheet.flatten(dropdown(tree, "Subcategory *").props.style)
+        .borderColor,
+    ).not.toBe("#b3261e");
+    expect(shown(tree)).not.toContain("Please choose a subcategory");
+  });
+
+  test("the name shows its automatic rule until typed over", () => {
+    const tree = render();
+    expect(shown(tree)).toContain("Automatic: color + brand + subcategory");
+    act(() =>
+      input(tree, "Name").props.onChange({ nativeEvent: { text: "Coat" } }),
+    );
+    expect(shown(tree)).not.toContain("Automatic: color");
+  });
+
+  test("an emptied quantity shows empty and saves as 1; a typed one is kept", () => {
+    const tree = render();
+    expect(input(tree, "Quantity").props.value).toBe("1");
+    act(() =>
+      input(tree, "Quantity").props.onChange({ nativeEvent: { text: "" } }),
+    );
+    expect(input(tree, "Quantity").props.value).toBe("");
+    chooseFirstType(tree);
+    save(tree);
+    expect(savedPayload().quantity).toBe(1);
+    mockDispatch.mockClear();
+    act(() =>
+      input(tree, "Quantity").props.onChange({ nativeEvent: { text: "3" } }),
+    );
+    save(tree);
+    expect(savedPayload().quantity).toBe(3);
+  });
+
+  test("an old garment without a quantity saves it unchanged", () => {
+    mockState.itemsList.items = [
+      { id: "old", name: "Old", type: "T-Shirt", collection: [], category: 0 },
+    ];
+    const tree = edit("old");
+    expect(input(tree, "Quantity").props.value).toBe("");
+    expect(input(tree, "Size").props.value).toBe("");
+    save(tree);
+    expect(savedPayload().quantity).toBeUndefined();
+  });
+
+  test("automatic colors fill every color read from the photo", async () => {
+    mockCutoutColors.mockReset();
+    mockState.itemsList.items = [
+      {
+        id: "cut",
+        name: "Cut",
+        type: "Sneakers",
+        category: 2,
+        image: "UklGRcut",
+        automaticColor: false,
+        primaryColor: "#000000",
+        collection: [],
+      },
+    ];
+    const tree = edit("cut");
+    expect(colorRows(tree)).toEqual(["Primary color"]);
+    mockCutoutColors.mockResolvedValueOnce(["#111111", "#222222", "#333333"]);
+    await act(async () => autoColors(tree).props.onValueChange(true));
+    expect(colorRows(tree)).toHaveLength(3);
+    expect(tree.root.findByType("ColorModal" as any).props.colors).toEqual([
+      "#111111",
+      "#222222",
+      "#333333",
+    ]);
+    // × stays available with automatic colors on
+    expect(
+      labelled(tree, "Remove color: Tertiary color").length,
+    ).toBeGreaterThan(0);
+  });
+
+  test("Save & add next saves, keeps where it goes, and starts an empty garment without asking", () => {
+    mockState.settings.lastWardrobeId = "work";
+    const tree = render();
+    act(() =>
+      input(tree, "Brand").props.onChange({ nativeEvent: { text: "Zara" } }),
+    );
+    act(() =>
+      input(tree, "Size").props.onChange({ nativeEvent: { text: "M" } }),
+    );
+    const typeLabel = chooseFirstType(tree);
+    const chip = (label: string) =>
+      tree.root.find(
+        n => n.props.accessibilityLabel === label && !!n.props.onPress,
+      );
+    act(() => chip("Summer").props.onPress());
+    act(() => chip("In storage").props.onPress());
+    act(() => button(tree, "Save & add next")!.props.onPress());
+    expect(savedPayload()).toEqual(
+      expect.objectContaining({
+        brand: "Zara",
+        name: `Zara ${typeLabel}`,
+        wardrobeId: "work",
+        stored: true,
+        size: "M",
+      }),
+    );
+    // It stays on the form
+    expect(navigation.popTo).not.toHaveBeenCalled();
+    expect(navigation.popToTop).not.toHaveBeenCalled();
+    expect(mockGuard.prevent).toBe(false);
+    // Emptied: brand, subcategory, name, size and photo
+    expect(input(tree, "Brand").props.value).toBe("");
+    expect(input(tree, "Size").props.value).toBe("");
+    expect(input(tree, "Name").props.value).toBe("");
+    expect(dropdown(tree, "Subcategory *").props.value).toBe("");
+    expect(tree.root.findByType("ImageViewer" as any).props.imageUrl).toBe("");
+    // Kept: category, wardrobe, storage, seasons
+    expect(dropdown(tree, "Category").props.value).toBe(0);
+    expect(tree.root.findByType("WardrobeSelector" as any).props.value).toBe(
+      "work",
+    );
+    expect(chip("In storage").props.accessibilityState.selected).toBe(true);
+    expect(chip("Summer").props.accessibilityState.selected).toBe(false);
+    // Says where it went and asks for the next photo
+    expect(tree.root.findByType("Snackbar" as any).props.visible).toBe(true);
+    expect(tree.root.findByType("Snackbar" as any).props.children).toBe(
+      "Saved to Work",
+    );
+    expect(
+      tree.root
+        .findAllByType("CustomModal" as any)
+        .find(m => m.props.label === "Import image")!.props.visible,
+    ).toBe(true);
+    // A change after that asks again
+    act(() =>
+      input(tree, "Brand").props.onChange({ nativeEvent: { text: "H" } }),
+    );
+    expect(mockGuard.prevent).toBe(true);
+  });
+
+  test("Save & add next is only for new garments", () => {
+    mockState.itemsList.items = [
+      { id: "a", name: "Coat", type: "T-Shirt", collection: [], category: 0 },
+    ];
+    expect(button(render("a"), "Save & add next")).toBeUndefined();
+  });
+
+  test("a new garment without a wardrobe says Saved", () => {
+    const tree = render();
+    act(() =>
+      tree.root.findByType("WardrobeSelector" as any).props.onChange(""),
+    );
+    chooseFirstType(tree);
+    save(tree);
+    expect(navigation.popTo).toHaveBeenCalledWith("StackNavHome", {
+      screen: "Closet",
+      params: { saved: "Saved" },
+    });
+  });
+
+  test("Spanish labels", () => {
+    mockState.settings.language = 1;
+    const tree = render();
+    expect(tree.root.findByType("PageHeader" as any).props.title).toBe(
+      "Nueva prenda",
+    );
+    expect(input(tree, "Talla")).toBeDefined();
+    expect(dropdown(tree, "Subcategoría *")).toBeDefined();
+    expect(button(tree, "Guardar y añadir otra")).toBeDefined();
+    expect(shown(tree)).toContain("Detalles");
+    expect(shown(tree)).toContain("De la foto");
+    expect(shown(tree)).toContain("Automático: color + marca + subcategoría");
   });
 });

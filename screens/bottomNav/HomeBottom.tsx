@@ -54,7 +54,7 @@ import {
   toggleSection,
 } from "../../redux/settingsSlice";
 import { theme } from "../../utils/theme";
-export function HomeBottom() {
+export function HomeBottom({ route }: { route?: any } = {}) {
   //this is the main page
   const navigation = useNavigation<any>();
   const itemsState = useSelector((state: RootState) => state.itemsList);
@@ -106,7 +106,15 @@ export function HomeBottom() {
   const [isOpen, setIsOpen] = useState(false);
   // Garments in the log sheet, by id so they stay current after edits.
   const [logging, setLogging] = useState<string[]>([]);
-  const [undo, setUndo] = useState<{ message: string; run: () => void }>();
+  // A message, with Undo when it can be undone.
+  const [undo, setUndo] = useState<{ message: string; run?: () => void }>();
+  // A new garment's form comes back with where it was saved.
+  const saved: string | undefined = route?.params?.saved;
+  useEffect(() => {
+    if (!saved) return;
+    navigation.setParams({ saved: undefined });
+    setUndo({ message: saved });
+  }, [saved, navigation]);
   // Select mode: ids of the ticked garments.
   const [selecting, setSelecting] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
@@ -390,10 +398,11 @@ export function HomeBottom() {
         wrapperStyle={
           selecting ? styles.snackbarOverSelection : styles.snackbar
         }
-        action={{
-          label: l.Undo[language],
-          onPress: () => undo?.run(),
-        }}
+        action={
+          undo?.run
+            ? { label: l.Undo[language], onPress: () => undo.run?.() }
+            : undefined
+        }
       >
         {undo?.message ?? ""}
       </Snackbar>

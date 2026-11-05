@@ -342,3 +342,21 @@ test("select mode ticks garments and stores, moves or logs them together", async
   ).not.toHaveLength(0);
   await act(async () => tree!.unmount());
 });
+
+test("Closet shows where a new garment was saved, without Undo, and clears the param", async () => {
+  mockNavigation.setParams.mockClear();
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(
+      <WardrobeProvider>
+        <HomeBottom route={{ params: { saved: "Guardado en Casa" } }} />
+      </WardrobeProvider>,
+    );
+  });
+  const snackbar = tree!.root.findByType("Snackbar" as any);
+  expect(snackbar.props.visible).toBe(true);
+  expect(snackbar.props.children).toBe("Guardado en Casa");
+  expect(snackbar.props.action).toBeUndefined();
+  expect(mockNavigation.setParams).toHaveBeenCalledWith({ saved: undefined });
+  await act(async () => tree!.unmount());
+});
