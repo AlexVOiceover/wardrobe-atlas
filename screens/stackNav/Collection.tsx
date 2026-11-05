@@ -28,8 +28,9 @@ import { CollectionNameSheet } from "../../components/CollectionNameSheet";
 const BAR_CLEARANCE = 88;
 
 /**
- * One collection's garments. They can be logged together as an outfit, and
- * "Add or remove garments" ticks them from the whole closet.
+ * One collection's garments. They can be logged together as an outfit, or
+ * some of them after a long press starts selecting; "Add or remove garments"
+ * ticks them from the whole closet. A new collection opens in that mode.
  */
 export function Collection({
   navigation,
@@ -38,7 +39,7 @@ export function Collection({
   navigation: any;
   route: any;
 }) {
-  const { value }: { value: string } = route.params;
+  const { value, edit }: { value: string; edit?: boolean } = route.params;
   const { collectionTags, items, logs } = useSelector(
     (s: RootState) => s.itemsList,
   );
@@ -51,24 +52,31 @@ export function Collection({
   const columns = normalizeGridColumns(settings.gridColumns);
   const density = cardDensity(columns);
   // While editing: ids of the ticked garments, saved together.
-  const [editing, setEditing] = useState(false);
-  const [picked, setPicked] = useState<string[]>([]);
+  const [editing, setEditing] = useState(edit === true);
+  const [picked, setPicked] = useState<string[]>(() =>
+    edit === true ? garments.map(garment => garment.id) : [],
+  );
+  // Select mode: the garments "Log outfit" logs.
+  const [selecting, setSelecting] = useState(false);
+  const [ticked, setTicked] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<string[]>([]);
   const [isRenaming, setIsRenaming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [logging, setLogging] = useState<string[]>([]);
   const [undo, setUndo] = useState<{ message: string; run: () => void }>();
   useEffect(() => {
-    if (!editing) return;
+    if (!editing && !selecting) return;
     const subscription = BackHandler.addEventListener(
       "hardwareBackPress",
       () => {
         setEditing(false);
+        setSelecting(false);
+        setTicked([]);
         return true;
       },
     );
     return () => subscription.remove();
-  }, [editing]);
+  }, [editing, selecting]);
   const sections = useMemo(
     () => (editing ? closetSections(items, categoryState, language) : []),
     [editing, items, categoryState, language],
@@ -81,10 +89,21 @@ export function Collection({
         <PageHeader />
       </ThemeView>
     );
+  const stopSelecting = () => {
+    setSelecting(false);
+    setTicked([]);
+  };
   const startEditing = () => {
+    stopSelecting();
     setPicked(garments.map(garment => garment.id));
     setEditing(true);
   };
+  const toggleTicked = (id: string) =>
+    setTicked(current =>
+      current.includes(id)
+        ? current.filter(other => other !== id)
+        : [...current, id],
+    );
   const saveEditing = () => {
     dispatch(setCollectionGarments({ value, ids: picked }));
     setEditing(false);
@@ -161,20 +180,37 @@ export function Collection({
   return (
     <ThemeView>
       <PageHeader
-        title={collection.label}
+        title={
+          selecting
+            ? countText(
+                l.GarmentCount,
+                l.GarmentsCount,
+                ticked.length,
+                language,
+              )
+            : collection.label
+        }
         actions={
-          <>
+          selecting ? (
             <HeaderIcon
-              name="create-outline"
-              label={l.Rename[language]}
-              onPress={() => setIsRenaming(true)}
+              name="close"
+              label={l.Cancel[language]}
+              onPress={stopSelecting}
             />
-            <HeaderIcon
-              name="trash-outline"
-              label={l.Delete[language]}
-              onPress={() => setIsDeleting(true)}
-            />
-          </>
+          ) : (
+            <>
+              <HeaderIcon
+                name="create-outline"
+                label={l.Rename[language]}
+                onPress={() => setIsRenaming(true)}
+              />
+              <HeaderIcon
+                name="trash-outline"
+                label={l.Delete[language]}
+                onPress={() => setIsDeleting(true)}
+              />
+            </>
+          )
         }
       />
       <ScrollView
@@ -192,17 +228,28 @@ export function Collection({
             garments={garments}
             columns={columns}
             renderGarment={garment => (
-              // Tap opens the garment sheet and a double tap logs at once,
-              // as in the Closet. There is no select mode here yet, so a long
-              // press still edits.
+              // As in the Closet: tap opens the garment sheet, a double tap
+              // logs at once and a long press starts selecting with it ticked.
               <ItemBox
                 {...garmentSummary(garment)}
                 density={density}
-                onPress={() => setLogging([garment.id])}
-                onDoubleTap={() =>
-                  offerUndo(logGarments(dispatch, [garment], language))
+                selected={selecting ? ticked.includes(garment.id) : undefined}
+                onPress={() =>
+                  selecting
+                    ? toggleTicked(garment.id)
+                    : setLogging([garment.id])
                 }
-                onLongPress={() => editGarment(garment)}
+                onDoubleTap={
+                  selecting
+                    ? undefined
+                    : () =>
+                        offerUndo(logGarments(dispatch, [garment], language))
+                }
+                onLongPress={() => {
+                  if (selecting) return toggleTicked(garment.id);
+                  setSelecting(true);
+                  setTicked([garment.id]);
+                }}
               />
             )}
           />
@@ -210,16 +257,34 @@ export function Collection({
       </ScrollView>
       {garments.length > 0 && (
         <View style={styles.bar}>
-          <Button mode="outlined" style={styles.action} onPress={startEditing}>
-            {l.EditCollectionGarments[language]}
-          </Button>
-          <Button
-            mode="contained"
-            style={styles.action}
-            onPress={() => setLogging(garments.map(garment => garment.id))}
-          >
-            {l.LogAsOutfit[language]}
-          </Button>
+          {selecting ? (
+            // Only the ticked garments.
+            <Button
+              mode="contained"
+              style={styles.action}
+              disabled={ticked.length === 0}
+              onPress={() => setLogging(ticked)}
+            >
+              {l.LogOutfitCount[language].replace("{n}", String(ticked.length))}
+            </Button>
+          ) : (
+            <>
+              <Button
+                mode="outlined"
+                style={styles.action}
+                onPress={startEditing}
+              >
+                {l.EditCollectionGarments[language]}
+              </Button>
+              <Button
+                mode="contained"
+                style={styles.action}
+                onPress={() => setLogging(garments.map(garment => garment.id))}
+              >
+                {l.LogAsOutfit[language]}
+              </Button>
+            </>
+          )}
         </View>
       )}
       <QuickLogSheet
@@ -232,7 +297,10 @@ export function Collection({
         language={language}
         onClose={() => setLogging([])}
         onEdit={editGarment}
-        onLogged={offerUndo}
+        onLogged={log => {
+          stopSelecting();
+          offerUndo(log);
+        }}
       />
       <CollectionNameSheet
         isOpen={isRenaming}

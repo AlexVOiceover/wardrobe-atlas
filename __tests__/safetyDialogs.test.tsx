@@ -19,9 +19,17 @@ jest.mock("react-redux", () => ({
 }));
 // The latest arguments of usePreventRemove: whether leaving asks first.
 const mockGuard = { prevent: false };
-const mockNavigation = { navigate: jest.fn(), popToTop: jest.fn() };
+const mockNavigation = {
+  navigate: jest.fn(),
+  popToTop: jest.fn(),
+  goBack: jest.fn(),
+  popTo: jest.fn(),
+  setParams: jest.fn(),
+};
+const mockRoute: { params?: any } = {};
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => mockNavigation,
+  useRoute: () => mockRoute,
   usePreventRemove: (prevent: boolean) => {
     mockGuard.prevent = prevent;
   },
@@ -42,7 +50,9 @@ jest.mock("../components/PageHeader", () => ({
 }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/DatePicker", () => ({ DatePicker: "DatePicker" }));
-jest.mock("../components/GarmentGrid", () => ({ GarmentGrid: "GarmentGrid" }));
+jest.mock("../components/GarmentPicker", () => ({
+  GarmentPicker: "GarmentPicker",
+}));
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 const render = (element: React.ReactElement) => {
@@ -111,26 +121,34 @@ describe("confirmation dialog", () => {
   });
 });
 
-test("outfit form asks before leaving only once something is entered", async () => {
+test("outfit form asks before leaving only once something is changed", async () => {
+  mockState.itemsList = {
+    items: [{ id: "a", name: "Shirt", logIds: ["e1"] }],
+    logs: [{ eventId: "e1", eventName: "Work", eventDate: '"2026-11-01"' }],
+  };
   const tree = render(
     <EventLogForm
       navigation={mockNavigation}
-      route={{ params: { selectedIDs: ["a"] } }}
+      route={{ params: { eventId: "e1" } }}
     />,
   );
   expect(mockGuard.prevent).toBe(false);
   const name = tree.root
     .findAllByType("CustomInput" as any)
-    .find(i => i.props.label === "Event Name")!;
+    .find(i => i.props.label === "Name")!;
   act(() => name.props.onChange({ nativeEvent: { text: "Dinner" } }));
   expect(mockGuard.prevent).toBe(true);
+  // Changing it back is not a change.
+  act(() => name.props.onChange({ nativeEvent: { text: "Work" } }));
+  expect(mockGuard.prevent).toBe(false);
+  act(() => name.props.onChange({ nativeEvent: { text: "Dinner" } }));
   await act(async () => {
-    await buttons(tree)
-      .find(b => b.props.children === "Save")!
-      .props.onPress();
+    const save = tree.root.findByType("PageHeader" as any).props.actions;
+    expect(save.props.label).toBe("Save");
+    save.props.onPress();
   });
   expect(mockGuard.prevent).toBe(false);
-  expect(mockNavigation.popToTop).toHaveBeenCalledTimes(1);
+  expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
 });
 
 test("Restore default categories sits after Add and asks first", () => {
@@ -201,20 +219,35 @@ describe("deleting a logged outfit", () => {
     expect(state).toEqual(before);
   });
 
-  test("the red bin deletes at once and the snackbar offers Undo", () => {
+  test("Delete in the outfit's page deletes at once and Outfits offers Undo", async () => {
     mockState.itemsList = outfits();
-    const tree = render(<OutfitLog />);
-    const bin = tree.root.find(
-      n => n.props.accessibilityLabel === "Delete: Dinner" && !!n.props.onPress,
+    const form = render(
+      <EventLogForm
+        navigation={mockNavigation}
+        route={{ params: { eventId: "e2" } }}
+      />,
     );
-    const icon = bin.findByType("Icon" as any);
-    expect(icon.props.name).toBe("trash-outline");
-    expect(icon.props.color).toBe("#b3261e");
-    act(() => bin.props.onPress());
+    const remove = buttons(form).find(
+      b => b.props.children === "Delete outfit",
+    )!;
+    expect(remove.props.textColor).toBe("#b3261e");
+    await act(async () => remove.props.onPress());
     expect(mockDispatch.mock.calls.map(call => call[0].type)).toEqual([
       "itemsList/deleteLog",
       "itemsList/deleteEventLog",
     ]);
+    // Deleting never asks to discard changes.
+    expect(mockGuard.prevent).toBe(false);
+    expect(mockNavigation.popTo).toHaveBeenCalledTimes(1);
+    const [screen, params] = mockNavigation.popTo.mock.calls[0];
+    expect(screen).toBe("StackNavHome");
+    expect(params.screen).toBe("Outfits");
+    act(() => form.unmount());
+    mockRoute.params = params.params;
+    const tree = render(<OutfitLog />);
+    expect(mockNavigation.setParams).toHaveBeenCalledWith({
+      notice: undefined,
+    });
     const snackbar = tree.root.findByType("Snackbar" as any);
     expect(snackbar.props.visible).toBe(true);
     expect(snackbar.props.children).toBe("Deleted: Dinner");
@@ -233,5 +266,6 @@ describe("deleting a logged outfit", () => {
       },
     });
     act(() => tree.unmount());
+    mockRoute.params = undefined;
   });
 });

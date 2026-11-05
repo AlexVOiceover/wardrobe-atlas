@@ -35,10 +35,13 @@ export const HeaderIcon = ({
 export const PageHeader = ({
   title,
   back = true,
+  onBack,
   actions,
 }: {
   title?: string;
   back?: boolean;
+  // Replaces going back, e.g. to close a full-screen picker.
+  onBack?: () => void;
   actions?: ReactNode;
 }) => {
   const navigation = useNavigation<any>();
@@ -51,7 +54,8 @@ export const PageHeader = ({
           label={localization.Back[language]}
           onPress={() => {
             Keyboard.dismiss();
-            navigation.goBack();
+            if (onBack) onBack();
+            else navigation.goBack();
           }}
         />
       )}

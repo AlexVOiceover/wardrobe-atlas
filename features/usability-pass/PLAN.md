@@ -113,6 +113,38 @@ Prompted by: "the flow is confusing, pressing on the image shows some kind of pr
 - Reordering collections: the arrows show directly in Custom order; the sheet is called "Order".
 - Empty Outfits screen explains how to log.
 
+**Implemented** (branch `feature/usability-c`):
+
+- **Outfits +** opens the garment picker (`components/GarmentPicker.tsx`, used by `ItemSelector`): the Closet's layout (`ClosetSections` + `ItemBox` with the ticked frame, the Closet's grid size), each garment once even when it is in two collections, only the wardrobe the Closet shows (as Suggest outfit), stored garments hidden behind a "Show stored (n)" chip, a search field. Folding headings is local to the picker; ticking and folding dispatch nothing (no `toggleCollection`/`isOpen` or settings writes). Ticked garments always show, even if stored or in another wardrobe.
+- Its sticky footer has **Log outfit (n)** / **Registrar conjunto (n)** (disabled at 0) and the sheet's "Now · change" control, now the shared `WhenControl` in `QuickLogSheet.tsx`. It logs with `logGarments` (named "Outfit"/"Conjunto", or the garment's name for one), returns to Outfits and shows "Logged: {name} · Undo". No name step.
+- Returning with Undo: screens go back with `returnToOutfits` (`components/LogComponent.tsx`), which `popTo`s the Outfits tab with a `notice` param (`logged` or `deleted` with the restore action); Outfits shows it in its snackbar and clears the param. Used by Outfits +, Suggest → Wear this and Delete in the edit page.
+- **Edit a logged outfit**: tapping a card opens `EventLogForm`, now the edit page (it is no longer used for creating). Name, When (date and time, later picks become now), notes, the garments with a ✕ "Remove {name}" each, **Add garments** (the same picker full screen in a `Modal`, starting with the outfit's garments ticked, **Done**), header ✓ Save, the Discard guard (name, notes, date or garment set differ from when it opened), and a red **Delete outfit** text button at the bottom that deletes at once and returns with "Deleted: {name} · Undo". A blank name shows "Give the outfit a name".
+- New reducer `updateEventLog({ eventId, eventName?, eventDate?, additionalNotes?, garmentIds? })` patches only the given fields. `deleteLog` removes an outfit from *every* garment, so it can't remove one garment; instead `garmentIds` sets exactly which garments link to the outfit, adding the id at the end for new ones and leaving kept ones where they were in their `logIds`. Save sends only fields that changed, so untouched dates keep their stored format. No new fields, no migration.
+- **Cards** are compact: name, date and time (24-hour), notes on one line if any, and a wrapping row of 56dp photos (`components/GarmentPhoto.tsx`, shared with the log sheet). The card is one button, "Edit {name}". The bin and the read-only details modal are gone.
+- **Sort**: Outfits opens by date worn, newest first; options are Date ↓, Date ↑, Name ↑, Name ↓, Last added.
+- **Suggest → Wear this** logs with `logGarments` keeping the "{style} outfit" name, then returns to Outfits with "Logged · Undo".
+- **Collection page**: long-press starts select mode with that garment ticked (header shows the count and ✕; Back ends it); taps tick; the bottom bar shows only **Log outfit (n)**, which opens the log sheet with the ticked garments; logging ends select mode. Outside select mode the bar is as before. The Batch A long-press-to-Edit is gone (Edit stays in the sheet's row).
+- **New collection** opens straight in "Add or remove garments". The id is computed with `newCollectionValue`, the same helper the `addCollection` reducer now uses (so a reused name gets "Name (2)"), rather than reading the store after dispatch.
+- **Collections order**: the sheet and its header icon are "Order" / "Orden". With Custom chosen (the default), the arrows show at once under the caption "Custom is the order you set here with the arrows."
+- **Empty Outfits**: "No outfits yet. Tap a garment in your Closet, or tap + to log an outfit." with the Log outfit button.
+- Spanish: strings added or touched use "conjunto" (tab "Conjuntos", "Registrar conjunto", "Sugerir conjunto", "Conjunto {style}"); the rest of the glossary is Batch E. Removed unused strings: SelectItems, Next, SelectAtLeastOneItem, EventInfo, EventDate, EventName, ClosetHistoryEmpty. `SelectionItemBox` was only used by the old picker and is deleted. `PageHeader` takes `onBack`; `DatePicker` takes `maximumDate` and has a spoken name.
+- Not done: the outfit date still shows as DD/MM/YYYY (Batch E's date helper); the picker has no filters besides search and stored.
+
+**Acceptance checks (Batch C):**
+
+- [ ] Outfits +: the picker looks like the Closet with a ticked frame; a garment in two collections shows once; stored garments are hidden until "Show stored (n)"; with a wardrobe chosen in the Closet only its garments show.
+- [ ] Ticking updates "Log outfit (n)"; "Now · change" picks an earlier time; Log outfit returns to Outfits with "Logged: Outfit · Undo"; Undo removes it and the use counts.
+- [ ] Outfits is sorted newest worn first; Last added is the last sort option.
+- [ ] Cards: name, date, notes, a row of small photos; no bin. Tapping opens the edit page.
+- [ ] Edit page: change name, date/time (no future), notes; remove a garment; Add garments ticks more; ✓ saves and the card and garment use counts update. Back after a change asks "Discard changes?"; Save doesn't.
+- [ ] Delete outfit (red, at the bottom) returns to Outfits with "Deleted: … · Undo"; Undo restores it.
+- [ ] Suggest → Wear this returns to Outfits with "Logged: Casual outfit · Undo".
+- [ ] Collection page: long-press ticks a garment and starts selecting; Log outfit (n) logs only the ticked ones; Back or ✕ ends selecting; tap still opens the sheet and double-tap logs.
+- [ ] New collection opens in "Add or remove garments"; saving ticks puts those garments in it (also for a name reused after a rename).
+- [ ] Collections › Order: titled "Order"; Custom shows the caption and arrows.
+- [ ] Empty Outfits shows the new hint; Spanish says "Aún no hay conjuntos…".
+- [x] `npx tsc --noEmit`, `npm run lint`, `npm test` pass (244 tests).
+
 ## Batch D: garment form
 
 - Field order by use: next to the photo **Category, Subcategory, Brand**; then Colors, Name, Seasons, Styles; then a **Details** group (Wardrobe, In storage, Size, Collection, Purchase date, Quantity).
