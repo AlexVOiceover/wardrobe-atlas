@@ -104,7 +104,7 @@ export function HomeBottom() {
     getCollectionSortValue(storedSettings.collectionSortValue),
   ).map(tag => ({ label: tag.label, value: tag.value }));
   const [isOpen, setIsOpen] = useState(false);
-  // Garments in the log sheet, by id so their storage switch stays current.
+  // Garments in the log sheet, by id so they stay current after edits.
   const [logging, setLogging] = useState<string[]>([]);
   const [undo, setUndo] = useState<{ message: string; run: () => void }>();
   // Select mode: ids of the ticked garments.
@@ -149,6 +149,12 @@ export function HomeBottom() {
     offerUndo(logGarments(dispatch, [garment], language));
   const editGarment = (garment: item) =>
     navigation.navigate("ItemForm", { editingIndex: garment.id });
+  // A long press starts selecting, with that garment ticked.
+  const startSelectingWith = (garment: item) => {
+    Keyboard.dismiss();
+    setSelecting(true);
+    setPicked([garment.id]);
+  };
   // The type is shown by the heading above, so cards leave it out.
   const renderGarment = (garment: item) => (
     <ItemBox
@@ -160,7 +166,7 @@ export function HomeBottom() {
         selecting ? togglePicked(garment.id) : setLogging([garment.id])
       }
       onLongPress={() =>
-        selecting ? togglePicked(garment.id) : editGarment(garment)
+        selecting ? togglePicked(garment.id) : startSelectingWith(garment)
       }
       onDoubleTap={selecting ? undefined : () => logNow(garment)}
     />

@@ -7,16 +7,10 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useDispatch } from "react-redux";
 import "react-native-get-random-values";
 import { nanoid } from "nanoid";
-import {
-  addEventLog,
-  addLog,
-  setGarmentsStored,
-  type item,
-} from "../redux/itemsSlice";
+import { addEventLog, addLog, type item } from "../redux/itemsSlice";
 import { countText, localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
 import { BottomSheet } from "./BottomSheet";
-import { FilterChip } from "./FilterChip";
 import { ThemeText } from "./ThemeText";
 
 export const usageSummary = (
@@ -68,8 +62,8 @@ export function logGarments(
 
 /**
  * Logs one use of the given garments as a single Outfits entry. "When" starts
- * as now and can be moved to an earlier time. With one garment it also shows
- * its uses, its storage chip and Edit.
+ * as now and can be moved to an earlier time. With one garment, its row shows
+ * its uses and opens Edit; with several, their photos show what is logged.
  */
 export function QuickLogSheet({
   garments,
@@ -90,10 +84,8 @@ export function QuickLogSheet({
   const garment = garments.length === 1 ? garments[0] : undefined;
   const [when, setWhen] = useState<Date>();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [photoLarge, setPhotoLarge] = useState(false);
   const close = () => {
     setWhen(undefined);
-    setPhotoLarge(false);
     onClose();
   };
   const setOpen: Dispatch<SetStateAction<boolean>> = value => {
@@ -108,123 +100,98 @@ export function QuickLogSheet({
   const whenLabel = when
     ? dayjs(when).format("DD/MM/YYYY · HH:mm")
     : localization.Now[language];
+  const name = garment?.name || localization.Garment[language];
   return (
     <BottomSheet
       isOpen={garments.length > 0}
       setIsOpen={setOpen}
+      // The garment's name is in its row, so the title says what this is for.
       title={
-        garment
-          ? garment.name || localization.Garment[language]
-          : localization.Outfit[language]
+        garment ? localization.LogUse[language] : localization.Outfit[language]
       }
     >
       {garments.length > 0 && (
         <View style={styles.content}>
-          {!garment && (
-            <ThemeText customStyle={captionText}>
-              {countText(
-                localization.GarmentCount,
-                localization.GarmentsCount,
-                garments.length,
-                language,
-              )}
-            </ThemeText>
-          )}
-          {garment && (
-            <View style={styles.summary}>
-              {garment.image ? (
-                // Tap to see the photo larger, tap again to shrink it.
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    photoLarge
-                      ? localization.ShowSmallerPhoto[language]
-                      : localization.ShowLargerPhoto[language]
-                  }
-                  onPress={() => setPhotoLarge(!photoLarge)}
-                  style={[styles.photo, photoLarge && styles.photoLarge]}
-                >
-                  <Image
-                    source={{ uri: `data:image/*;base64,${garment.image}` }}
-                    style={StyleSheet.absoluteFill}
-                    resizeMode={photoLarge ? "contain" : "cover"}
-                  />
-                </Pressable>
-              ) : (
-                <View style={[styles.photo, styles.placeholder]}>
-                  <Icon
-                    name="shirt-outline"
-                    size={24}
-                    color={theme.colors.muted}
-                  />
-                </View>
-              )}
-              <ThemeText customStyle={[captionText, styles.usage]}>
-                {usageSummary(garment.logIds?.length ?? 0, lastUsed, language)}
-              </ThemeText>
-              <FilterChip
-                dense
-                icon="archive-outline"
-                label={localization.InStorage[language]}
-                selected={garment.stored === true}
-                onPress={() =>
-                  dispatch(
-                    setGarmentsStored({
-                      ids: [garment.id],
-                      stored: garment.stored !== true,
-                    }),
-                  )
-                }
-              />
-            </View>
-          )}
-          <View style={styles.when}>
+          {garment ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${localization.When[language]}: ${whenLabel}`}
-              onPress={() => setPickerOpen(true)}
-              style={styles.whenValue}
+              accessibilityLabel={localization.EditNamed[language].replace(
+                "{name}",
+                name,
+              )}
+              onPress={() => {
+                close();
+                onEdit(garment);
+              }}
+              style={styles.garmentRow}
             >
-              <ThemeText customStyle={captionText}>
-                {localization.When[language]}
-              </ThemeText>
-              <ThemeText numberOfLines={1}>{whenLabel}</ThemeText>
-            </Pressable>
-            {when ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={localization.BackToNow[language]}
-                onPress={() => setWhen(undefined)}
-                style={styles.icon}
-              >
-                <Icon name="close" size={18} color={theme.colors.muted} />
-              </Pressable>
-            ) : (
-              <View style={styles.icon}>
-                <Icon
-                  name="calendar-outline"
-                  size={18}
-                  color={theme.colors.muted}
-                />
+              <GarmentPhoto image={garment.image} size={56} />
+              <View style={styles.garmentText}>
+                <ThemeText numberOfLines={2} customStyle={styles.name}>
+                  {name}
+                </ThemeText>
+                <ThemeText customStyle={captionText}>
+                  {usageSummary(
+                    garment.logIds?.length ?? 0,
+                    lastUsed,
+                    language,
+                  )}
+                </ThemeText>
               </View>
-            )}
-          </View>
-          <View style={styles.actions}>
-            {garment && (
-              <Button
-                mode="outlined"
-                style={styles.action}
-                onPress={() => {
-                  close();
-                  onEdit(garment);
-                }}
-              >
-                {localization.Edit[language]}
-              </Button>
-            )}
-            <Button mode="contained" style={styles.action} onPress={logUse}>
+              <Icon
+                name="chevron-forward"
+                size={20}
+                color={theme.colors.muted}
+              />
+            </Pressable>
+          ) : (
+            <>
+              <View style={styles.thumbnails}>
+                {garments.map(picked => (
+                  <GarmentPhoto
+                    key={picked.id}
+                    image={picked.image}
+                    size={40}
+                    label={picked.name || localization.Garment[language]}
+                  />
+                ))}
+              </View>
+              <ThemeText customStyle={captionText}>
+                {countText(
+                  localization.GarmentCount,
+                  localization.GarmentsCount,
+                  garments.length,
+                  language,
+                )}
+              </ThemeText>
+            </>
+          )}
+          <View>
+            <Button mode="contained" onPress={logUse}>
               {localization.LogUse[language]}
             </Button>
+            <View style={styles.when}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${localization.When[language]}: ${whenLabel}`}
+                onPress={() => setPickerOpen(true)}
+                style={styles.whenValue}
+              >
+                <ThemeText customStyle={styles.whenText}>
+                  {when ? whenLabel : localization.NowChange[language]}
+                </ThemeText>
+              </Pressable>
+              {when && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={localization.BackToNow[language]}
+                  onPress={() => setWhen(undefined)}
+                  style={styles.icon}
+                >
+                  <Icon name="close" size={18} color={theme.colors.muted} />
+                </Pressable>
+              )}
+            </View>
           </View>
           <DateTimePickerModal
             isVisible={pickerOpen}
@@ -243,60 +210,85 @@ export function QuickLogSheet({
     </BottomSheet>
   );
 }
+// A garment's photo, or a shirt where it has none.
+function GarmentPhoto({
+  image,
+  size,
+  label,
+}: {
+  image: string;
+  size: number;
+  label?: string;
+}) {
+  const frame = [styles.photo, { width: size, height: size }];
+  return image ? (
+    <View accessibilityLabel={label} style={frame}>
+      <Image
+        source={{ uri: `data:image/*;base64,${image}` }}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
+    </View>
+  ) : (
+    <View accessibilityLabel={label} style={[frame, styles.placeholder]}>
+      <Icon
+        name="shirt-outline"
+        size={size * 0.45}
+        color={theme.colors.muted}
+      />
+    </View>
+  );
+}
 const styles = StyleSheet.create({
   content: {
     gap: theme.spacing.md,
   },
-  // Wraps so the large photo takes the whole first line.
-  summary: {
+  garmentRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
     gap: theme.spacing.md,
+    minHeight: theme.touch,
+  },
+  garmentText: {
+    flex: 1,
+    gap: 2,
+  },
+  name: {
+    fontWeight: "600",
+  },
+  thumbnails: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.xs,
   },
   photo: {
-    width: 56,
-    height: 56,
     borderRadius: theme.radius.sm,
     backgroundColor: theme.colors.surface,
     overflow: "hidden",
-  },
-  photoLarge: {
-    width: "100%",
-    height: 280,
   },
   placeholder: {
     justifyContent: "center",
     alignItems: "center",
   },
-  usage: {
-    flex: 1,
-  },
+  // A small text button under Log use.
   when: {
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    minHeight: 48,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.colors.muted,
-    borderRadius: theme.radius.sm,
   },
   whenValue: {
-    flex: 1,
     justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: theme.spacing.md,
+    minHeight: theme.touch,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  whenText: {
+    color: theme.colors.bar,
+    fontSize: theme.type.caption,
   },
   icon: {
     width: theme.touch,
     minHeight: theme.touch,
     justifyContent: "center",
     alignItems: "center",
-  },
-  actions: {
-    flexDirection: "row",
-    gap: theme.spacing.sm,
-  },
-  action: {
-    flex: 1,
   },
 });

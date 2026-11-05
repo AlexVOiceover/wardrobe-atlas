@@ -50,8 +50,10 @@ jest.mock("react-native-paper", () => ({
   Snackbar: "Snackbar",
   TextInput: "TextInput",
 }));
+const mockLogGarments = jest.fn();
 jest.mock("../components/QuickLogSheet", () => ({
   QuickLogSheet: "QuickLogSheet",
+  logGarments: (...args: unknown[]) => mockLogGarments(...args),
 }));
 jest.mock("../components/ConfirmationDialog", () => ({
   ConfirmationDialog: "ConfirmationDialog",
@@ -181,6 +183,48 @@ test("Log as outfit logs every garment in the collection", () => {
   expect(sheet().props.garments).toEqual([]);
   act(() => button(tree, "Log as outfit").props.onPress());
   expect(sheet().props.garments.map((g: any) => g.id)).toEqual(["shirt"]);
+});
+
+test("tapping a garment opens its sheet, a double tap logs it with Undo, and a long press edits it", () => {
+  const tree = render(
+    <Collection
+      navigation={navigation}
+      route={{ params: { value: "trip" } }}
+    />,
+  );
+  const sheet = () => tree.root.findByType("QuickLogSheet" as any);
+  const card = () =>
+    tree.root.find(
+      x => x.props.accessibilityLabel === "Linen shirt" && !!x.props.onPress,
+    );
+  jest.useFakeTimers();
+  act(() => card().props.onPress());
+  act(() => jest.advanceTimersByTime(300));
+  expect(sheet().props.garments.map((g: any) => g.id)).toEqual(["shirt"]);
+  expect(navigation.navigate).not.toHaveBeenCalled();
+  act(() => sheet().props.onClose());
+  mockLogGarments.mockReturnValueOnce({ eventId: "e1", name: "Linen shirt" });
+  act(() => card().props.onPress());
+  act(() => card().props.onPress());
+  act(() => jest.advanceTimersByTime(1000));
+  jest.useRealTimers();
+  expect(sheet().props.garments).toEqual([]);
+  expect(mockLogGarments).toHaveBeenCalledWith(
+    mockDispatch,
+    [expect.objectContaining({ id: "shirt" })],
+    0,
+  );
+  const snackbar = tree.root.findByType("Snackbar" as any);
+  expect(snackbar.props.children).toBe("Logged: Linen shirt");
+  act(() => snackbar.props.action.onPress());
+  expect(mockDispatch.mock.calls.map(call => call[0].type)).toEqual([
+    "itemsList/deleteLog",
+    "itemsList/deleteEventLog",
+  ]);
+  act(() => card().props.onLongPress());
+  expect(navigation.navigate).toHaveBeenCalledWith("ItemForm", {
+    editingIndex: "shirt",
+  });
 });
 
 test("deleting asks first, then removes the collection and goes back", () => {
