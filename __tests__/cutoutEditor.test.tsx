@@ -1,6 +1,6 @@
 import React from "react";
 import { act, create, ReactTestRenderer } from "react-test-renderer";
-import { Image } from "react-native";
+import { Image, Modal } from "react-native";
 import {
   BRUSH_SIZES,
   CutoutEditor,
@@ -18,6 +18,9 @@ jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select({ settings: { language: 0 } }),
 }));
 jest.mock("@react-navigation/native", () => ({ useNavigation: () => ({}) }));
+jest.mock("../components/ConfirmationDialog", () => ({
+  ConfirmationDialog: "ConfirmationDialog",
+}));
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 beforeEach(() => {
@@ -173,4 +176,28 @@ test("a failed stroke keeps the image and says so", async () => {
   act(() => pressable(tree, "Done").props.onPress());
   expect(onDone).not.toHaveBeenCalled();
   expect(onCancel).toHaveBeenCalled();
+});
+
+test("closing with strokes applied asks first; without them it just closes", async () => {
+  const { tree, onCancel } = open({});
+  const dialog = () => tree.root.findByType("ConfirmationDialog" as any);
+  const modal = () => tree.root.findByType(Modal);
+  // Nothing painted yet: ✕ and Back close at once.
+  act(() => pressable(tree, "Cancel").props.onPress());
+  act(() => modal().props.onRequestClose());
+  expect(onCancel).toHaveBeenCalledTimes(2);
+  expect(dialog().props.visible).toBe(false);
+  mockEditCutout.mockResolvedValueOnce("UklGRone");
+  await paint(tree, [[150, 150]]);
+  act(() => modal().props.onRequestClose());
+  expect(dialog().props.visible).toBe(true);
+  expect(dialog().props.title).toBe("Discard changes?");
+  expect(onCancel).toHaveBeenCalledTimes(2);
+  // Keep editing keeps the stroke.
+  act(() => dialog().props.setVisible(false));
+  expect(dialog().props.visible).toBe(false);
+  expect(photo(tree)).toBe("data:image/webp;base64,UklGRone");
+  act(() => pressable(tree, "Cancel").props.onPress());
+  act(() => dialog().props.onConfirm());
+  expect(onCancel).toHaveBeenCalledTimes(3);
 });

@@ -59,6 +59,7 @@ jest.mock("react-redux", () => ({
 }));
 jest.mock("@react-navigation/native", () => ({
   useNavigation: () => mockNavigation,
+  usePreventRemove: jest.fn(),
   CommonActions: { goBack: jest.fn() },
 }));
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");

@@ -5,25 +5,24 @@ import { importItems } from "../redux/itemsSlice";
 import { importSettings } from "../redux/settingsSlice";
 import { readWardrobeBackup } from "./wardrobeData";
 
+/** Replaces the store with a chosen backup; says how it went. */
 export const importStoreFromJson = async (
   syncDisplay: (enabled: boolean) => void,
-) => {
+): Promise<"imported" | "cancelled" | "invalid"> => {
   try {
     const file = await ScopedStorage.openDocument(true, "utf8");
-    if (
-      !file ||
-      (file.mime !== "application/json" && !file.name.endsWith(".json"))
-    )
-      return false;
+    if (!file) return "cancelled";
+    if (file.mime !== "application/json" && !file.name.endsWith(".json"))
+      return "invalid";
     const state = readWardrobeBackup(JSON.parse(file.data));
     store.dispatch(importCategory(state.CategoryList));
     store.dispatch(importItems(state.itemsList));
     store.dispatch(importSettings(state.settings));
     await persistor.flush();
     syncDisplay(state.settings.enableHeatMap);
-    return true;
+    return "imported";
   } catch (error) {
     console.error("Import failed:", error);
-    return false;
+    return "invalid";
   }
 };

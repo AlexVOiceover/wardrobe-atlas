@@ -4,6 +4,7 @@ import { Button } from "react-native-paper";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
 import { localization } from "../utils/localization";
+import { theme } from "../utils/theme";
 import { ThemeText } from "./ThemeText";
 import CustomModal from "./CustomModal";
 interface ConfirmationDialogProps {
@@ -12,12 +13,17 @@ interface ConfirmationDialogProps {
   onConfirm: () => void;
   title?: string;
   message?: string;
-  /** Optional content rendered under the disclaimer/message (e.g. section checkboxes). */
+  /** Optional content rendered under the message (e.g. section checkboxes). */
   children?: ReactNode;
   /** Disable confirm (e.g. when no sections are selected). */
   confirmDisabled?: boolean;
-  confirmColor?: string;
+  /** Names the action; "Delete" unless given. */
+  confirmLabel?: string;
+  cancelLabel?: string;
+  /** Destructive actions get a red button. */
+  destructive?: boolean;
 }
+/** A centred question: Cancel on the left, the named action on the right. */
 export const ConfirmationDialog = ({
   visible,
   setVisible,
@@ -26,6 +32,9 @@ export const ConfirmationDialog = ({
   message,
   children,
   confirmDisabled = false,
+  confirmLabel,
+  cancelLabel,
+  destructive = true,
 }: ConfirmationDialogProps) => {
   const language =
     useSelector((state: RootState) => state.settings.language) || 0;
@@ -39,36 +48,37 @@ export const ConfirmationDialog = ({
       visible={visible}
       setVisible={setVisible}
       label={title || localization.Delete[language]}
+      minHeight={0}
       maxHeight={560}
+      showClose={false}
     >
-      <View style={styles.container}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <ThemeText customStyle={styles.message}>
-            {message || localization.ConfirmDelete[language]}
-          </ThemeText>
-          {children != null ? (
-            <View style={styles.extraContent}>{children}</View>
-          ) : null}
-        </ScrollView>
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="outlined"
-            onPress={handleConfirm}
-            style={styles.button}
-            disabled={confirmDisabled}
+      <View>
+        {(!!message || children != null) && (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
-            {localization.Yes[language]}
+            {!!message && (
+              <ThemeText customStyle={styles.message}>{message}</ThemeText>
+            )}
+            {children != null ? (
+              <View style={styles.extraContent}>{children}</View>
+            ) : null}
+          </ScrollView>
+        )}
+        <View style={styles.buttonContainer}>
+          <Button onPress={() => setVisible(false)}>
+            {cancelLabel ?? localization.Cancel[language]}
           </Button>
           <Button
-            mode="outlined"
-            onPress={() => setVisible(false)}
-            style={styles.button}
+            mode="contained"
+            onPress={handleConfirm}
+            disabled={confirmDisabled}
+            buttonColor={destructive ? theme.colors.danger : undefined}
+            textColor={destructive ? theme.colors.background : undefined}
           >
-            {localization.No[language]}
+            {confirmLabel ?? localization.Delete[language]}
           </Button>
         </View>
       </View>
@@ -76,9 +86,6 @@ export const ConfirmationDialog = ({
   );
 };
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-  },
   scroll: {
     width: "100%",
     maxHeight: 360,
@@ -96,12 +103,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
-    gap: 10,
+    justifyContent: "flex-end",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm,
     marginTop: 8,
-  },
-  button: {
-    flex: 1,
   },
 });

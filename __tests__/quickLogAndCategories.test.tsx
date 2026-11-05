@@ -545,7 +545,7 @@ describe("Categories page and names in both languages", () => {
     });
     mockDispatch.mockClear();
     press(tree, "Delete: Shirt");
-    const dialog = tree.root.findByType("ConfirmationDialog" as any);
+    const dialog = tree.root.findAllByType("ConfirmationDialog" as any)[0];
     expect(dialog.props.message).toContain("2 garments will move to Other.");
     act(() => dialog.props.onConfirm());
     expect(mockDispatch.mock.calls.map(call => call[0])).toEqual([

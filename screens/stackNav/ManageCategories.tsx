@@ -135,6 +135,7 @@ export function ManageCategories() {
   const [open, setOpen] = useState<number[]>([]);
   const [sheet, setSheet] = useState<Sheet>();
   const [deleting, setDeleting] = useState<Deleting>();
+  const [restoring, setRestoring] = useState(false);
   const categories = visibleCategories(categoryState, language);
   const allCategoryNames = categories.map(category =>
     categoryNamesOf(categoryState, category.index),
@@ -259,6 +260,14 @@ export function ManageCategories() {
           }
         }}
       />
+      <ConfirmationDialog
+        visible={restoring}
+        setVisible={setRestoring}
+        title={localization.RestoreDefaultCategoriesQuestion[language]}
+        message={localization.RestoreDefaultCategoriesMessage[language]}
+        confirmLabel={localization.RestoreDefaults[language]}
+        onConfirm={() => dispatch(restoreDefaultCategories())}
+      />
       <NameSheet
         isOpen={!!sheetProps}
         setIsOpen={value => {
@@ -347,7 +356,13 @@ export function ManageCategories() {
         >
           {localization.Add_New_Category[language]}
         </Button>
-        <Button onPress={() => dispatch(restoreDefaultCategories())}>
+        {/* Rarely needed, so kept apart from Add at the end of the list. */}
+        <Button
+          compact
+          textColor={theme.colors.muted}
+          style={styles.restore}
+          onPress={() => setRestoring(true)}
+        >
           {localization.RestoreDefaultCategories[language]}
         </Button>
       </ScrollView>
@@ -390,5 +405,9 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: theme.spacing.md,
+  },
+  restore: {
+    marginTop: theme.spacing.lg * 2,
+    alignSelf: "center",
   },
 });
