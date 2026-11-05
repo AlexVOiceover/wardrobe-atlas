@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Button, TextInput } from "react-native-paper";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,6 +8,7 @@ import {
   addWardrobe,
   renameWardrobe,
   deleteWardrobe,
+  type Wardrobe,
 } from "../../redux/itemsSlice";
 import { wardrobeNameError } from "../../utils/wardrobes";
 import { localization as l } from "../../utils/localization";
@@ -16,6 +17,8 @@ import { PageHeader } from "../../components/PageHeader";
 import { ThemeView } from "../../components/ThemeView";
 import { FormErrors } from "../../components/FormErrors";
 import { ListRow } from "../../components/ListRow";
+import { ConfirmationDialog } from "../../components/ConfirmationDialog";
+import { useDiscardGuard } from "../../hooks/useDiscardGuard";
 export function Wardrobes() {
   const { wardrobes, items } = useSelector((s: RootState) => s.itemsList);
   const { language } = useSelector((s: RootState) => s.settings);
@@ -23,6 +26,13 @@ export function Wardrobes() {
   const [editing, setEditing] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState<Wardrobe>();
+  // Leaving with a typed name that wasn't saved asks first.
+  const { dialog } = useDiscardGuard(
+    editing !== null &&
+      name !== (wardrobes.find(w => w.id === editing)?.name ?? ""),
+    language,
+  );
   const cancel = () => {
     setEditing(null);
     setName("");
@@ -45,6 +55,18 @@ export function Wardrobes() {
   };
   return (
     <ThemeView>
+      {dialog}
+      <ConfirmationDialog
+        visible={!!deleting}
+        setVisible={shown => !shown && setDeleting(undefined)}
+        title={`${l.Delete[language]}: ${deleting?.name ?? ""}`}
+        message={l.DeleteWardrobeMessage[language]}
+        onConfirm={() => {
+          if (!deleting) return;
+          dispatch(deleteWardrobe({ id: deleting.id }));
+          if (editing === deleting.id) cancel();
+        }}
+      />
       <PageHeader title={l.Wardrobes[language]} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -79,23 +101,7 @@ export function Wardrobes() {
                   accessibilityRole="button"
                   accessibilityLabel={`${l.Delete[language]}: ${w.name}`}
                   style={styles.action}
-                  onPress={() =>
-                    Alert.alert(
-                      l.Delete[language] + ": " + w.name,
-                      l.DeleteWardrobeMessage[language],
-                      [
-                        { text: l.Cancel[language], style: "cancel" },
-                        {
-                          text: l.Delete[language],
-                          style: "destructive",
-                          onPress: () => {
-                            dispatch(deleteWardrobe({ id: w.id }));
-                            if (editing === w.id) cancel();
-                          },
-                        },
-                      ],
-                    )
-                  }
+                  onPress={() => setDeleting(w)}
                 >
                   <Icon
                     name="trash-outline"

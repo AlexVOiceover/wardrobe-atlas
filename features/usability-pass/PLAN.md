@@ -76,6 +76,32 @@ Prompted by: "the flow is confusing, pressing on the image shows some kind of pr
 - "Restore default categories" asks first and moves lower on the screen.
 - Outfit delete uses the red bin like the rest of the app, with Undo.
 
+**Implemented** (branch `feature/usability-b`):
+
+- `hooks/useDiscardGuard.tsx` wraps React Navigation's `usePreventRemove` (v7). Back, the header arrow and the Android Back button on a changed form show "Discard changes?" with **Keep editing** and **Discard** (red). Save and Delete leave through the hook's `leave`, which switches the guard off before closing, so they never ask.
+- "Changed" means different from what the form showed when it opened. Garment form: compares what Save would store; the automatic name counts only once typed over, and colours change only with the photo or by hand, so an untouched form (new or edited) leaves without asking. Changing a field and changing it back is not a change. Outfit form: a name, notes or a different date. Wardrobes: the open add/rename row with a name different from the saved one; its own Cancel still closes it without asking.
+- Cut-out editor: ✕ and Back ask only after a stroke was applied. The dialog shows inside the full-screen editor (`Portal.Host`); ✓ with nothing painted still just closes.
+- `ConfirmationDialog`: no Close button; **Cancel** (text) on the left and the named action on the right, contained and red unless `destructive={false}`. New props `confirmLabel`, `cancelLabel`, `destructive`; the generic "delete this log?" message, Yes and No are gone. Labels: garment, category, subcategory and collection delete "Delete"; garment model "Download" (not red); remove all backgrounds "Remove backgrounds" (red, can't be undone); restore categories "Restore" (red). Wardrobe delete moved from the system `Alert` to this dialog.
+- Spanish uses one verb for deleting: **Eliminar** (was "Borrar"), also in the "¿Estás seguro…?" messages.
+- Import asks "Replace everything with the backup?" with **Export first** (outlined, in the dialog), Cancel and **Import** (red). Export first runs the export and, once saved, asks again. `importStoreFromJson` now returns `"imported" | "cancelled" | "invalid"`; a wrong or broken file shows "Couldn't import: this file isn't a Wardrobe Atlas backup." in the snackbar; choosing no file says nothing.
+- Categories: "Restore default categories" asks first and is a small grey text button well below "Add new category" at the end of the list.
+- Outfits: the × is a red `trash-outline` bin named "Delete: {outfit}". It deletes at once and shows "Deleted: {name} · Undo" (5 s, above the add button). Undo dispatches the new `restoreEventLog`, which puts the same record (id, date, name, notes, log time) back at its old place in the list and the id back at its old place in each garment's `logIds`; a second Undo does nothing. No saved data format changes.
+- Not done: export failures are still silent (export returns false for both cancel and error).
+
+**Acceptance checks (Batch B):**
+
+- [ ] New garment: open and press Back with nothing entered closes at once; enter a brand (or photo) and Back asks "Discard changes?"; Keep editing stays with the brand; Discard closes.
+- [ ] Edit garment: Back without changes closes; change a field, Back asks; Save and Delete never ask.
+- [ ] Log outfit form: Back with a name, notes or a new date asks; Save doesn't.
+- [ ] Wardrobes: start Add or Rename, type, then Back asks; Cancel in the row closes it without asking. Delete shows the app's dialog (Cancel / red Delete), not the system alert.
+- [ ] Fix the cut-out: ✕ or Back after painting asks; before painting it just closes. The dialog shows on top of the editor.
+- [ ] Every confirmation: no Close button, Cancel on the left, the action named and red on the right (Download is not red).
+- [ ] Settings › Import: asks first; Export first saves a backup and asks again; Import with a non-backup file shows the error; cancelling the file picker shows nothing.
+- [ ] Categories: Restore default categories sits at the end, asks first, then restores.
+- [ ] Outfits: the red bin deletes at once with "Deleted: … · Undo"; Undo brings the outfit back at the same place with the same garments, date and notes; garment use counts return.
+- [ ] Spanish: "¿Descartar cambios?", "Seguir editando", "Descartar", "Eliminar", "Exportar antes".
+- [x] `npx tsc --noEmit`, `npm run lint`, `npm test` pass (230 tests).
+
 ## Batch C: logging and outfits
 
 - **Outfits +**: pick garments (same look as the Closet, stored garments hidden, button "Log outfit (3)"), the When row, then log with the same "Logged · Undo" message. No required "Event name".

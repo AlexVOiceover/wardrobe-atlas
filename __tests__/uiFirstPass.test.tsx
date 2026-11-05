@@ -88,9 +88,10 @@ test("More reaches every management screen", () => {
 
 test("any category is deleted only after confirmation, moving its garments to Other", () => {
   const tree = render(<ManageCategories />);
-  const dialog = () => tree.root.findByType("ConfirmationDialog" as any);
+  // The first dialog deletes; the second restores the defaults.
+  const dialog = () => tree.root.findAllByType("ConfirmationDialog" as any)[0];
   expect(dialog().props.visible).toBe(false);
-  act(() => pressable(tree, "Borrar: Hats").props.onPress());
+  act(() => pressable(tree, "Eliminar: Hats").props.onPress());
   expect(dialog().props.visible).toBe(true);
   expect(dialog().props.message).toContain("2 prendas pasarán a Otros.");
   expect(mockDispatch).not.toHaveBeenCalled();
@@ -100,7 +101,7 @@ test("any category is deleted only after confirmation, moving its garments to Ot
     [{ type: "itemsList/clearGarmentCategory", payload: { category: 4 } }],
   ]);
   // Built-in categories can be deleted too
-  act(() => pressable(tree, "Borrar: Tops").props.onPress());
+  act(() => pressable(tree, "Eliminar: Tops").props.onPress());
   expect(dialog().props.message).toContain("1 prenda pasará a Otros.");
 });
 

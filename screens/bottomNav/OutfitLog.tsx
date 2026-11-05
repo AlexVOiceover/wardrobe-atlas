@@ -2,9 +2,9 @@ import { View, StyleSheet, Keyboard, FlatList } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import React, { useEffect, useState, useMemo } from "react";
 // replaced FlashList with FlatList from react-native
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { LogComponent } from "../../components/LogComponent";
+import { LogComponent, deleteOutfit } from "../../components/LogComponent";
 import CustomModal from "../../components/CustomModal";
 import { logsType } from "../../redux/itemsSlice";
 import { ThemeText } from "../../components/ThemeText";
@@ -20,13 +20,16 @@ import { FilterChip } from "../../components/FilterChip";
 import { EmptyState } from "../../components/EmptyState";
 import { AddButton, ADD_BUTTON_CLEARANCE } from "../../components/AddButton";
 import { captionText, theme } from "../../utils/theme";
-import { Button } from "react-native-paper";
+import { Button, Snackbar } from "react-native-paper";
 export const OutfitLog = () => {
   const navigation = useNavigation<any>();
   const [search, setSearch] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const logsState = useSelector((state: RootState) => state.itemsList.logs);
-  const [refresh, setRefresh] = useState(false);
+  const garments = useSelector((state: RootState) => state.itemsList.items);
+  const dispatch = useDispatch();
+  // The last deleted outfit, while Undo is offered.
+  const [undo, setUndo] = useState<{ message: string; run: () => void }>();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalEventId, setModalEventId] = useState("");
   const [modalInfo, setModalInfo] = useState<logsType>();
@@ -57,6 +60,17 @@ export const OutfitLog = () => {
     modalInfo?.eventDate ? JSON.parse(modalInfo?.eventDate) : "",
   ).locale(language === 1 ? "es" : "en");
   const logOutfit = () => navigation.navigate("ItemSelector");
+  const remove = (eventId: string) => {
+    const deleted = deleteOutfit(dispatch, logsState, garments, eventId);
+    if (!deleted) return;
+    setUndo({
+      message: localization.OutfitDeleted[language].replace(
+        "{name}",
+        deleted.name,
+      ),
+      run: () => dispatch(deleted.restore),
+    });
+  };
   return (
     <ThemeView>
       <CustomModal
@@ -128,7 +142,6 @@ export const OutfitLog = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
         data={filteredLogs}
-        extraData={refresh}
         keyExtractor={item => item.eventId}
         ListHeaderComponent={
           <Button
@@ -156,13 +169,25 @@ export const OutfitLog = () => {
             eventName={item.eventName}
             eventDate={JSON.parse(item.eventDate)}
             eventId={item.eventId}
-            setRefresh={setRefresh}
+            onDelete={() => remove(item.eventId)}
             setModalVisible={setModalVisible}
             setModalEventId={setModalEventId}
           />
         )}
       />
       <AddButton label={localization.LogOutfit[language]} onPress={logOutfit} />
+      <Snackbar
+        visible={!!undo}
+        onDismiss={() => setUndo(undefined)}
+        duration={5000}
+        wrapperStyle={styles.snackbar}
+        action={{
+          label: localization.Undo[language],
+          onPress: () => undo?.run(),
+        }}
+      >
+        {undo?.message ?? ""}
+      </Snackbar>
     </ThemeView>
   );
 };
@@ -180,6 +205,9 @@ const styles = StyleSheet.create({
   },
   suggest: {
     marginBottom: theme.spacing.md,
+  },
+  snackbar: {
+    bottom: ADD_BUTTON_CLEARANCE,
   },
   list: {
     flexGrow: 1,

@@ -1,7 +1,7 @@
 import { validWardrobeId, wardrobeNameError } from "../utils/wardrobes";
 import { SEASONS } from "../utils/data";
 import { defaultStyles } from "../utils/styles";
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import "react-native-get-random-values";
 import { nanoid } from "nanoid";
 import {
@@ -245,6 +245,27 @@ const itemsSlice = createSlice({
       if (eventIndex < 0) return;
       state.logs.splice(eventIndex, 1);
     },
+    // Undo of a delete: the outfit goes back where it was in the list, and
+    // so does its id in each garment's logIds.
+    restoreEventLog: (
+      state,
+      action: PayloadAction<{
+        log: logsType;
+        index: number;
+        garments: { id: string; index: number }[];
+      }>,
+    ) => {
+      const { log, index, garments } = action.payload;
+      if (state.logs.some(x => x.eventId === log.eventId)) return;
+      state.logs.splice(index, 0, log);
+      garments.forEach(garment => {
+        const restored = state.items.find(x => x.id === garment.id);
+        if (!restored || restored.logIds?.includes(log.eventId)) return;
+        const logIds = restored.logIds ?? [];
+        logIds.splice(garment.index, 0, log.eventId);
+        restored.logIds = logIds;
+      });
+    },
     addLog: (state, action) => {
       //this added to add the eventId to the item/s
       const itemIndex = state.items.findIndex(
@@ -357,6 +378,7 @@ export const {
   deleteLog,
   addEventLog,
   deleteEventLog,
+  restoreEventLog,
   setGarmentImage,
   setGarmentsStored,
   setGarmentsWardrobe,

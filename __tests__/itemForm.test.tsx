@@ -25,6 +25,15 @@ jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select(mockState),
   useDispatch: () => mockDispatch,
 }));
+// The latest arguments of usePreventRemove: whether leaving asks first.
+const mockGuard = { prevent: false, onPrevented: (_: any) => {} };
+jest.mock("@react-navigation/native", () => ({
+  useNavigation: () => mockNavigation,
+  usePreventRemove: (prevent: boolean, onPrevented: any) => {
+    mockGuard.prevent = prevent;
+    mockGuard.onPrevented = onPrevented;
+  },
+}));
 jest.mock("nanoid", () => ({ nanoid: () => "new" }));
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 jest.mock("react-native-paper", () => ({ Button: "Button", Switch: "Switch" }));
@@ -80,7 +89,8 @@ beforeEach(() => {
   mockState.settings.lastWardrobeId = "";
 });
 
-const navigation = { popToTop: jest.fn(), dispatch: jest.fn() };
+const mockNavigation = { popToTop: jest.fn(), dispatch: jest.fn() };
+const navigation = mockNavigation;
 // The outermost element carrying an accessibility label (not its host copies)
 const labelled = (tree: ReactTestRenderer, label: string) =>
   tree.root.findAll(
@@ -815,7 +825,9 @@ describe("Fix the cut-out", () => {
     // Automatic colors come from the garment, not the old background.
     expect(mockCutoutColors).toHaveBeenLastCalledWith("UklGRcut");
     expect(primary(tree)).toBe("#C8B49A");
-    expect(tree.root.findByType("ImageViewer" as any).props.fit).toBe("contain");
+    expect(tree.root.findByType("ImageViewer" as any).props.fit).toBe(
+      "contain",
+    );
     act(() => photoAction(tree, "Fix the cut-out")!.props.onPress());
     expect(editor(tree).props).toMatchObject({
       visible: true,
@@ -965,5 +977,94 @@ describe("the photo", () => {
         payload: expect.objectContaining({ id: "shoe", image: "" }),
       }),
     );
+  });
+});
+
+describe("leaving a changed form", () => {
+  const discard = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAllByType("ConfirmationDialog" as any)
+      .find(d => d.props.title === "Discard changes?")!;
+  const press = (tree: ReactTestRenderer, text: string) =>
+    act(() =>
+      tree.root
+        .findAllByType("Button" as any)
+        .find(b => b.props.children === text)!
+        .props.onPress(),
+    );
+
+  test("an untouched new garment leaves without asking, even with automatic name and colors", () => {
+    const tree = render();
+    expect(mockGuard.prevent).toBe(false);
+    setAutoColors(tree, false);
+    setAutoColors(tree, true);
+    expect(mockGuard.prevent).toBe(false);
+    expect(discard(tree).props.visible).toBe(false);
+  });
+
+  test("a typed field asks; Keep editing stays, Discard leaves", () => {
+    const tree = render();
+    act(() =>
+      input(tree, "Brand").props.onChange({ nativeEvent: { text: "Uniqlo" } }),
+    );
+    expect(mockGuard.prevent).toBe(true);
+    const action = { type: "GO_BACK" };
+    act(() => mockGuard.onPrevented({ data: { action } }));
+    expect(discard(tree).props.visible).toBe(true);
+    expect(discard(tree).props.confirmLabel).toBe("Discard");
+    expect(discard(tree).props.cancelLabel).toBe("Keep editing");
+    act(() => discard(tree).props.setVisible(false));
+    expect(discard(tree).props.visible).toBe(false);
+    expect(navigation.dispatch).not.toHaveBeenCalled();
+    act(() => mockGuard.onPrevented({ data: { action } }));
+    act(() => discard(tree).props.onConfirm());
+    expect(mockGuard.prevent).toBe(false);
+    expect(navigation.dispatch).toHaveBeenCalledWith(action);
+  });
+
+  test("clearing a typed field again leaves without asking", () => {
+    const tree = render();
+    act(() =>
+      input(tree, "Brand").props.onChange({ nativeEvent: { text: "U" } }),
+    );
+    act(() =>
+      input(tree, "Brand").props.onChange({ nativeEvent: { text: "" } }),
+    );
+    expect(mockGuard.prevent).toBe(false);
+  });
+
+  test("Save and Delete leave without asking", () => {
+    const tree = render();
+    act(() =>
+      input(tree, "Name").props.onChange({ nativeEvent: { text: "Coat" } }),
+    );
+    const type = tree.root
+      .findAllByType("Dropdown" as any)
+      .find(d => d.props.placeholder === "Subcategory")!;
+    act(() => type.props.setValue(type.props.items[0].value));
+    expect(mockGuard.prevent).toBe(true);
+    press(tree, "Save");
+    // The guard is off before the screen closes.
+    expect(mockGuard.prevent).toBe(false);
+    expect(navigation.popToTop).toHaveBeenCalledTimes(1);
+    act(() => tree.unmount());
+
+    mockState.itemsList.items = [
+      { id: "a", name: "Coat", collection: [], category: 0 },
+    ];
+    const editing = render("a");
+    expect(mockGuard.prevent).toBe(false);
+    act(() =>
+      input(editing, "Brand").props.onChange({ nativeEvent: { text: "Zara" } }),
+    );
+    expect(mockGuard.prevent).toBe(true);
+    act(() =>
+      editing.root
+        .findAllByType("ConfirmationDialog" as any)
+        .find(d => !d.props.title)!
+        .props.onConfirm(),
+    );
+    expect(mockGuard.prevent).toBe(false);
+    expect(navigation.popToTop).toHaveBeenCalledTimes(2);
   });
 });

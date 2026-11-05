@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet } from "react-native";
 import { ThemeView } from "../../components/ThemeView";
 import { PageHeader } from "../../components/PageHeader";
 import { CustomInput } from "../../components/CustomInput";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DatePicker } from "../../components/DatePicker";
 import { useDispatch, useSelector } from "react-redux";
 import { addEventLog, addLog } from "../../redux/itemsSlice";
@@ -12,6 +12,7 @@ import { localization } from "../../utils/localization";
 import { RootState } from "../../redux/store";
 import { FormErrors } from "../../components/FormErrors";
 import { theme } from "../../utils/theme";
+import { useDiscardGuard } from "../../hooks/useDiscardGuard";
 export const EventLogForm = ({
   navigation,
   route,
@@ -27,6 +28,13 @@ export const EventLogForm = ({
   const { selectedIDs } = route.params;
   const dispatch = useDispatch();
   const storedSettings = useSelector((state: RootState) => state.settings);
+  const initialDate = useRef(eventDate.getTime());
+  const { leave, dialog } = useDiscardGuard(
+    eventName !== "" ||
+      additionalNotes !== "" ||
+      eventDate.getTime() !== initialDate.current,
+    storedSettings.language,
+  );
   async function addEventHandler() {
     const generatedId = nanoid(); // event Id
     const errors = [];
@@ -50,10 +58,11 @@ export const EventLogForm = ({
     selectedIDs.forEach((id: string) => {
       dispatch(addLog({ selectedId: id, logId: generatedId }));
     });
-    navigation.popToTop();
+    leave(() => navigation.popToTop());
   }
   return (
     <ThemeView>
+      {dialog}
       <PageHeader title={localization.EventInfo[storedSettings.language]} />
       <ScrollView
         keyboardShouldPersistTaps="handled"

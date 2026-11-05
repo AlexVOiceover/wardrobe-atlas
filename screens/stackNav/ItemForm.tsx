@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Button, Switch } from "react-native-paper";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { PageHeader } from "../../components/PageHeader";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 import { useDispatch, useSelector } from "react-redux";
@@ -62,6 +62,7 @@ import {
 } from "../../utils/garmentIsolation";
 import { OptionalDateField } from "../../components/OptionalDateField";
 import { FormErrors } from "../../components/FormErrors";
+import { useDiscardGuard } from "../../hooks/useDiscardGuard";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
 // The photo's width; it is as tall as the fields beside it.
 const PHOTO_WIDTH = 112;
@@ -295,10 +296,35 @@ export const ItemForm = ({
     language: storedSettings.language,
   });
   const displayedName = nameEdited ? name : generatedName;
+  // What Save would store; the form is changed when it differs from the
+  // first render. The automatic name counts only once typed over.
+  const formValues = JSON.stringify([
+    wardrobeId,
+    nameEdited ? name : "",
+    brand,
+    collection,
+    category,
+    type,
+    stored,
+    shownStyles,
+    seasons,
+    quantity,
+    sizeUnit,
+    size,
+    hasPurchaseDate ? purchaseDate.getTime() : "",
+    imageUrl,
+    isAutoOn,
+    savedColors,
+  ]);
+  const initialValues = useRef(formValues);
+  const { leave, dialog: discardDialog } = useDiscardGuard(
+    formValues !== initialValues.current,
+    storedSettings.language,
+  );
   function deleteItemHandler() {
     dispatch(deleteItem({ selectedId: storedItems.id }));
     dispatch(itemRefresher());
-    navigation.popToTop();
+    leave(() => navigation.popToTop());
   }
   function addItemHandler() {
     const errors = [];
@@ -374,7 +400,7 @@ export const ItemForm = ({
     dispatch(
       setLastWardrobe({ wardrobeId: validWardrobeId(wardrobes, wardrobeId) }),
     );
-    navigation.popToTop();
+    leave(() => navigation.popToTop());
     if (editingIndex) {
       dispatch(itemRefresher());
     }
@@ -516,6 +542,7 @@ export const ItemForm = ({
   };
   return (
     <>
+      {discardDialog}
       <ConfirmationDialog
         visible={deleteVisible}
         setVisible={setDeleteVisible}
@@ -529,6 +556,8 @@ export const ItemForm = ({
         message={localization.ConfirmGarmentModelDownload[
           storedSettings.language
         ].replace("{mb}", String(GARMENT_MODEL.megabytes))}
+        confirmLabel={localization.Download[storedSettings.language]}
+        destructive={false}
         onConfirm={downloadModel}
       />
       <PhotoView

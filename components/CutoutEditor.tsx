@@ -7,12 +7,14 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { Portal } from "react-native-paper";
 import { CutoutStroke, editCutout } from "../utils/backgroundRemoval";
 import { localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
 import { FilterChip } from "./FilterChip";
 import { HeaderIcon } from "./PageHeader";
 import { ThemeText } from "./ThemeText";
+import { DiscardDialog } from "../hooks/useDiscardGuard";
 
 // Brush widths as fractions of the image width
 export const BRUSH_SIZES = [0.03, 0.06, 0.12];
@@ -85,8 +87,10 @@ export function CutoutEditor({
   const [points, setPoints] = useState<Point[]>([]);
   const [area, setArea] = useState({ width: 0, height: 0 });
   const [aspect, setAspect] = useState(1);
+  const [asking, setAsking] = useState(false);
   useEffect(() => {
     if (!visible) return;
+    setAsking(false);
     setCurrent(image);
     setHistory([]);
     setMode("erase");
@@ -148,6 +152,8 @@ export function CutoutEditor({
     setCurrent(history[history.length - 1]);
     setHistory(previous => previous.slice(0, -1));
   };
+  // Closing with strokes applied asks before throwing them away.
+  const close = () => (history.length > 0 ? setAsking(true) : onCancel());
   const dot = BRUSH_SIZES[brush] * frame.width;
   const sizeLabels = [
     localization.BrushFine,
@@ -155,122 +161,139 @@ export function CutoutEditor({
     localization.BrushWide,
   ];
   return (
-    <Modal visible={visible} animationType="none" onRequestClose={onCancel}>
-      <View style={styles.screen}>
-        <View style={styles.bar}>
-          <HeaderIcon
-            name="close"
-            label={localization.Cancel[language]}
-            onPress={onCancel}
-          />
-          <ThemeText numberOfLines={1} customStyle={styles.title}>
-            {localization.FixCutout[language]}
-          </ThemeText>
-          {history.length > 0 && (
-            <HeaderIcon
-              name="arrow-undo"
-              label={localization.Undo[language]}
-              onPress={undo}
-            />
-          )}
-          <HeaderIcon
-            name="checkmark"
-            label={localization.Done[language]}
-            onPress={() => (history.length > 0 ? onDone(current) : onCancel())}
-          />
-        </View>
-        <View
-          testID="cutout-canvas"
-          style={styles.canvas}
-          onLayout={event => {
-            const { width, height } = event.nativeEvent.layout;
-            setArea({ width, height });
+    <Modal visible={visible} animationType="none" onRequestClose={close}>
+      {/* Dialogs show inside this full-screen modal, not under it. */}
+      <Portal.Host>
+        <DiscardDialog
+          visible={asking}
+          language={language}
+          onKeep={() => setAsking(false)}
+          onDiscard={() => {
+            setAsking(false);
+            onCancel();
           }}
-          {...responder.panHandlers}
-        >
-          {/* Touches go to the canvas, so positions are relative to it. */}
-          <View
-            pointerEvents="none"
-            style={[
-              styles.image,
-              {
-                left: frame.x,
-                top: frame.y,
-                width: frame.width,
-                height: frame.height,
-              },
-            ]}
-          >
-            <Image
-              accessibilityLabel={localization.Photo[language]}
-              source={{ uri: `data:image/webp;base64,${current}` }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="stretch"
+        />
+        <View style={styles.screen}>
+          <View style={styles.bar}>
+            <HeaderIcon
+              name="close"
+              label={localization.Cancel[language]}
+              onPress={close}
             />
-          </View>
-          {points.map((point, index) => (
-            <View
-              key={index}
-              pointerEvents="none"
-              style={[
-                styles.dot,
-                mode === "erase" ? styles.eraseDot : styles.restoreDot,
-                {
-                  left: point.x - dot / 2,
-                  top: point.y - dot / 2,
-                  width: dot,
-                  height: dot,
-                  borderRadius: dot / 2,
-                },
-              ]}
-            />
-          ))}
-          {busy && (
-            <View pointerEvents="none" style={styles.busy}>
-              <ActivityIndicator color={theme.colors.text} />
-            </View>
-          )}
-        </View>
-        <View style={styles.tools}>
-          <ThemeText accessibilityLiveRegion="polite" customStyle={captionText}>
-            {failed
-              ? localization.FixCutoutFailed[language]
-              : mode === "erase"
-              ? localization.EraseHint[language]
-              : localization.RestoreHint[language]}
-          </ThemeText>
-          <View style={styles.row}>
-            <FilterChip
-              dense
-              icon="remove-circle-outline"
-              label={localization.Erase[language]}
-              selected={mode === "erase"}
-              onPress={() => setMode("erase")}
-            />
-            {/* The original photo is only known until the garment is saved. */}
-            {original && (
-              <FilterChip
-                dense
-                icon="add-circle-outline"
-                label={localization.Restore[language]}
-                selected={mode === "restore"}
-                onPress={() => setMode("restore")}
+            <ThemeText numberOfLines={1} customStyle={styles.title}>
+              {localization.FixCutout[language]}
+            </ThemeText>
+            {history.length > 0 && (
+              <HeaderIcon
+                name="arrow-undo"
+                label={localization.Undo[language]}
+                onPress={undo}
               />
             )}
+            <HeaderIcon
+              name="checkmark"
+              label={localization.Done[language]}
+              onPress={() =>
+                history.length > 0 ? onDone(current) : onCancel()
+              }
+            />
           </View>
-          <View style={styles.row}>
-            {sizeLabels.map((label, index) => (
-              <FilterChip
+          <View
+            testID="cutout-canvas"
+            style={styles.canvas}
+            onLayout={event => {
+              const { width, height } = event.nativeEvent.layout;
+              setArea({ width, height });
+            }}
+            {...responder.panHandlers}
+          >
+            {/* Touches go to the canvas, so positions are relative to it. */}
+            <View
+              pointerEvents="none"
+              style={[
+                styles.image,
+                {
+                  left: frame.x,
+                  top: frame.y,
+                  width: frame.width,
+                  height: frame.height,
+                },
+              ]}
+            >
+              <Image
+                accessibilityLabel={localization.Photo[language]}
+                source={{ uri: `data:image/webp;base64,${current}` }}
+                style={StyleSheet.absoluteFill}
+                resizeMode="stretch"
+              />
+            </View>
+            {points.map((point, index) => (
+              <View
                 key={index}
-                dense
-                label={label[language]}
-                selected={brush === index}
-                onPress={() => setBrush(index)}
+                pointerEvents="none"
+                style={[
+                  styles.dot,
+                  mode === "erase" ? styles.eraseDot : styles.restoreDot,
+                  {
+                    left: point.x - dot / 2,
+                    top: point.y - dot / 2,
+                    width: dot,
+                    height: dot,
+                    borderRadius: dot / 2,
+                  },
+                ]}
               />
             ))}
+            {busy && (
+              <View pointerEvents="none" style={styles.busy}>
+                <ActivityIndicator color={theme.colors.text} />
+              </View>
+            )}
+          </View>
+          <View style={styles.tools}>
+            <ThemeText
+              accessibilityLiveRegion="polite"
+              customStyle={captionText}
+            >
+              {failed
+                ? localization.FixCutoutFailed[language]
+                : mode === "erase"
+                ? localization.EraseHint[language]
+                : localization.RestoreHint[language]}
+            </ThemeText>
+            <View style={styles.row}>
+              <FilterChip
+                dense
+                icon="remove-circle-outline"
+                label={localization.Erase[language]}
+                selected={mode === "erase"}
+                onPress={() => setMode("erase")}
+              />
+              {/* The original photo is only known until the garment is saved. */}
+              {original && (
+                <FilterChip
+                  dense
+                  icon="add-circle-outline"
+                  label={localization.Restore[language]}
+                  selected={mode === "restore"}
+                  onPress={() => setMode("restore")}
+                />
+              )}
+            </View>
+            <View style={styles.row}>
+              {sizeLabels.map((label, index) => (
+                <FilterChip
+                  key={index}
+                  dense
+                  label={label[language]}
+                  selected={brush === index}
+                  onPress={() => setBrush(index)}
+                />
+              ))}
+            </View>
           </View>
         </View>
-      </View>
+      </Portal.Host>
     </Modal>
   );
 }

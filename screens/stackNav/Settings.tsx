@@ -21,25 +21,54 @@ import { FilterChip } from "../../components/FilterChip";
 import { ListRow } from "../../components/ListRow";
 import { SectionHeading } from "../../components/SectionHeading";
 import { BulkBackgroundRemoval } from "../../components/BulkBackgroundRemoval";
+import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 export const Settings = () => {
   const storedSettings = useSelector((state: RootState) => state.settings);
   const { language, name, enableHeatMap } = storedSettings;
   const dispatch = useDispatch();
-  const [visible, setVisible] = useState(false);
-  const onToggleSnackBar = () => setVisible(!visible);
-  const onDismissSnackBar = () => setVisible(false);
-  const [exportOrImport, setExportOrImport] = useState(0);
+  // What the snackbar says after an export or import.
+  const [notice, setNotice] = useState("");
+  const [importing, setImporting] = useState(false);
   const [checkedHeatMap, setCheckedHeatMap] = useState(enableHeatMap);
   const setCheckboxes = (newEnableHeatMap: boolean) => {
     setCheckedHeatMap(newEnableHeatMap);
   };
+  const exportBackup = async () => {
+    const exported = await exportStoreToJson();
+    if (exported) setNotice(localization.ExportDone[language]);
+    return exported;
+  };
+  const importBackup = async () => {
+    const result = await importStoreFromJson(setCheckboxes);
+    if (result === "imported") setNotice(localization.ImportDone[language]);
+    else if (result === "invalid")
+      setNotice(localization.ImportFailed[language]);
+  };
   return (
     <ThemeView>
       <PageHeader title={localization.Settings[language]} />
-      <Snackbar visible={visible} onDismiss={onDismissSnackBar}>
-        {exportOrImport === 0
-          ? localization.ExportDone[language]
-          : localization.ImportDone[language]}
+      <ConfirmationDialog
+        visible={importing}
+        setVisible={setImporting}
+        title={localization.ImportBackup[language]}
+        message={localization.ImportBackupMessage[language]}
+        confirmLabel={localization.Import[language]}
+        onConfirm={importBackup}
+      >
+        <Button
+          mode="outlined"
+          icon="export"
+          onPress={async () => {
+            setImporting(false);
+            // Back to the question once the backup is saved.
+            if (await exportBackup()) setImporting(true);
+          }}
+        >
+          {localization.ExportFirst[language]}
+        </Button>
+      </ConfirmationDialog>
+      <Snackbar visible={!!notice} onDismiss={() => setNotice("")}>
+        {notice}
       </Snackbar>
       <ScrollView
         contentContainerStyle={styles.container}
@@ -72,24 +101,14 @@ export const Settings = () => {
           <SectionHeading title={localization.Backup[language]} />
           <View style={styles.row}>
             <Button
-              onPress={async () => {
-                if (await exportStoreToJson()) {
-                  setExportOrImport(0);
-                  onToggleSnackBar();
-                }
-              }}
+              onPress={exportBackup}
               mode="outlined"
               style={styles.backupButton}
             >
               {localization.Export[language]}
             </Button>
             <Button
-              onPress={async () => {
-                if (await importStoreFromJson(setCheckboxes)) {
-                  setExportOrImport(1);
-                  onToggleSnackBar();
-                }
-              }}
+              onPress={() => setImporting(true)}
               mode="outlined"
               style={styles.backupButton}
             >

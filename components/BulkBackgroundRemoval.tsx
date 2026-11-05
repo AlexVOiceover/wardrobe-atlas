@@ -81,6 +81,7 @@ export function BulkBackgroundRemoval({ language }: { language: number }) {
           "{n}",
           String(pending.length),
         )}
+        confirmLabel={localization.RemoveBackgrounds[language]}
         onConfirm={run}
       />
       {progress ? (

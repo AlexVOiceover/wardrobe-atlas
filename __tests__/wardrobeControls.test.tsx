@@ -23,6 +23,17 @@ jest.mock("react-redux", () => ({
 jest.mock("../components/PageHeader", () => ({ PageHeader: "PageHeader" }));
 jest.mock("../components/ThemeView", () => ({ ThemeView: "ThemeView" }));
 jest.mock("nanoid", () => ({ nanoid: () => "new" }));
+jest.mock("../components/ConfirmationDialog", () => ({
+  ConfirmationDialog: "ConfirmationDialog",
+}));
+// The latest arguments of usePreventRemove: whether leaving asks first.
+const mockGuard = { prevent: false };
+jest.mock("@react-navigation/native", () => ({
+  useNavigation: () => ({ dispatch: jest.fn() }),
+  usePreventRemove: (prevent: boolean) => {
+    mockGuard.prevent = prevent;
+  },
+}));
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 jest.mock("react-native-paper", () => ({
   Button: "Button",
@@ -92,12 +103,16 @@ test("management validates blank names and cancellation never dispatches changes
       .findAllByType("Button" as any)
       .find(x => x.props.children === label)!;
   act(() => button("Añadir armario").props.onPress());
+  // An empty form leaves without asking; a typed name asks first.
+  expect(mockGuard.prevent).toBe(false);
   act(() => button("Guardar").props.onPress());
   expect(mockDispatch).not.toHaveBeenCalled();
   act(() =>
     tree!.root.findByType("TextInput" as any).props.onChangeText("Viajes"),
   );
+  expect(mockGuard.prevent).toBe(true);
   act(() => button("Cancelar").props.onPress());
+  expect(mockGuard.prevent).toBe(false);
   expect(mockDispatch).not.toHaveBeenCalled();
   act(() => button("Añadir armario").props.onPress());
   act(() =>
@@ -108,4 +123,38 @@ test("management validates blank names and cancellation never dispatches changes
     type: "itemsList/addWardrobe",
     payload: { name: "Viajes" },
   });
+});
+
+test("renaming asks only once the name changes, and delete asks in the app's dialog", () => {
+  mockDispatch.mockClear();
+  let tree: ReactTestRenderer;
+  act(() => {
+    tree = create(<Wardrobes />);
+  });
+  const pressable = (label: string) =>
+    tree!.root.find(
+      n => n.props.accessibilityLabel === label && !!n.props.onPress,
+    );
+  act(() => pressable("Editar: Casa").props.onPress());
+  expect(mockGuard.prevent).toBe(false);
+  act(() =>
+    tree!.root.findByType("TextInput" as any).props.onChangeText("Casa 2"),
+  );
+  expect(mockGuard.prevent).toBe(true);
+  const dialog = () =>
+    tree!.root
+      .findAllByType("ConfirmationDialog" as any)
+      .find(d => d.props.title.startsWith("Eliminar"))!;
+  expect(dialog().props.visible).toBe(false);
+  act(() => pressable("Eliminar: Casa").props.onPress());
+  expect(dialog().props.visible).toBe(true);
+  expect(dialog().props.title).toBe("Eliminar: Casa");
+  expect(mockDispatch).not.toHaveBeenCalled();
+  act(() => dialog().props.onConfirm());
+  expect(mockDispatch).toHaveBeenCalledWith({
+    type: "itemsList/deleteWardrobe",
+    payload: { id: "all" },
+  });
+  // The open rename of the deleted wardrobe closes with it.
+  expect(tree!.root.findAllByType("TextInput" as any)).toHaveLength(0);
 });
