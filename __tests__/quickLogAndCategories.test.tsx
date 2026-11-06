@@ -368,10 +368,13 @@ describe("quick use log", () => {
         onLogged={onLogged}
       />,
     );
+  // Paper buttons by their text; the round log button by its label.
   const button = (tree: ReactTestRenderer, label: string) =>
-    tree.root
-      .findAllByType("Button" as any)
-      .find(b => b.props.children === label)!;
+    tree.root.findAll(
+      n =>
+        !!n.props.onPress &&
+        (n.props.children === label || n.props.accessibilityLabel === label),
+    )[0];
 
   test("shows uses and last use", () => {
     expect(usageSummary(0, undefined, 0)).toBe("Not used yet");
@@ -383,7 +386,7 @@ describe("quick use log", () => {
     );
   });
 
-  test("the garment's row shows its name once and opens Edit; no Edit button or storage chip", () => {
+  test("one garment: its name is the title, a big Log use and a clear Edit garment", () => {
     const onEdit = jest.fn();
     const onClose = jest.fn();
     const tree = render(
@@ -396,25 +399,13 @@ describe("quick use log", () => {
       />,
     );
     expect(tree.root.findByType("BottomSheet" as any).props.title).toBe(
-      "Log use",
+      "Navy shirt",
     );
-    const text = JSON.stringify(tree.toJSON());
-    expect(text.split('"Navy shirt"')).toHaveLength(2);
-    expect(
-      tree.root.findAllByType("Button" as any).map(b => b.props.children),
-    ).toEqual(["Log use"]);
+    expect(button(tree, "Log use")).toBeDefined();
     expect(
       tree.root.findAll(n => n.props.accessibilityLabel === "In storage"),
     ).toHaveLength(0);
-    act(() =>
-      tree.root
-        .find(
-          n =>
-            n.props.accessibilityLabel === "Edit Navy shirt" &&
-            !!n.props.onPress,
-        )
-        .props.onPress(),
-    );
+    act(() => button(tree, "Edit garment").props.onPress());
     expect(onClose).toHaveBeenCalled();
     expect(onEdit).toHaveBeenCalledWith({ ...shirt, image: "/9j/photo" });
   });
@@ -854,8 +845,9 @@ describe("storage", () => {
     ).toHaveLength(0);
     act(() =>
       tree.root
-        .findAllByType("Button" as any)
-        .find(b => b.props.children === "Log use")!
+        .findAll(
+          n => n.props.accessibilityLabel === "Log use" && !!n.props.onPress,
+        )[0]
         .props.onPress(),
     );
     const actions = mockDispatch.mock.calls.map(call => call[0]);

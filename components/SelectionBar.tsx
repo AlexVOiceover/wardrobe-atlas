@@ -25,7 +25,7 @@ const Action = ({
     onPress={onPress}
     style={[styles.action, disabled && styles.disabled]}
   >
-    <Icon name={icon} size={22} color={theme.colors.onBar} />
+    <Icon name={icon} size={22} color={theme.colors.bar} />
     {/* Two lines at most, so a long Spanish label never gets cut. */}
     <ThemeText numberOfLines={2} customStyle={styles.actionLabel}>
       {label}
@@ -69,7 +69,7 @@ export function SelectionBar({
           onPress={onClose}
           style={styles.icon}
         >
-          <Icon name="close" size={24} color={theme.colors.onBar} />
+          <Icon name="close" size={24} color={theme.colors.text} />
         </Pressable>
         <ThemeText accessibilityLiveRegion="polite" customStyle={styles.count}>
           {localization.SelectedCount[language].replace("{n}", String(count))}
@@ -113,12 +113,20 @@ export function SelectionBar({
   );
 }
 const styles = StyleSheet.create({
+  // Light with a coloured edge, so it doesn't merge with the tab bar below.
   bar: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: theme.colors.bar,
+    backgroundColor: theme.colors.background,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderRightWidth: 2,
+    borderColor: theme.colors.bar,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    elevation: 8,
     paddingBottom: theme.spacing.xs,
   },
   top: {
@@ -134,7 +142,7 @@ const styles = StyleSheet.create({
   },
   count: {
     flex: 1,
-    color: theme.colors.onBar,
+    color: theme.colors.text,
     fontWeight: "600",
   },
   selectAll: {
@@ -143,7 +151,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
   },
   selectAllLabel: {
-    color: theme.colors.onBar,
+    color: theme.colors.bar,
     textDecorationLine: "underline",
   },
   actions: {
@@ -158,7 +166,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   actionLabel: {
-    color: theme.colors.onBar,
+    color: theme.colors.text,
     fontSize: theme.type.caption,
     textAlign: "center",
   },

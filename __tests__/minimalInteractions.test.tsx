@@ -47,13 +47,13 @@ test("sheet closes idempotently on Android Back, its backdrop and its ✕", () =
   );
 });
 
-test("sheet sits at the bottom, full width, above the navigation bar", () => {
+test("panel sits in the middle of the screen with rounded corners", () => {
   const tree = render(true, jest.fn(), 48);
   const styles = tree.root
     .findAll(n => !!n.props.style && typeof n.type === "string")
     .map(n => StyleSheet.flatten(n.props.style));
-  expect(styles.some(s => s?.justifyContent === "flex-end")).toBe(true);
+  expect(styles.some(s => s?.justifyContent === "center")).toBe(true);
+  expect(styles.some(s => s?.justifyContent === "flex-end")).toBe(false);
   const sheet = styles.find(s => s?.maxHeight === "85%");
-  expect(sheet).toMatchObject({ width: "100%", paddingBottom: 48 });
-  expect(sheet?.borderTopLeftRadius).toBeGreaterThan(0);
+  expect(sheet?.borderRadius).toBeGreaterThan(0);
 });

@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 import { RadioButton, Button } from "react-native-paper";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
 import { localization as l } from "../utils/localization";
-import { captionText, theme } from "../utils/theme";
+import { theme } from "../utils/theme";
 import { BottomSheet } from "./BottomSheet";
+import { FieldBox } from "./FieldBox";
 import { ThemeText } from "./ThemeText";
 const WardrobeContext = createContext<{
   selected?: string;
@@ -41,27 +43,43 @@ export function WardrobeSelector({
   ];
   const selection =
     value === undefined ? (all ? "all" : "") : value ? "wardrobe:" + value : "";
+  const label =
+    options.find(o => o.value === selection)?.label ??
+    l.WardrobeUnavailable[language];
   return (
-    <View
-      style={
-        compact
-          ? { flex: 1, alignItems: "flex-start" }
-          : { gap: theme.spacing.xs }
-      }
-    >
-      {!compact && (
-        <ThemeText customStyle={captionText}>{l.Wardrobe[language]}</ThemeText>
+    <View style={compact ? { flex: 1, alignItems: "flex-start" } : undefined}>
+      {compact ? (
+        <Button
+          mode="text"
+          textColor={theme.colors.onBar}
+          icon="chevron-down"
+          contentStyle={{ flexDirection: "row-reverse" }}
+          onPress={() => setExpanded(!expanded)}
+        >
+          {label}
+        </Button>
+      ) : (
+        // In forms it looks like the other fields.
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${l.Wardrobe[language]}: ${label}`}
+          onPress={() => setExpanded(!expanded)}
+        >
+          <FieldBox
+            label={l.Wardrobe[language]}
+            right={
+              <Icon
+                name="chevron-down"
+                size={20}
+                color={theme.colors.text}
+                style={{ paddingHorizontal: theme.spacing.sm }}
+              />
+            }
+          >
+            <ThemeText numberOfLines={1}>{label}</ThemeText>
+          </FieldBox>
+        </Pressable>
       )}
-      <Button
-        mode={compact ? "text" : "outlined"}
-        textColor={compact ? theme.colors.onBar : undefined}
-        icon="chevron-down"
-        contentStyle={{ flexDirection: "row-reverse" }}
-        onPress={() => setExpanded(!expanded)}
-      >
-        {options.find(o => o.value === selection)?.label ??
-          l.WardrobeUnavailable[language]}
-      </Button>
       <BottomSheet
         isOpen={expanded}
         setIsOpen={setExpanded}
