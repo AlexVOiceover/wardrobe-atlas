@@ -51,4 +51,15 @@ test("tab bar does not add the navigation bar inset the root SafeAreaView alread
   expect(
     tree.root.findAllByProps({ children: "Closet" }).length,
   ).toBeGreaterThan(0);
+  // Closet · Collections · Outfits · More
+  const titles = ["Closet", "Collections", "Outfits", "More"];
+  const shown = tree.root
+    .findAll(
+      n =>
+        typeof n.type === "string" &&
+        titles.includes(n.props.children as string),
+    )
+    .map(n => n.props.children)
+    .filter((title, index, all) => all.indexOf(title) === index);
+  expect(shown).toEqual(titles);
 });

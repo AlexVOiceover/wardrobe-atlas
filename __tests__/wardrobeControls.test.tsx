@@ -51,10 +51,14 @@ test("selector distinguishes All from real wardrobe IDs, uses Spanish and closes
   act(() => {
     tree = create(<WardrobeSelector all onChange={onChange} />);
   });
-  expect(tree!.root.findAllByType("Button" as any)[0].props.children).toBe(
-    "Todos los armarios",
-  );
-  act(() => tree!.root.findAllByType("Button" as any)[0].props.onPress());
+  // In forms the selector looks like the other fields.
+  const opener = () =>
+    tree!.root.find(
+      n =>
+        n.props.accessibilityLabel === "Armario: Todos los armarios" &&
+        !!n.props.onPress,
+    );
+  act(() => opener().props.onPress());
   expect(
     tree!.root.findAllByType("RadioItem" as any).map(x => x.props.label),
   ).toEqual(["Todos los armarios", "Sin asignar", "Casa"]);
@@ -64,7 +68,7 @@ test("selector distinguishes All from real wardrobe IDs, uses Spanish and closes
       .props.onValueChange("wardrobe:all"),
   );
   expect(onChange).toHaveBeenLastCalledWith("all");
-  act(() => tree!.root.findAllByType("Button" as any)[0].props.onPress());
+  act(() => opener().props.onPress());
   act(() => tree!.root.findByType(Modal).props.onRequestClose());
   expect(tree!.root.findByType(Modal).props.visible).toBe(false);
 });

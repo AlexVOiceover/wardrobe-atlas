@@ -104,45 +104,17 @@ export function QuickLogSheet({
     <BottomSheet
       isOpen={garments.length > 0}
       setIsOpen={setOpen}
-      // The garment's name is in its row, so the title says what this is for.
-      title={
-        garment ? localization.LogUse[language] : localization.Outfit[language]
-      }
+      title={garment ? name : localization.Outfit[language]}
     >
       {garments.length > 0 && (
         <View style={styles.content}>
           {garment ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={localization.EditNamed[language].replace(
-                "{name}",
-                name,
-              )}
-              onPress={() => {
-                close();
-                onEdit(garment);
-              }}
-              style={styles.garmentRow}
-            >
+            <View style={styles.garmentRow}>
               <GarmentPhoto image={garment.image} size={56} />
-              <View style={styles.garmentText}>
-                <ThemeText numberOfLines={2} customStyle={styles.name}>
-                  {name}
-                </ThemeText>
-                <ThemeText customStyle={captionText}>
-                  {usageSummary(
-                    garment.logIds?.length ?? 0,
-                    lastUsed,
-                    language,
-                  )}
-                </ThemeText>
-              </View>
-              <Icon
-                name="chevron-forward"
-                size={20}
-                color={theme.colors.muted}
-              />
-            </Pressable>
+              <ThemeText customStyle={[captionText, styles.usage]}>
+                {usageSummary(garment.logIds?.length ?? 0, lastUsed, language)}
+              </ThemeText>
+            </View>
           ) : (
             <>
               <View style={styles.thumbnails}>
@@ -165,17 +137,44 @@ export function QuickLogSheet({
               </ThemeText>
             </>
           )}
-          <View>
-            <Button mode="contained" onPress={logUse}>
-              {localization.LogUse[language]}
-            </Button>
+          {/* Logging is what this panel is for, so it gets a big target. */}
+          <View style={styles.log}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={localization.LogUse[language]}
+              onPress={logUse}
+              style={({ pressed }) => [
+                styles.logButton,
+                pressed && styles.logButtonPressed,
+              ]}
+            >
+              <Icon name="checkmark" size={32} color={theme.colors.onBar} />
+              <ThemeText customStyle={styles.logText}>
+                {localization.LogUse[language]}
+              </ThemeText>
+            </Pressable>
             <WhenControl when={when} setWhen={setWhen} language={language} />
           </View>
+          {garment && (
+            <Button
+              mode="outlined"
+              icon={editIcon}
+              onPress={() => {
+                close();
+                onEdit(garment);
+              }}
+            >
+              {localization.EditGarment[language]}
+            </Button>
+          )}
         </View>
       )}
     </BottomSheet>
   );
 }
+const editIcon = ({ size, color }: { size: number; color: string }) => (
+  <Icon name="create-outline" size={size} color={color} />
+);
 /**
  * "Now · change" under a log button: picks an earlier time to log at; ✕ goes
  * back to now. Future times count as now.
@@ -241,19 +240,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.md,
-    minHeight: theme.touch,
   },
-  garmentText: {
+  usage: {
     flex: 1,
-    gap: 2,
-  },
-  name: {
-    fontWeight: "600",
   },
   thumbnails: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: theme.spacing.xs,
+  },
+  log: {
+    alignItems: "center",
+  },
+  logButton: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    backgroundColor: theme.colors.bar,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 2,
+  },
+  logButtonPressed: {
+    opacity: 0.8,
+  },
+  logText: {
+    color: theme.colors.onBar,
+    fontWeight: "600",
+    textAlign: "center",
   },
   // A small text button under Log use.
   when: {

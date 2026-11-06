@@ -31,6 +31,9 @@ export type SettingsType = {
   gridColumns: number;
   // Wardrobe of the last garment saved; new garments start there.
   lastWardrobeId: string;
+  // Size unit of the last garment saved with one; new garments start there.
+  // Older stores have none.
+  lastSizeUnit?: string;
   // Closet category and type sections the user folded.
   collapsedSections: string[];
   // Last chosen sort orders; older stores have none and get the defaults.
@@ -75,6 +78,9 @@ const settingsSlice = createSlice({
     setLastWardrobe: (state, action) => {
       state.lastWardrobeId = action.payload.wardrobeId || "";
     },
+    setLastSizeUnit: (state, action) => {
+      if (action.payload.sizeUnit) state.lastSizeUnit = action.payload.sizeUnit;
+    },
     toggleSection: (state, action) => {
       const key = action.payload.key;
       const sections = state.collapsedSections ?? [];
@@ -94,6 +100,10 @@ const settingsSlice = createSlice({
         typeof action.payload.lastWardrobeId === "string"
           ? action.payload.lastWardrobeId
           : "";
+      state.lastSizeUnit =
+        typeof action.payload.lastSizeUnit === "string"
+          ? action.payload.lastSizeUnit
+          : undefined;
       state.collapsedSections = normalizeCollapsedSections(
         action.payload.collapsedSections,
       );
@@ -114,6 +124,7 @@ export const {
   setOutfitSortValue,
   setGridColumns,
   setLastWardrobe,
+  setLastSizeUnit,
   toggleSection,
   importSettings,
 } = settingsSlice.actions;

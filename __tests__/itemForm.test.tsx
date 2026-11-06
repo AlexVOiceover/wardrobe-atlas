@@ -10,6 +10,7 @@ const mockState = {
     language: 0,
     collectionSortValue: "CUSTOM",
     lastWardrobeId: "" as string | undefined,
+    lastSizeUnit: undefined as string | undefined,
   },
   CategoryList: { CategoryCustomTypes: [] },
   itemsList: {
@@ -315,10 +316,23 @@ const button = (tree: ReactTestRenderer, label: string) =>
     .findAllByType("Button" as any)
     .find(b => b.props.children === label);
 // The icon button on the photo's corner, found by what it does.
-const photoAction = (tree: ReactTestRenderer, label: string) =>
-  tree.root
+// A labelled button, or the photo view's cut-out button (it has no corner
+// shortcut on the form any more).
+const photoAction = (tree: ReactTestRenderer, label: string) => {
+  const found = tree.root
     .findAll(n => n.props.accessibilityLabel === label && !!n.props.onPress)
     .at(0);
+  if (found) return found;
+  const view = tree.root
+    .findAll(n => n.props.cutoutLabel === label && !!n.props.onCutout)
+    .at(0);
+  return (
+    view &&
+    ({
+      props: { onPress: view.props.onCutout, disabled: view.props.busy },
+    } as any)
+  );
+};
 
 test("secondary and tertiary colors are optional and only added on request", () => {
   const tree = render();
@@ -377,10 +391,25 @@ test("editing shows existing colors, and removing secondary moves tertiary up", 
   );
 });
 
-const input = (tree: ReactTestRenderer, label: string) =>
-  tree.root
+// Paper inputs by label; the boxed Size and Quantity fields by their spoken
+// name, wrapped to take the same change events.
+const input = (tree: ReactTestRenderer, label: string): any => {
+  const paper = tree.root
     .findAllByType("CustomInput" as any)
-    .find(i => i.props.label === label)!;
+    .find(i => i.props.label === label);
+  if (paper) return paper;
+  const boxed = tree.root.findAll(
+    n => n.props.accessibilityLabel === label && !!n.props.onChangeText,
+  )[0];
+  return (
+    boxed && {
+      props: {
+        ...boxed.props,
+        onChange: (e: any) => boxed.props.onChangeText(e.nativeEvent.text),
+      },
+    }
+  );
+};
 const chooseFirstType = (tree: ReactTestRenderer) => {
   const type = tree.root
     .findAllByType("Dropdown" as any)
@@ -617,9 +646,9 @@ test("In storage starts off for new garments and is saved when switched on", () 
     tree.root.find(
       n => n.props.accessibilityLabel === "In storage" && !!n.props.onPress,
     );
-  expect(storage().props.accessibilityState.selected).toBe(false);
+  expect(storage().props.accessibilityState.checked).toBe(false);
   act(() => storage().props.onPress());
-  expect(storage().props.accessibilityState.selected).toBe(true);
+  expect(storage().props.accessibilityState.checked).toBe(true);
   const type = tree.root
     .findAllByType("Dropdown" as any)
     .find(d => d.props.placeholder === "Subcategory *")!;
@@ -690,7 +719,7 @@ test("Remove background replaces a shoe photo, Undo brings it back, and Save sto
   );
 });
 
-describe("Keep only the garment", () => {
+describe("Remove person and background", () => {
   const items = () => [
     {
       id: "fleece",
@@ -727,7 +756,7 @@ describe("Keep only the garment", () => {
     expect(photoAction(tree, "Remove background")).toBeUndefined();
     mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRtop" });
     await act(async () =>
-      photoAction(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Remove person and background")!.props.onPress(),
     );
     expect(mockIsolateGarment).toHaveBeenLastCalledWith("/9j/photo", "upper");
     expect(mockRemoveBackground).not.toHaveBeenCalled();
@@ -737,7 +766,7 @@ describe("Keep only the garment", () => {
     tree = edit("jeans");
     mockIsolateGarment.mockResolvedValueOnce({ error: "noSubject" });
     await act(async () =>
-      photoAction(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Remove person and background")!.props.onPress(),
     );
     expect(mockIsolateGarment).toHaveBeenLastCalledWith("UklGRold", "lower");
     expect(shown(tree)).toContain("No garment found");
@@ -748,7 +777,7 @@ describe("Keep only the garment", () => {
     mockGarmentModel.present = false;
     const tree = edit("fleece");
     await act(async () =>
-      photoAction(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Remove person and background")!.props.onPress(),
     );
     expect(modelDialog(tree).props.visible).toBe(true);
     expect(modelDialog(tree).props.message).toContain("176 MB");
@@ -780,7 +809,7 @@ describe("Keep only the garment", () => {
     mockGarmentModel.download.mockResolvedValueOnce(false);
     const tree = edit("fleece");
     await act(async () =>
-      photoAction(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Remove person and background")!.props.onPress(),
     );
     await act(async () => modelDialog(tree).props.onConfirm());
     expect(shown(tree)).toContain("Couldn't download the garment model");
@@ -868,7 +897,7 @@ describe("Fix the cut-out", () => {
     mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRcut" });
     mockCutoutColors.mockResolvedValue(["#C8B49A"]);
     await act(async () =>
-      photoAction(tree, "Keep only the garment")!.props.onPress(),
+      photoAction(tree, "Remove person and background")!.props.onPress(),
     );
     // Automatic colors come from the garment, not the old background.
     expect(mockCutoutColors).toHaveBeenLastCalledWith("UklGRcut");
@@ -1137,6 +1166,9 @@ describe("Batch D: garment form", () => {
           n.type === ("WardrobeSelector" as any) ||
           (n.props.accessibilityLabel === "Automatic color selection" &&
             n.type === ("Switch" as any)) ||
+          (["Size", "Quantity"].includes(n.props.accessibilityLabel) &&
+            !!n.props.onChangeText &&
+            typeof n.type !== "string") ||
           (typeof n.props.children === "string" &&
             ["Seasons", "Styles", "Details"].includes(n.props.children) &&
             typeof n.type !== "string"),
@@ -1146,6 +1178,8 @@ describe("Batch D: garment form", () => {
           ? "Wardrobe"
           : n.type === ("Switch" as any)
           ? "Colors"
+          : n.props.onChangeText && !n.props.label
+          ? n.props.accessibilityLabel
           : n.props.placeholder ?? n.props.label ?? n.props.children,
       )
       .filter((label, index, all) => all.indexOf(label) === index);
@@ -1330,7 +1364,7 @@ describe("Batch D: garment form", () => {
     expect(tree.root.findByType("WardrobeSelector" as any).props.value).toBe(
       "work",
     );
-    expect(chip("In storage").props.accessibilityState.selected).toBe(true);
+    expect(chip("In storage").props.accessibilityState.checked).toBe(true);
     expect(chip("Summer").props.accessibilityState.selected).toBe(false);
     // Says where it went and asks for the next photo
     expect(tree.root.findByType("Snackbar" as any).props.visible).toBe(true);
@@ -1381,5 +1415,67 @@ describe("Batch D: garment form", () => {
     expect(shown(tree)).toContain("Detalles");
     expect(shown(tree)).toContain("De la foto");
     expect(shown(tree)).toContain("Automático: color + marca + subcategoría");
+  });
+});
+
+describe("owner feedback on the garment form", () => {
+  afterEach(() => {
+    mockState.settings.lastSizeUnit = undefined;
+  });
+  const unit = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAllByType("Dropdown" as any)
+      .find(d => d.props.placeholder === "Unit")!;
+
+  test("a new garment starts with the last unit used, and saving remembers it", () => {
+    mockState.settings.lastSizeUnit = "EU";
+    const tree = render();
+    expect(unit(tree).props.value).toBe("EU");
+    act(() => unit(tree).props.setValue("UK"));
+    chooseFirstType(tree);
+    save(tree);
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: "settings/setLastSizeUnit",
+      payload: { sizeUnit: "UK" },
+    });
+  });
+
+  test("quantity has arrows: up adds one, down stops at 1", () => {
+    const tree = render();
+    const step = (label: string) =>
+      tree.root.find(
+        n => n.props.accessibilityLabel === label && !!n.props.onPress,
+      );
+    expect(input(tree, "Quantity").props.value).toBe("1");
+    expect(step("One less").props.disabled).toBe(true);
+    act(() => step("One more").props.onPress());
+    act(() => step("One more").props.onPress());
+    expect(input(tree, "Quantity").props.value).toBe("3");
+    act(() => step("One less").props.onPress());
+    expect(input(tree, "Quantity").props.value).toBe("2");
+  });
+
+  test("the photo has no scissors shortcut; the cut-out lives in the photo view", () => {
+    mockState.itemsList.items = [
+      {
+        id: "shoe",
+        name: "Shoe",
+        type: "Sneakers",
+        category: 2,
+        image: "/9j/photo",
+        collection: [],
+      },
+    ];
+    const tree = edit("shoe");
+    expect(tree.root.findByType(PhotoView).props.cutoutLabel).toBe(
+      "Remove background",
+    );
+    expect(
+      tree.root.findAll(
+        n =>
+          n.type === ("Icon" as any) &&
+          ["cut", "arrow-undo"].includes(n.props.name),
+      ),
+    ).toHaveLength(0);
   });
 });

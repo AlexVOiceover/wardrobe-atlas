@@ -43,19 +43,19 @@ export default function MyTabs() {
         }}
       />
       <Tab.Screen
-        name="Outfits"
-        component={OutfitLog}
-        options={{
-          title: localization.Outfits[language],
-          tabBarIcon: tabIcon("calendar-outline"),
-        }}
-      />
-      <Tab.Screen
         name="Collections"
         component={Collections}
         options={{
           title: localization.Collections[language],
           tabBarIcon: tabIcon("albums-outline"),
+        }}
+      />
+      <Tab.Screen
+        name="Outfits"
+        component={OutfitLog}
+        options={{
+          title: localization.Outfits[language],
+          tabBarIcon: tabIcon("calendar-outline"),
         }}
       />
       <Tab.Screen

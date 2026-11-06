@@ -7,6 +7,7 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import type { RootState } from "../redux/store";
 import { localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
+import { fieldBox } from "./FieldBox";
 import { ThemeText } from "./ThemeText";
 
 /** A date that may be left empty: "—" until picked, ✕ clears it. */
@@ -64,17 +65,15 @@ export const OptionalDateField = ({
 };
 const styles = StyleSheet.create({
   field: {
+    ...fieldBox,
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: theme.colors.muted,
   },
   value: {
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: theme.spacing.sm,
-    minHeight: 48,
+    minHeight: fieldBox.minHeight,
   },
   clear: {
     width: theme.touch,

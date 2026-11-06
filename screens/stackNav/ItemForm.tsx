@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -22,7 +23,7 @@ import {
   itemRefresher,
   deleteItem,
 } from "../../redux/itemsSlice";
-import { setLastWardrobe } from "../../redux/settingsSlice";
+import { setLastSizeUnit, setLastWardrobe } from "../../redux/settingsSlice";
 import { garmentName } from "../../utils/garmentName";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import ColorModal from "../../components/ColorModal";
@@ -61,6 +62,7 @@ import {
   isolateGarment,
 } from "../../utils/garmentIsolation";
 import { OptionalDateField } from "../../components/OptionalDateField";
+import { FieldBox, fieldBox } from "../../components/FieldBox";
 import { FormErrors } from "../../components/FormErrors";
 import { useDiscardGuard } from "../../hooks/useDiscardGuard";
 import { captionText, pickerStyle, theme } from "../../utils/theme";
@@ -145,8 +147,9 @@ export const ItemForm = ({
         ? 1
         : initialQuantity
       : Number(quantityText) || 1;
+  // New garments start with the unit last used.
   const [sizeUnit, setSizeUnit] = useState(
-    storedItems ? storedItems.sizeUnit : "",
+    storedItems ? storedItems.sizeUnit : storedSettings.lastSizeUnit ?? "",
   );
   const [size, setSize] = useState(storedItems ? storedItems.size : "");
   // No purchase date unless the user sets one; a default date would be wrong data.
@@ -283,7 +286,7 @@ export const ItemForm = ({
     cutoutStatus !== "" && cutoutStatus !== "working" && cutoutStatus !== "done"
       ? cutoutMessages[cutoutStatus][storedSettings.language]
       : undefined;
-  // The photo's corner button: its label says what it does.
+  // The photo view's cut-out button: its label says what it does.
   const cutoutLabel = (
     photoBeforeCutout
       ? localization.Undo
@@ -423,6 +426,7 @@ export const ItemForm = ({
       dispatch(addItem(garment));
     }
     dispatch(setLastWardrobe({ wardrobeId: garment.wardrobeId }));
+    dispatch(setLastSizeUnit({ sizeUnit: garment.sizeUnit }));
     return true;
   }
   function addItemHandler() {
@@ -664,7 +668,7 @@ export const ItemForm = ({
         <PageHeader
           title={
             editingIndex
-              ? localization.EditingItem[storedSettings.language]
+              ? localization.EditGarment[storedSettings.language]
               : localization.Adding_an_item[storedSettings.language]
           }
           actions={
@@ -704,23 +708,6 @@ export const ItemForm = ({
                   )}
                 </View>
               )}
-              {canCutout && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={cutoutLabel}
-                  accessibilityState={{ disabled: cutoutBusy }}
-                  disabled={cutoutBusy}
-                  hitSlop={6}
-                  onPress={photoBeforeCutout ? undoCutout : cutOut}
-                  style={styles.photoAction}
-                >
-                  <Icon
-                    name={photoBeforeCutout ? "arrow-undo" : "cut"}
-                    size={20}
-                    color={theme.colors.text}
-                  />
-                </Pressable>
-              )}
               {isCutout(imageUrl) && !cutoutBusy && (
                 <Pressable
                   accessibilityRole="button"
@@ -729,7 +716,7 @@ export const ItemForm = ({
                   }
                   hitSlop={6}
                   onPress={() => setEditorVisible(true)}
-                  style={[styles.photoAction, styles.photoActionLeft]}
+                  style={styles.photoAction}
                 >
                   <Icon name="brush" size={20} color={theme.colors.text} />
                 </Pressable>
@@ -968,29 +955,47 @@ export const ItemForm = ({
           <SectionHeading
             title={localization.Details[storedSettings.language]}
           />
-          <View style={styles.whereRow}>
-            <View style={styles.wardrobe}>
+          <View style={styles.fieldRow}>
+            <View style={styles.half}>
               <WardrobeSelector value={wardrobeId} onChange={setWardrobeId} />
             </View>
-            <FilterChip
-              dense
-              icon="archive-outline"
-              label={localization.InStorage[storedSettings.language]}
-              selected={stored}
+            {/* A tick box, so it's clear whether the garment is stored. */}
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityLabel={localization.InStorage[storedSettings.language]}
+              accessibilityState={{ checked: stored }}
               onPress={() => setStored(!stored)}
-            />
+              style={[styles.half, styles.storageBox]}
+            >
+              <Icon
+                name={stored ? "checkbox" : "square-outline"}
+                size={24}
+                color={stored ? theme.colors.bar : theme.colors.muted}
+              />
+              <Icon
+                name="archive-outline"
+                size={20}
+                color={theme.colors.text}
+              />
+              <ThemeText numberOfLines={1} customStyle={styles.storageText}>
+                {localization.InStorage[storedSettings.language]}
+              </ThemeText>
+            </Pressable>
           </View>
-          <View style={styles.sizeRow}>
-            <CustomInput
-              mode="outlined"
-              dense
-              style={styles.sizeField}
+          <View style={styles.fieldRow}>
+            <FieldBox
               label={localization.Size[storedSettings.language]}
-              value={String(size ?? "")}
-              onChange={text => setSize(text.nativeEvent.text)}
-              maxLength={6}
-            />
-            <View style={styles.unitField}>
+              style={styles.half}
+            >
+              <TextInput
+                accessibilityLabel={localization.Size[storedSettings.language]}
+                value={String(size ?? "")}
+                onChangeText={setSize}
+                maxLength={6}
+                style={styles.boxInput}
+              />
+            </FieldBox>
+            <View style={styles.half}>
               <DropDownPicker
                 open={openSizeUnit}
                 value={sizeUnit}
@@ -1000,7 +1005,7 @@ export const ItemForm = ({
                 mode="SIMPLE"
                 listMode="MODAL"
                 placeholder={localization.Unit[storedSettings.language]}
-                style={[pickerStyle, styles.picker, { marginTop: 6 }]}
+                style={[pickerStyle, styles.boxPicker]}
                 dropDownContainerStyle={pickerStyle}
                 theme={colorScheme}
               />
@@ -1019,11 +1024,11 @@ export const ItemForm = ({
             mode="BADGE"
             listMode="MODAL"
             placeholder={localization.Collection[storedSettings.language]}
-            style={pickerStyle}
+            style={[pickerStyle, styles.boxPicker]}
             dropDownContainerStyle={pickerStyle}
           />
-          <View style={styles.sizeRow}>
-            <View style={styles.sizeField}>
+          <View style={styles.fieldRow}>
+            <View style={styles.half}>
               <OptionalDateField
                 label={localization.Purchase_Date[storedSettings.language]}
                 date={hasPurchaseDate ? purchaseDate : undefined}
@@ -1035,18 +1040,57 @@ export const ItemForm = ({
                 }}
               />
             </View>
-            <CustomInput
-              mode="outlined"
-              dense
-              style={styles.quantityField}
+            <FieldBox
               label={localization.Quantity[storedSettings.language]}
-              value={quantityText}
-              onChange={text =>
-                setQuantityText(text.nativeEvent.text.replace(/[^0-9]/g, ""))
+              style={styles.half}
+              right={
+                <View style={styles.stepper}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      localization.LessQuantity[storedSettings.language]
+                    }
+                    disabled={quantity <= 1}
+                    onPress={() => setQuantityText(String(quantity - 1))}
+                    style={[styles.step, quantity <= 1 && styles.disabled]}
+                  >
+                    <Icon
+                      name="chevron-down"
+                      size={22}
+                      color={theme.colors.text}
+                    />
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      localization.MoreQuantity[storedSettings.language]
+                    }
+                    disabled={quantity >= 99}
+                    onPress={() => setQuantityText(String(quantity + 1))}
+                    style={[styles.step, quantity >= 99 && styles.disabled]}
+                  >
+                    <Icon
+                      name="chevron-up"
+                      size={22}
+                      color={theme.colors.text}
+                    />
+                  </Pressable>
+                </View>
               }
-              keyboardType="numeric"
-              maxLength={2}
-            />
+            >
+              <TextInput
+                accessibilityLabel={
+                  localization.Quantity[storedSettings.language]
+                }
+                value={quantityText}
+                onChangeText={text =>
+                  setQuantityText(text.replace(/[^0-9]/g, ""))
+                }
+                keyboardType="numeric"
+                maxLength={2}
+                style={styles.boxInput}
+              />
+            </FieldBox>
           </View>
 
           <FormErrors errors={errorsList} />
@@ -1101,22 +1145,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: theme.spacing.sm,
   },
-  whereRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: theme.spacing.xs,
-  },
-  wardrobe: {
-    flex: 1,
-  },
   // Stretches to the height of the fields beside it, so no space is left
   // under the photo and the corner buttons stay on it.
   photo: {
     alignSelf: "stretch",
-  },
-  photoActionLeft: {
-    right: undefined,
-    left: theme.spacing.xs,
   },
   photoAction: {
     position: "absolute",
@@ -1219,19 +1251,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  sizeRow: {
+  fieldRow: {
     flexDirection: "row",
-    alignItems: "center",
     gap: theme.spacing.sm,
   },
-  sizeField: {
+  half: {
     flex: 1,
   },
-  unitField: {
-    width: 104,
+  storageBox: {
+    ...fieldBox,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
   },
-  quantityField: {
-    width: 72,
+  storageText: {
+    flexShrink: 1,
+  },
+  boxInput: {
+    padding: 0,
+    fontSize: theme.type.body,
+    color: theme.colors.text,
+  },
+  boxPicker: {
+    minHeight: fieldBox.minHeight,
+  },
+  stepper: {
+    flexDirection: "row",
+  },
+  step: {
+    width: 40,
+    minHeight: fieldBox.minHeight,
+    justifyContent: "center",
+    alignItems: "center",
   },
   actions: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import { Dispatch, ReactNode, SetStateAction, useContext } from "react";
+import { Dispatch, ReactNode, SetStateAction } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -7,7 +7,6 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { SafeAreaInsetsContext } from "react-native-safe-area-context";
 import { localization } from "../utils/localization";
 import { RootState } from "../redux/store";
 import { useSelector } from "react-redux";
@@ -15,8 +14,9 @@ import { theme } from "../utils/theme";
 import { HeaderIcon } from "./PageHeader";
 import { ThemeText } from "./ThemeText";
 /**
- * A sheet anchored to the bottom of the screen, closed by its ✕, a tap
- * outside or Back. Long content scrolls; the sheet stays above the keyboard.
+ * A panel centred on the screen (the owner prefers it to one at the bottom),
+ * closed by its ✕, a tap outside or Back. Long content scrolls; the panel
+ * stays above the keyboard.
  */
 export const BottomSheet = ({
   isOpen,
@@ -30,8 +30,6 @@ export const BottomSheet = ({
   children: ReactNode;
 }) => {
   const { language } = useSelector((s: RootState) => s.settings);
-  // Without a provider (tests) there is no inset.
-  const bottomInset = useContext(SafeAreaInsetsContext)?.bottom ?? 0;
   const close = () => setIsOpen(false);
   return (
     <Modal
@@ -43,7 +41,7 @@ export const BottomSheet = ({
       {/*
         When Android resizes the modal for the keyboard this adds nothing;
         when it draws under the keyboard instead (Android 15+), it lifts the
-        sheet by the part the keyboard covers.
+        panel by the part the keyboard covers.
       */}
       <KeyboardAvoidingView behavior="padding" style={styles.overlay}>
         <Pressable
@@ -51,13 +49,7 @@ export const BottomSheet = ({
           onPress={close}
           style={StyleSheet.absoluteFill}
         />
-        <View
-          accessibilityViewIsModal
-          style={[
-            styles.sheet,
-            { paddingBottom: Math.max(bottomInset, theme.spacing.sm) },
-          ]}
-        >
+        <View accessibilityViewIsModal style={styles.sheet}>
           <View style={styles.header}>
             <ThemeText
               accessibilityRole="header"
@@ -87,7 +79,8 @@ export const BottomSheet = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    padding: theme.spacing.md,
     backgroundColor: theme.colors.scrim,
   },
   sheet: {
@@ -95,10 +88,9 @@ const styles = StyleSheet.create({
     maxHeight: "85%",
     paddingLeft: theme.spacing.md,
     paddingRight: theme.spacing.xs,
-    paddingTop: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
     backgroundColor: theme.colors.background,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderRadius: theme.radius.sm,
   },
   header: {
     flexDirection: "row",

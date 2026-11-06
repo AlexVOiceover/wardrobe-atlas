@@ -83,6 +83,9 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
             ? settings.lastWardrobeId
             : undefined,
         ) ?? "",
+      ...(typeof settings.lastSizeUnit === "string" && settings.lastSizeUnit
+        ? { lastSizeUnit: settings.lastSizeUnit }
+        : {}),
     },
     itemsList: {
       wardrobes,
