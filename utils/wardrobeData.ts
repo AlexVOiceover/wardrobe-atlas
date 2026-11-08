@@ -86,9 +86,6 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
       ...(typeof settings.lastSizeUnit === "string" && settings.lastSizeUnit
         ? { lastSizeUnit: settings.lastSizeUnit }
         : {}),
-      ...(typeof settings.driveLastBackupAt === "string"
-        ? { driveLastBackupAt: settings.driveLastBackupAt }
-        : {}),
     },
     itemsList: {
       wardrobes,

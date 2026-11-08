@@ -5,8 +5,6 @@ import { Settings } from "../screens/stackNav/Settings";
 const mockDispatch = jest.fn();
 const mockExport = jest.fn();
 const mockImport = jest.fn();
-// Settings › Backup › Google Drive is tested on its own (driveBackup tests).
-jest.mock("../components/DriveBackup", () => ({ DriveBackup: "DriveBackup" }));
 jest.mock("react-redux", () => ({
   useSelector: (select: Function) =>
     select({ settings: { language: 0, name: "Alex", enableHeatMap: false } }),
@@ -161,3 +159,13 @@ test("Settings has no name field, keeps its groups in order, and the whole row t
 });
 const StyleSheetFlattenWeight = (style: unknown) =>
   require("react-native").StyleSheet.flatten(style)?.fontWeight;
+
+test("Backup explains how to keep the backup in Google Drive", async () => {
+  let tree: ReactTestRenderer;
+  await act(async () => {
+    tree = create(<Settings />);
+  });
+  expect(JSON.stringify(tree!.toJSON())).toContain(
+    "choose Drive when saving or opening the file",
+  );
+});

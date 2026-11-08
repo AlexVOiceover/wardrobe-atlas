@@ -11,13 +11,13 @@ import { Button, Snackbar } from "react-native-paper";
 import { exportStoreToJson } from "../../utils/exportStoreToJson";
 import { importStoreFromJson } from "../../utils/importStoreFromJson";
 import { localization } from "../../utils/localization";
-import { theme } from "../../utils/theme";
+import { captionText, theme } from "../../utils/theme";
+import { ThemeText } from "../../components/ThemeText";
 import { FilterChip } from "../../components/FilterChip";
 import { ListRow } from "../../components/ListRow";
 import { SectionHeading } from "../../components/SectionHeading";
 import { BulkBackgroundRemoval } from "../../components/BulkBackgroundRemoval";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
-import { DriveBackup } from "../../components/DriveBackup";
 export const Settings = () => {
   const storedSettings = useSelector((state: RootState) => state.settings);
   const { language, enableHeatMap } = storedSettings;
@@ -113,13 +113,9 @@ export const Settings = () => {
               {localization.Import[language]}
             </Button>
           </View>
-          <View style={styles.drive}>
-            <DriveBackup
-              language={language}
-              onNotice={setNotice}
-              syncDisplay={setCheckboxes}
-            />
-          </View>
+          <ThemeText customStyle={styles.hint}>
+            {localization.BackupHint[language]}
+          </ThemeText>
         </View>
         <View>
           <SectionHeading title={localization.PhotoTools[language]} />
@@ -146,7 +142,8 @@ const styles = StyleSheet.create({
   backupButton: {
     flex: 1,
   },
-  drive: {
-    marginTop: theme.spacing.md,
+  hint: {
+    ...captionText,
+    marginTop: theme.spacing.sm,
   },
 });
