@@ -17,6 +17,7 @@ import { ListRow } from "../../components/ListRow";
 import { SectionHeading } from "../../components/SectionHeading";
 import { BulkBackgroundRemoval } from "../../components/BulkBackgroundRemoval";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
+import { DriveBackup } from "../../components/DriveBackup";
 export const Settings = () => {
   const storedSettings = useSelector((state: RootState) => state.settings);
   const { language, enableHeatMap } = storedSettings;
@@ -112,6 +113,13 @@ export const Settings = () => {
               {localization.Import[language]}
             </Button>
           </View>
+          <View style={styles.drive}>
+            <DriveBackup
+              language={language}
+              onNotice={setNotice}
+              syncDisplay={setCheckboxes}
+            />
+          </View>
         </View>
         <View>
           <SectionHeading title={localization.PhotoTools[language]} />
@@ -137,5 +145,8 @@ const styles = StyleSheet.create({
   },
   backupButton: {
     flex: 1,
+  },
+  drive: {
+    marginTop: theme.spacing.md,
   },
 });

@@ -5,6 +5,8 @@ import { Settings } from "../screens/stackNav/Settings";
 const mockDispatch = jest.fn();
 const mockExport = jest.fn();
 const mockImport = jest.fn();
+// Settings › Backup › Google Drive is tested on its own (driveBackup tests).
+jest.mock("../components/DriveBackup", () => ({ DriveBackup: "DriveBackup" }));
 jest.mock("react-redux", () => ({
   useSelector: (select: Function) =>
     select({ settings: { language: 0, name: "Alex", enableHeatMap: false } }),

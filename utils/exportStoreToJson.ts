@@ -1,14 +1,16 @@
 import { createWardrobeBackup } from "./wardrobeData";
-import { RootState, store } from "../redux/store"; // Replace with the correct path to your rootReducer file
+import { store } from "../redux/store"; // Replace with the correct path to your rootReducer file
 import * as ScopedStorage from "react-native-scoped-storage";
+/** The whole wardrobe as backup text, the same for a file and Google Drive. */
+export const backupText = () =>
+  JSON.stringify(createWardrobeBackup(store.getState()));
 export const exportStoreToJson = async () => {
   if (!store) {
     console.log("Store not initialized");
     return;
   }
   try {
-    const state: RootState = store.getState();
-    const serializedState = JSON.stringify(createWardrobeBackup(state));
+    const serializedState = backupText();
     // Create a new file named store.json in the Documents directory
     const storePath = await ScopedStorage.createDocument(
       "store.json",

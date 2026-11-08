@@ -55,6 +55,8 @@ const mockNavigation = {
   setParams: jest.fn(),
   dispatch: jest.fn(),
 };
+// Settings › Backup › Google Drive is tested on its own (driveBackup tests).
+jest.mock("../components/DriveBackup", () => ({ DriveBackup: "DriveBackup" }));
 jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select(mockState),
   useDispatch: () => mockDispatch,
