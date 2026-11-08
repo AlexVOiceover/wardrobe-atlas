@@ -36,3 +36,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Usability pass](usability-pass/PLAN.md)
 - [Owner feedback on the usability pass](owner-feedback-nov6/PLAN.md)
 - [Close-up and zoom in the cut-out editor](cutout-loupe-zoom/PLAN.md)
+- [Google Drive backup](google-drive-backup/PLAN.md)
