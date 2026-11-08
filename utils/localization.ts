@@ -68,6 +68,11 @@ export const localization = {
   BackgroundUnsupported: ["Background removal isn't available on this phone.", "Quitar el fondo no está disponible en este teléfono."],
   BackgroundFailed: ["Couldn't remove the background.", "No se pudo quitar el fondo."],
   FixCutout: ["Fix the cut-out", "Retocar el recorte"],
+  ZoomHint: [
+    "Pinch with two fingers to zoom and move the photo.",
+    "Pellizca con dos dedos para acercar y mover la foto.",
+  ],
+  ShowWholePhoto: ["Show the whole photo", "Ver la foto entera"],
   BackgroundRemoved: ["Background removed", "Fondo quitado"],
   FixCutoutFailed: ["That stroke couldn't be applied. Try again.", "No se pudo aplicar el trazo. Inténtalo de nuevo."],
   EraseHint: ["Paint over what should go.", "Pinta sobre lo que sobra."],
