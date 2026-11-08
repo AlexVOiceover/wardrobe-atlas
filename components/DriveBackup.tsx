@@ -136,8 +136,19 @@ export function DriveBackup({
     try {
       const email = await connectAccount();
       if (email) setAccount(email);
-    } catch {
-      setError(l.DriveConnectFailed[language]);
+    } catch (caught) {
+      // Google's code (e.g. 10 = the app isn't registered for this key) says
+      // what to fix in the Google Cloud setup.
+      const { code, message } = (caught ?? {}) as {
+        code?: string;
+        message?: string;
+      };
+      const detail = [code, message].filter(Boolean).join(": ");
+      setError(
+        detail
+          ? `${l.DriveConnectFailed[language]} (${detail})`
+          : l.DriveConnectFailed[language],
+      );
     }
   };
 
