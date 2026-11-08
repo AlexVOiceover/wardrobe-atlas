@@ -204,11 +204,15 @@ describe("Settings › Google Drive", () => {
 
   test("a failed connection says to check the setup", async () => {
     const tree = await open();
-    mockGoogle.signIn.mockRejectedValueOnce(new Error("DEVELOPER_ERROR"));
+    mockGoogle.signIn.mockRejectedValueOnce(
+      Object.assign(new Error("DEVELOPER_ERROR"), { code: "10" }),
+    );
     await act(async () =>
       button(tree, "Connect Google Drive")!.props.onPress(),
     );
+    // Google's code is shown, to say what to fix in the setup.
     expect(text(tree)).toContain("Couldn't connect to Google");
+    expect(text(tree)).toContain("(10: DEVELOPER_ERROR)");
   });
 
   test("Back up now on Wi-Fi uploads into the folder, keeps 3 and remembers when", async () => {

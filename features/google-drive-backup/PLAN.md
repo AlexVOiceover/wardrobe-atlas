@@ -93,3 +93,8 @@ Settings › Backup gains a **Google Drive** section:
 - Settings tests stub the Drive section, which loads native Google code.
 - Not checked on a phone; connecting needs the Google Cloud setup. The Android build in CI is the first check of the native libraries.
 
+## Follow-up (2026-11-08)
+
+- On the owner's phone, Connect opened the account chooser and then failed with the general "Couldn't connect to Google" message. The released APK was checked: package `com.wardrobeatlas.app`, SHA-1 `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`, matching the setup instructions.
+- The message now ends with Google's code and text (e.g. "(10: DEVELOPER_ERROR)") so the cause in the Google Cloud setup can be identified.
+
