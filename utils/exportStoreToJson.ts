@@ -1,19 +1,23 @@
 import { createWardrobeBackup } from "./wardrobeData";
-import { store } from "../redux/store"; // Replace with the correct path to your rootReducer file
+import { RootState, store } from "../redux/store"; // Replace with the correct path to your rootReducer file
 import * as ScopedStorage from "react-native-scoped-storage";
-/** The whole wardrobe as backup text, the same for a file and Google Drive. */
-export const backupText = () =>
-  JSON.stringify(createWardrobeBackup(store.getState()));
+const pad = (value: number) => String(value).padStart(2, "0");
+/** wardrobe-atlas-2026-11-08-1405.json, in the phone's time. */
+export const backupFileName = (date: Date) =>
+  `wardrobe-atlas-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate(),
+  )}-${pad(date.getHours())}${pad(date.getMinutes())}.json`;
 export const exportStoreToJson = async () => {
   if (!store) {
     console.log("Store not initialized");
     return;
   }
   try {
-    const serializedState = backupText();
-    // Create a new file named store.json in the Documents directory
+    const state: RootState = store.getState();
+    const serializedState = JSON.stringify(createWardrobeBackup(state));
+    // Android asks where to save it: the phone, Google Drive or another app.
     const storePath = await ScopedStorage.createDocument(
-      "store.json",
+      backupFileName(new Date()),
       "application/json",
       serializedState,
       "utf8",

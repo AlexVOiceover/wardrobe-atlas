@@ -1,6 +1,6 @@
 # Google Drive backup
 
-Status: owner said "build it" on 2026-11-08; implemented on `feature/google-drive-backup`. Connecting on a phone needs the owner's Google Cloud setup (below). Decisions marked *(Claude)* were not asked and can be overridden.
+Status: **replaced on 2026-11-08** by the simpler approach in "Replaced by Export/Import" at the end. The in-app Drive connection was removed. The sections below record what was built and why it was dropped.
 
 ## Goals
 
@@ -98,3 +98,15 @@ Settings › Backup gains a **Google Drive** section:
 - On the owner's phone, Connect opened the account chooser and then failed with the general "Couldn't connect to Google" message. The released APK was checked: package `com.wardrobeatlas.app`, SHA-1 `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`, matching the setup instructions.
 - The message now ends with Google's code and text (e.g. "(10: DEVELOPER_ERROR)") so the cause in the Google Cloud setup can be identified.
 
+## Replaced by Export/Import (2026-11-08)
+
+On the phone, Connect failed with Google's error 10 (DEVELOPER_ERROR). An in-app Drive connection needs a Google Cloud project with an Android OAuth client and a consent screen. While that screen is in Testing, only listed test users can connect, and they must reconnect about every 7 days. The owner found this too complex and chose the simpler way, asking for the obsolete code to be cleaned up.
+
+- Removed the Settings Google Drive section, `components/DriveBackup.tsx`, `utils/driveBackup.ts`, `utils/googleAccount.ts`, their tests and strings, the `driveLastBackupAt` setting, and the `@react-native-google-signin/google-signin` and `@react-native-community/netinfo` dependencies. Export and Import are back to their code from before PR #44.
+- Export already opens Android's "save as" picker, and Import its "open" picker. Both list Google Drive when the Drive app is installed, so no Google Cloud setup is needed. A caption under Export and Import now says so.
+- Exported files are named `wardrobe-atlas-YYYY-MM-DD-HHmm.json` instead of `store.json`, so copies in Drive are easy to tell apart.
+- Saved data: a stored `driveLastBackupAt` is dropped on the next load, because settings normalisation keeps only known keys. Nothing else changes.
+- Not kept: the in-app list of Drive backups, keeping the newest 3, and the mobile-data check. Old copies are managed in the Drive app.
+- The Google Cloud project, if created, is no longer used and can be deleted.
+
+Validation: `npx tsc --noEmit`, `npm run lint` and `npm test` (29 suites, 287 tests) pass. Not yet checked on a phone: choosing Drive in the save and open pickers.

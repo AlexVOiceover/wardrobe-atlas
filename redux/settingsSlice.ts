@@ -34,9 +34,6 @@ export type SettingsType = {
   // Size unit of the last garment saved with one; new garments start there.
   // Older stores have none.
   lastSizeUnit?: string;
-  // When the last Google Drive backup finished (ISO time); none before the
-  // first one.
-  driveLastBackupAt?: string;
   // Closet category and type sections the user folded.
   collapsedSections: string[];
   // Last chosen sort orders; older stores have none and get the defaults.
@@ -80,9 +77,6 @@ const settingsSlice = createSlice({
     },
     setLastWardrobe: (state, action) => {
       state.lastWardrobeId = action.payload.wardrobeId || "";
-    },
-    setDriveLastBackup: (state, action) => {
-      state.driveLastBackupAt = action.payload.at;
     },
     setLastSizeUnit: (state, action) => {
       if (action.payload.sizeUnit) state.lastSizeUnit = action.payload.sizeUnit;
@@ -131,7 +125,6 @@ export const {
   setGridColumns,
   setLastWardrobe,
   setLastSizeUnit,
-  setDriveLastBackup,
   toggleSection,
   importSettings,
 } = settingsSlice.actions;
