@@ -35,3 +35,4 @@ Follow [the working agreement](../AGENTS.md). Plans define scope, compatibility 
 - [Taller photo on the garment form](taller-photo/PLAN.md)
 - [Usability pass](usability-pass/PLAN.md)
 - [Owner feedback on the usability pass](owner-feedback-nov6/PLAN.md)
+- [Close-up and zoom in the cut-out editor](cutout-loupe-zoom/PLAN.md)

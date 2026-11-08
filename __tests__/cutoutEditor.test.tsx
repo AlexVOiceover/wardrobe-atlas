@@ -4,8 +4,14 @@ import { Image, Modal } from "react-native";
 import {
   BRUSH_SIZES,
   CutoutEditor,
+  MAX_ZOOM,
+  NO_ZOOM,
+  clampZoom,
   fitImage,
+  loupeSide,
+  pinchZoom,
   toStroke,
+  zoomedFrame,
 } from "../components/CutoutEditor";
 
 const mockEditCutout = jest.fn();
@@ -59,6 +65,34 @@ test("finger positions become fractions of the image", () => {
       0.06,
     ),
   ).toEqual({ mode: "erase", size: 0.06, points: [0, 0, 0.5, 0.5] });
+});
+
+test("pinching zooms around the spot between the fingers, within limits", () => {
+  const area = { width: 300, height: 300 };
+  const frame = { x: 75, y: 0, width: 150, height: 300 };
+  const start = { zoom: NO_ZOOM, center: { x: 150, y: 150 }, distance: 100 };
+  // Fingers twice as far apart, still centred: 2× around the middle
+  expect(pinchZoom(start, { x: 150, y: 150 }, 200, area, frame)).toEqual({
+    scale: 2,
+    x: -150,
+    y: -150,
+  });
+  // Can't zoom out past the whole photo, nor in past the limit
+  expect(pinchZoom(start, { x: 150, y: 150 }, 50, area, frame)).toEqual(
+    NO_ZOOM,
+  );
+  expect(pinchZoom(start, { x: 150, y: 150 }, 5000, area, frame).scale).toBe(
+    MAX_ZOOM,
+  );
+  // Panning can't push the photo off the middle of the canvas
+  const panned = clampZoom({ scale: 2, x: 1000, y: 0 }, area, frame);
+  expect(zoomedFrame(frame, panned).x).toBe(150);
+});
+
+test("the close-up moves to the right when the finger is under it", () => {
+  expect(loupeSide({ x: 250, y: 50 })).toBe("left");
+  expect(loupeSide({ x: 50, y: 250 })).toBe("left");
+  expect(loupeSide({ x: 50, y: 50 })).toBe("right");
 });
 
 // Drives the canvas's touch handlers the way React Native's responder does.
@@ -158,6 +192,90 @@ test("each stroke is applied when the finger lifts, and Undo steps back", async 
   expect(photo(tree)).toBe("data:image/webp;base64,UklGRone");
   act(() => pressable(tree, "Done").props.onPress());
   expect(onDone).toHaveBeenCalledWith("UklGRone");
+});
+
+test("while painting a close-up shows; after a pinch strokes are finer and land on the zoomed photo", async () => {
+  const { tree, onDone } = open({});
+  const canvas = () => tree.root.find(n => n.props.testID === "cutout-canvas");
+  const loupe = () =>
+    tree.root.findAll(
+      n => n.props.testID === "cutout-loupe" && typeof n.type === "string",
+    );
+  const touch = (x: number, y: number) => ({
+    locationX: x,
+    locationY: y,
+    pageX: x,
+    pageY: y,
+  });
+  // The responder skips moves it has already seen, so time moves on.
+  let time = 0;
+  const history = () => {
+    time += 1;
+    return {
+      numberActiveTouches: 1,
+      indexOfSingleActiveTouch: 0,
+      mostRecentTimeStamp: time,
+      touchBank: [
+        {
+          touchActive: true,
+          startPageX: 0,
+          startPageY: 0,
+          currentPageX: 0,
+          currentPageY: 0,
+          currentTimeStamp: time,
+          previousPageX: 0,
+          previousPageY: 0,
+          previousTimeStamp: time,
+        },
+      ],
+    };
+  };
+  const event = (touches: { x: number; y: number }[]) => ({
+    nativeEvent: {
+      ...touch(touches[0].x, touches[0].y),
+      touches: touches.map(t => touch(t.x, t.y)),
+      changedTouches: [],
+    },
+    touchHistory: history(),
+  });
+  // One finger: the close-up shows while it is down
+  act(() => {
+    canvas().props.onStartShouldSetResponder(event([{ x: 150, y: 200 }]));
+    canvas().props.onResponderGrant(event([{ x: 150, y: 200 }]));
+  });
+  expect(loupe()).toHaveLength(1);
+  // A second finger turns it into a pinch: no stroke, no close-up
+  act(() => {
+    canvas().props.onResponderMove(
+      event([
+        { x: 100, y: 150 },
+        { x: 200, y: 150 },
+      ]),
+    );
+    canvas().props.onResponderMove(
+      event([
+        { x: 50, y: 150 },
+        { x: 250, y: 150 },
+      ]),
+    );
+  });
+  expect(loupe()).toHaveLength(0);
+  await act(async () =>
+    canvas().props.onResponderRelease(event([{ x: 250, y: 150 }])),
+  );
+  expect(mockEditCutout).not.toHaveBeenCalled();
+  expect(pressable(tree, "Show the whole photo")).toBeDefined();
+  // Zoomed 2× around the middle: the middle of the screen is still the
+  // middle of the photo, and the brush is half as wide on the photo.
+  mockEditCutout.mockResolvedValueOnce("UklGRzoomed");
+  await paint(tree, [[150, 150]]);
+  expect(mockEditCutout).toHaveBeenLastCalledWith("UklGRcut", undefined, [
+    { mode: "erase", size: BRUSH_SIZES[1] / 2, points: [0.5, 0.5] },
+  ]);
+  act(() => pressable(tree, "Show the whole photo").props.onPress());
+  expect(pressable(tree, "Show the whole photo")).toBeUndefined();
+  act(() => pressable(tree, "Done").props.onPress());
+  expect(onDone).toHaveBeenCalledWith("UklGRzoomed");
 });
 
 test("without the original photo only Erase is offered", () => {
