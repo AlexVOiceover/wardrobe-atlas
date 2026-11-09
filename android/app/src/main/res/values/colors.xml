@@ -2,5 +2,5 @@
 <resources>
     <color name="primary_dark">#ffffff</color>
     <color name="white">#FFF</color>
-    <color name="launcher_background">#F5F5F5</color>
+    <color name="launcher_background">#1F4E5A</color>
 </resources>
