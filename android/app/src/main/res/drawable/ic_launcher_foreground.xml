@@ -1,3 +1,9 @@
+<!-- Launcher icon foreground: a white T-shirt on an amber hanger, inside the 66dp safe zone of the 108dp canvas. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="@android:color/transparent" android:strokeColor="#111111" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M24,40 L29,68 L38,50 L47,68 L52,40 M58,68 L69,40 L80,68 M62,57 L76,57" />
+    <!-- T-shirt -->
+    <path android:fillColor="#FFFFFF" android:pathData="M45,42 L32,47.5 L26,59 L34.5,63 L38.5,56.5 L38.5,77 Q38.5,79 40.5,79 L67.5,79 Q69.5,79 69.5,77 L69.5,56.5 L73.5,63 L82,59 L76,47.5 L63,42 Q54,52 45,42 Z" />
+    <!-- Hanger hook -->
+    <path android:strokeColor="#F2B35B" android:strokeWidth="3.2" android:strokeLineCap="round" android:pathData="M50,33.5 A4,4 0 1 1 54,37.5 L54,42" />
+    <!-- Hanger shoulders, over the shirt -->
+    <path android:strokeColor="#F2B35B" android:strokeWidth="3.2" android:strokeLineCap="round" android:pathData="M54,42 L35,50.5 M54,42 L73,50.5" />
 </vector>

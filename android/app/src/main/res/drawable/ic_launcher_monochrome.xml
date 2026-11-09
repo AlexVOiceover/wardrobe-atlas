@@ -1,0 +1,5 @@
+<!-- Themed icon (Android 13+): only the shape counts, the phone picks the colour. The shoulder lines would vanish on the shirt, so it is the shirt and hook alone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M45,42 L32,47.5 L26,59 L34.5,63 L38.5,56.5 L38.5,77 Q38.5,79 40.5,79 L67.5,79 Q69.5,79 69.5,77 L69.5,56.5 L73.5,63 L82,59 L76,47.5 L63,42 Q54,52 45,42 Z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3.2" android:strokeLineCap="round" android:pathData="M50,33.5 A4,4 0 1 1 54,37.5 L54,42" />
+</vector>
