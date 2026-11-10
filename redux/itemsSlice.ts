@@ -334,10 +334,6 @@ const itemsSlice = createSlice({
         state.items[i].logIds?.splice(logIndex as number, 1);
       }
     },
-    setGarmentImage: (state, action) => {
-      const garment = state.items.find(x => x.id === action.payload.id);
-      if (garment) garment.image = action.payload.image;
-    },
     setGarmentsStored: (state, action) => {
       const ids: string[] = action.payload.ids ?? [];
       state.items.forEach(garment => {
@@ -415,7 +411,6 @@ export const {
   deleteEventLog,
   restoreEventLog,
   updateEventLog,
-  setGarmentImage,
   setGarmentsStored,
   setGarmentsWardrobe,
   clearGarmentCategory,

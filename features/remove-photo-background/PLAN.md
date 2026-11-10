@@ -85,3 +85,17 @@ Not tested on a phone:
 - Cutout quality on real clothes, and the speed.
 - The model download through Play services.
 - The APK size increase.
+
+## Removed: Remove all backgrounds (2026-11-10)
+
+The owner asked to remove the "Remove all backgrounds" control from Settings.
+
+- Removed:
+  - the Settings › Photo tools section;
+  - `components/BulkBackgroundRemoval.tsx`;
+  - the `setGarmentImage` reducer, which only that control used;
+  - its strings (PhotoTools, RemoveAllBackgrounds, ConfirmRemoveBackgrounds, BackgroundProgress, BackgroundsDone, BackgroundsSkipped, NoPhotosToProcess, Stop);
+  - its tests.
+- Kept: removing the background of one garment from the garment form, and the background option in bulk add.
+- Saved data: unchanged; photos that were already cut out stay cut out.
+- Checks: `npx tsc --noEmit`, `npm run lint` and `npm test` (29 suites, 283 tests) pass.
