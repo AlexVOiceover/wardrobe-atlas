@@ -16,7 +16,6 @@ import { ThemeText } from "../../components/ThemeText";
 import { FilterChip } from "../../components/FilterChip";
 import { ListRow } from "../../components/ListRow";
 import { SectionHeading } from "../../components/SectionHeading";
-import { BulkBackgroundRemoval } from "../../components/BulkBackgroundRemoval";
 import { ConfirmationDialog } from "../../components/ConfirmationDialog";
 export const Settings = () => {
   const storedSettings = useSelector((state: RootState) => state.settings);
@@ -116,10 +115,6 @@ export const Settings = () => {
           <ThemeText customStyle={styles.hint}>
             {localization.BackupHint[language]}
           </ThemeText>
-        </View>
-        <View>
-          <SectionHeading title={localization.PhotoTools[language]} />
-          <BulkBackgroundRemoval language={language} />
         </View>
         <View>
           <SectionHeading title={localization.Updates[language]} />

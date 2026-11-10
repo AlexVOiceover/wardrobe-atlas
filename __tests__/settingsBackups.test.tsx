@@ -21,9 +21,6 @@ jest.mock("../components/ConfirmationDialog", () => ({
   ConfirmationDialog: "ConfirmationDialog",
 }));
 jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
-jest.mock("../components/BulkBackgroundRemoval", () => ({
-  BulkBackgroundRemoval: "BulkBackgroundRemoval",
-}));
 jest.mock("../components/UpdateControls", () => ({
   UpdateControls: "UpdateControls",
 }));
@@ -52,9 +49,8 @@ test("Settings retains working JSON backup actions and update controls after tex
   expect(tree!.root.findByType("UpdateControls" as any).props.settings).toBe(
     true,
   );
-  expect(tree!.root.findAllByType("BulkBackgroundRemoval" as any)).toHaveLength(
-    1,
-  );
+  // Photo tools (remove all backgrounds) was removed on the owner's request.
+  expect(JSON.stringify(tree!.toJSON())).not.toContain("Photo tools");
   await act(async () => {
     await buttons()[0].props.onPress();
   });
@@ -136,7 +132,6 @@ test("Settings has no name field, keeps its groups in order, and the whole row t
     "Language",
     "Display",
     "Backup",
-    "Photo tools",
     "Updates",
   ]);
   const row = tree!.root.find(
