@@ -1,6 +1,6 @@
 """Draws the Wardrobe Atlas launcher icon and writes its Android vector files.
 
-Five T-shirts stand side by side in perspective, all white except the middle
+Four T-shirts stand side by side in perspective, all white except the second
 one, which is amber and lifted: the garment the app helps you find. Each
 shirt's visible part is computed so the shirts never overlap and a real gap
 separates them, which keeps the single-colour themed icon readable.
@@ -107,10 +107,10 @@ def legacy(shirts, background):
 
 
 if __name__ == "__main__":
-    shirts = build(5, 2, perspective(0.55, 22, 13), gap=3, lift=12)
+    shirts = build(4, 1, perspective(0.6, 22, 15), gap=3, lift=12)
     (RES / "drawable/ic_launcher_foreground.xml").write_text(vector(
         paths(shirts, "    "),
-        "Launcher icon foreground: five T-shirts side by side, the middle one amber and lifted.",
+        "Launcher icon foreground: four T-shirts side by side, the second one amber and lifted.",
     ))
     (RES / "drawable/ic_launcher_monochrome.xml").write_text(vector(
         paths(shirts, "    ", mono=True),

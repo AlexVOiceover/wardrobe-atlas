@@ -2,7 +2,8 @@
 
 Status: two rounds.
 - 2026-11-09: the owner chose "shirt on a hanger" (option C of the first proposals), published in v0.1.108.
-- Same day: the owner asked for a stack of T-shirts like a "layers" icon, but piled side by side, with one shirt in a different colour for the garment the app helps you find. They chose option A of the second proposals and said "implement A and ship it". Implemented on `feature/stacked-shirts-icon`.
+- Same day: the owner asked for a stack of T-shirts like a "layers" icon, but piled side by side, with one shirt in a different colour for the garment the app helps you find. They chose option A of the second proposals and said "implement A and ship it", published in v0.1.110.
+- 2026-11-10: the owner found five shirts a bit too busy and asked for four. Implemented on `feature/four-shirts-icon`.
 
 ## Goals
 
@@ -14,14 +15,14 @@ Status: two rounds.
 - No change to the app name, the in-app colours or the splash screen.
 - No raster (PNG) icons; the icon stays vector-only.
 
-## Design (current: "Five shirts, the amber one lifted")
+## Design (current: four shirts, the amber one lifted)
 
-- Five T-shirts stand side by side in perspective, like the owner's reference "layers" icon turned sideways.
-- All the shirts are white except the middle one, which is amber (`#F2B35B`) and raised out of the row, as if the app pulled it out.
+- Four T-shirts stand side by side in perspective, like the owner's reference "layers" icon turned sideways. Five was the first version; four is less busy and gives each shirt more room.
+- All the shirts are white except the second, which is amber (`#F2B35B`) and raised out of the row, as if the app pulled it out. With four shirts there is no exact middle, so the amber one sits second from the left, with one shirt behind it and two in front.
 - The background is the app's teal bar colour (`#1F4E5A`, `theme.colors.bar`).
 - Each shirt's visible part is computed so the shirts never overlap, with a real gap between them. This keeps the single-colour themed icon readable.
 - Everything is fitted inside the central 66-unit safe zone of Android's 108 × 108 adaptive canvas, so no launcher shape cuts it.
-- Not chosen in the second round: B (five shirts in a row, nothing lifted), C (four shirts) and D (front-facing pile).
+- Not chosen in the second round: B (five shirts in a row, nothing lifted) and D (front-facing pile). The four-shirt layout is option C from that round.
 
 ## Implementation
 
@@ -45,7 +46,7 @@ None. Only Android resources change.
 ## Acceptance checks
 
 - The Android build compiles the vector resources (CI `android` check).
-- On the phone, after updating: five white shirts with a lifted amber one on teal, with nothing cut off. With themed icons on, the same shapes in the theme colour, with the gaps visible.
+- On the phone, after updating: four shirts, three white and one lifted amber, on teal, with nothing cut off. With themed icons on, the same shapes in the theme colour, with the gaps visible.
 
 ## Validation
 
