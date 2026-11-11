@@ -19,6 +19,17 @@ jest.mock("../utils/backgroundRemoval", () => ({
   ...jest.requireActual("../utils/backgroundRemoval"),
   editCutout: (...args: unknown[]) => mockEditCutout(...args),
 }));
+// Photo files and what they hold; Done saves the result as a new file.
+const mockFiles: Record<string, string> = {
+  "cut.webp": "UklGRcut",
+  "shirt.jpg": "/9j/photo",
+};
+const mockSavePhoto = jest.fn(async (_data: string) => "saved.webp");
+jest.mock("../utils/photoStore", () => ({
+  photoUri: (name: string) => `file:///photos/${name}`,
+  readPhoto: async (name: string) => mockFiles[name],
+  savePhoto: (data: string) => mockSavePhoto(data),
+}));
 jest.mock("react-native-vector-icons/Ionicons", () => "Icon");
 jest.mock("react-redux", () => ({
   useSelector: (select: Function) => select({ settings: { language: 0 } }),
@@ -135,15 +146,18 @@ const paint = async (tree: ReactTestRenderer, points: number[][]) => {
   await act(async () => canvas.props.onResponderRelease(event(points.at(-1)!)));
 };
 
-const open = (props: Partial<React.ComponentProps<typeof CutoutEditor>>) => {
+const open = async (
+  props: Partial<React.ComponentProps<typeof CutoutEditor>>,
+) => {
   const onDone = jest.fn();
   const onCancel = jest.fn();
   let tree!: ReactTestRenderer;
-  act(() => {
+  // The editor reads the photo files before it can be painted on.
+  await act(async () => {
     tree = create(
       <CutoutEditor
         visible
-        image="UklGRcut"
+        image="cut.webp"
         language={0}
         onCancel={onCancel}
         onDone={onDone}
@@ -167,7 +181,7 @@ const photo = (tree: ReactTestRenderer) =>
   tree.root.findByType(Image).props.source.uri;
 
 test("each stroke is applied when the finger lifts, and Undo steps back", async () => {
-  const { tree, onDone } = open({ original: "/9j/photo" });
+  const { tree, onDone } = await open({ original: "shirt.jpg" });
   mockEditCutout.mockResolvedValueOnce("UklGRone");
   await paint(tree, [
     [75, 0],
@@ -190,12 +204,14 @@ test("each stroke is applied when the finger lifts, and Undo steps back", async 
   ]);
   act(() => pressable(tree, "Undo").props.onPress());
   expect(photo(tree)).toBe("data:image/webp;base64,UklGRone");
-  act(() => pressable(tree, "Done").props.onPress());
-  expect(onDone).toHaveBeenCalledWith("UklGRone");
+  await act(async () => pressable(tree, "Done").props.onPress());
+  // The edited cutout is saved as a new photo file.
+  expect(mockSavePhoto).toHaveBeenCalledWith("UklGRone");
+  expect(onDone).toHaveBeenCalledWith("saved.webp");
 });
 
 test("while painting a close-up shows; after a pinch strokes are finer and land on the zoomed photo", async () => {
-  const { tree, onDone } = open({});
+  const { tree, onDone } = await open({});
   const canvas = () => tree.root.find(n => n.props.testID === "cutout-canvas");
   const loupe = () =>
     tree.root.findAll(
@@ -274,30 +290,31 @@ test("while painting a close-up shows; after a pinch strokes are finer and land 
   ]);
   act(() => pressable(tree, "Show the whole photo").props.onPress());
   expect(pressable(tree, "Show the whole photo")).toBeUndefined();
-  act(() => pressable(tree, "Done").props.onPress());
-  expect(onDone).toHaveBeenCalledWith("UklGRzoomed");
+  await act(async () => pressable(tree, "Done").props.onPress());
+  expect(mockSavePhoto).toHaveBeenCalledWith("UklGRzoomed");
+  expect(onDone).toHaveBeenCalledWith("saved.webp");
 });
 
-test("without the original photo only Erase is offered", () => {
-  const { tree } = open({});
+test("without the original photo only Erase is offered", async () => {
+  const { tree } = await open({});
   expect(pressable(tree, "Erase")).toBeDefined();
   expect(pressable(tree, "Restore")).toBeUndefined();
 });
 
 test("a failed stroke keeps the image and says so", async () => {
-  const { tree, onCancel, onDone } = open({});
+  const { tree, onCancel, onDone } = await open({});
   mockEditCutout.mockResolvedValueOnce(undefined);
   await paint(tree, [[150, 150]]);
   expect(photo(tree)).toBe("data:image/webp;base64,UklGRcut");
   expect(JSON.stringify(tree.toJSON())).toContain("couldn't be applied");
   // Nothing changed, so Done just closes.
-  act(() => pressable(tree, "Done").props.onPress());
+  await act(async () => pressable(tree, "Done").props.onPress());
   expect(onDone).not.toHaveBeenCalled();
   expect(onCancel).toHaveBeenCalled();
 });
 
 test("closing with strokes applied asks first; without them it just closes", async () => {
-  const { tree, onCancel } = open({});
+  const { tree, onCancel } = await open({});
   const dialog = () => tree.root.findByType("ConfirmationDialog" as any);
   const modal = () => tree.root.findByType(Modal);
   // Nothing painted yet: ✕ and Back close at once.

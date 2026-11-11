@@ -8,8 +8,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { changeLanguage, setHeatMap } from "../../redux/settingsSlice";
 import { Button, Snackbar } from "react-native-paper";
-import { exportStoreToJson } from "../../utils/exportStoreToJson";
-import { importStoreFromJson } from "../../utils/importStoreFromJson";
+import {
+  exportBackup as saveBackup,
+  importBackup as readBackup,
+} from "../../utils/backupArchive";
 import { localization } from "../../utils/localization";
 import { captionText, theme } from "../../utils/theme";
 import { ThemeText } from "../../components/ThemeText";
@@ -29,12 +31,12 @@ export const Settings = () => {
     setCheckedHeatMap(newEnableHeatMap);
   };
   const exportBackup = async () => {
-    const exported = await exportStoreToJson();
+    const exported = await saveBackup();
     if (exported) setNotice(localization.ExportDone[language]);
     return exported;
   };
   const importBackup = async () => {
-    const result = await importStoreFromJson(setCheckboxes);
+    const result = await readBackup(setCheckboxes);
     if (result === "imported") setNotice(localization.ImportDone[language]);
     else if (result === "invalid")
       setNotice(localization.ImportFailed[language]);

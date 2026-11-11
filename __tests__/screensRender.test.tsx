@@ -90,11 +90,9 @@ jest.mock("react-native-blob-util", () => ({}));
 jest.mock("@bam.tech/react-native-image-resizer", () => ({}));
 jest.mock("react-native-modal-datetime-picker", () => "DateModal");
 jest.mock("react-native-wheel-color-picker", () => "ColorPicker");
-jest.mock("../utils/exportStoreToJson", () => ({
-  exportStoreToJson: jest.fn(),
-}));
-jest.mock("../utils/importStoreFromJson", () => ({
-  importStoreFromJson: jest.fn(),
+jest.mock("../utils/backupArchive", () => ({
+  exportBackup: jest.fn(),
+  importBackup: jest.fn(),
 }));
 jest.mock("../components/UpdateControls", () => ({
   UpdateControls: "UpdateControls",

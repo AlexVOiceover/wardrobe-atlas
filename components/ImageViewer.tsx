@@ -4,6 +4,7 @@ import type { RootState } from "../redux/store";
 import { Image, Pressable, StyleSheet } from "react-native";
 import { theme } from "../utils/theme";
 import { ThemeText } from "./ThemeText";
+import { photoUri } from "../utils/photoStore";
 /**
  * The garment's photo. It is `width` wide and fills the height its parent
  * gives it, never shorter than a square. A tap adds a photo, or opens the
@@ -45,7 +46,7 @@ export const ImageViewer = ({
       {imageUrl !== "" ? (
         // Out of the layout, so the photo's own size can't stretch the frame.
         <Image
-          source={{ uri: `data:image/*;base64,${imageUrl}` }}
+          source={{ uri: photoUri(imageUrl) }}
           style={[StyleSheet.absoluteFill, { resizeMode: fit }]}
         />
       ) : (

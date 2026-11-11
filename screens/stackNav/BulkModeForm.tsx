@@ -25,7 +25,7 @@ import { garmentName } from "../../utils/garmentName";
 import { extractColors } from "../../utils/extractColors";
 import { removeBackground } from "../../utils/backgroundRemoval";
 import { launchImageLibrary, launchCamera } from "react-native-image-picker";
-import ReactNativeBlobUtil from "react-native-blob-util";
+import { savePhotoFile } from "../../utils/photoStore";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
 import {
   getCollectionSortValue,
@@ -87,10 +87,7 @@ export const BulkModeForm = ({
           40,
           0,
         );
-        let image = await ReactNativeBlobUtil.fs.readFile(
-          response.uri,
-          "base64",
-        );
+        let image = await savePhotoFile(response.uri);
         if (removeBackgrounds) {
           // A photo that can't be cut out keeps its background.
           const cutout = await removeBackground(image);

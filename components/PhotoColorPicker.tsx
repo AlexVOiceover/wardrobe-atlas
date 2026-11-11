@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   GestureResponderEvent,
@@ -9,13 +9,13 @@ import {
   View,
 } from "react-native";
 import { getSegmentsAverageColor } from "@somesoap/react-native-image-palette";
-import ReactNativeBlobUtil from "react-native-blob-util";
 import { useSelector } from "react-redux";
 import type { RootState } from "../redux/store";
 import { localization } from "../utils/localization";
 import { normalizeHex, sampleSegment } from "../utils/photoColor";
 import { captionText, theme } from "../utils/theme";
 import { ThemeText } from "./ThemeText";
+import { photoUri } from "../utils/photoStore";
 
 /** Tap on the garment photo to sample a color from that spot. */
 export const PhotoColorPicker = ({
@@ -31,8 +31,7 @@ export const PhotoColorPicker = ({
   const [marker, setMarker] = useState<{ x: number; y: number }>();
   const [sampling, setSampling] = useState(false);
   const [failed, setFailed] = useState(false);
-  const file = useRef<string | undefined>(undefined);
-  const uri = `data:image/jpeg;base64,${image}`;
+  const uri = photoUri(image);
 
   useEffect(() => {
     Image.getSize(
@@ -42,27 +41,7 @@ export const PhotoColorPicker = ({
     );
     setMarker(undefined);
     setFailed(false);
-    // The palette library reads files, so the photo is written to the cache
-    // on first tap and removed when the photo changes or the picker closes.
-    return () => {
-      const path = file.current;
-      file.current = undefined;
-      if (path) {
-        ReactNativeBlobUtil.fs.unlink(path).catch(() => {});
-      }
-    };
   }, [uri]);
-
-  const photoFile = async () => {
-    if (!file.current) {
-      const path = `${
-        ReactNativeBlobUtil.fs.dirs.CacheDir
-      }/picker_${Date.now()}.jpg`;
-      await ReactNativeBlobUtil.fs.writeFile(path, image, "base64");
-      file.current = path;
-    }
-    return `file://${file.current}`;
-  };
 
   // The photo box matches the image exactly, so tap positions map onto it.
   const width = Math.min(available, MAX_HEIGHT * aspectRatio);
@@ -77,7 +56,7 @@ export const PhotoColorPicker = ({
     setSampling(true);
     setFailed(false);
     try {
-      const [color] = await getSegmentsAverageColor(await photoFile(), [
+      const [color] = await getSegmentsAverageColor(uri, [
         sampleSegment(x, y, size.width, size.height),
       ]);
       onSample(normalizeHex(color));

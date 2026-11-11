@@ -40,7 +40,7 @@ const previous = {
         sizeUnit: "UK",
         category: 0,
         collection: ["Travel"],
-        image: "photo-data",
+        image: "shirt-1.jpg",
         logIds: ["event"],
         primaryColor: "#112233",
         obsolete: 9,
@@ -84,7 +84,7 @@ const mockWardrobe = normalizeWardrobe(previous);
 test("normalization keeps wardrobe content and only the current schema", () => {
   expect(mockWardrobe.settings.language).toBe(1);
   expect(mockWardrobe.settings.name).toBe(previous.settings.name);
-  expect(mockWardrobe.itemsList.items[0].image).toBe("photo-data");
+  expect(mockWardrobe.itemsList.items[0].image).toBe("shirt-1.jpg");
   expect(mockWardrobe.itemsList.items[0].logIds).toEqual(["event"]);
   expect(mockWardrobe.itemsList.logs[0].additionalNotes).toBe("Keep this");
   expect(mockWardrobe.CategoryList.Categories[0].name).toEqual(["Custom"]);
@@ -156,7 +156,7 @@ test("current Spanish persists across saved state and repeated backup round trip
   const saved = { ...mockWardrobe, _persist: { version: 1, rehydrated: true } };
   expect(normalizeWardrobe(saved).settings.language).toBe(1);
   const backup = createWardrobeBackup(mockWardrobe);
-  expect(backup.formatVersion).toBe(2);
+  expect(backup.formatVersion).toBe(3);
   const restored = readWardrobeBackup(JSON.parse(JSON.stringify(backup)));
   expect(restored).toEqual(mockWardrobe);
   expect(readWardrobeBackup(createWardrobeBackup(restored))).toEqual(
@@ -271,4 +271,16 @@ test("brand and the last used wardrobe survive load and backups; old data has no
     settings: { ...previous.settings, lastWardrobeId: "gone" },
   });
   expect(missing.settings.lastWardrobeId).toBe("");
+});
+
+test("only photo file names survive loading; old base64 photos and paths are dropped", () => {
+  const garment = (image: string) =>
+    normalizeWardrobe({
+      CategoryList: { categories: [] },
+      itemsList: { items: [{ id: "a", name: "A", image }], logs: [] },
+      settings: {},
+    }).itemsList.items[0].image;
+  expect(garment("k3x9-ab12cd.webp")).toBe("k3x9-ab12cd.webp");
+  expect(garment("/9j/4AAQSkZJRgABAQ")).toBe("");
+  expect(garment("../../secrets.jpg")).toBe("");
 });

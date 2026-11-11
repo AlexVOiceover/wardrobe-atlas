@@ -16,7 +16,8 @@ import settingsSlice from "./settingsSlice";
 import { normalizeWardrobe } from "../utils/wardrobeData";
 const persistConfig = {
   key: "root",
-  version: 2,
+  // 3: photos moved out of the data into files (old base64 photos are dropped).
+  version: 3,
   storage: FilesystemStorage,
   migrate: async (state: any) =>
     state ? { ...normalizeWardrobe(state), _persist: state._persist } : state,

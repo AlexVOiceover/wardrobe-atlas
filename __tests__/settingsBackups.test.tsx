@@ -24,11 +24,9 @@ jest.mock("../components/CustomInput", () => ({ CustomInput: "CustomInput" }));
 jest.mock("../components/UpdateControls", () => ({
   UpdateControls: "UpdateControls",
 }));
-jest.mock("../utils/exportStoreToJson", () => ({
-  exportStoreToJson: () => mockExport(),
-}));
-jest.mock("../utils/importStoreFromJson", () => ({
-  importStoreFromJson: (sync: Function) => mockImport(sync),
+jest.mock("../utils/backupArchive", () => ({
+  exportBackup: () => mockExport(),
+  importBackup: (sync: Function) => mockImport(sync),
 }));
 
 test("Settings retains working JSON backup actions and update controls after text-copy removal", async () => {
@@ -128,12 +126,7 @@ test("Settings has no name field, keeps its groups in order, and the whole row t
         StyleSheetFlattenWeight(n.props.style) === "600",
     )
     .map(n => n.props.children);
-  expect(headings).toEqual([
-    "Language",
-    "Display",
-    "Backup",
-    "Updates",
-  ]);
+  expect(headings).toEqual(["Language", "Display", "Backup", "Updates"]);
   const row = tree!.root.find(
     n => n.props.accessibilityRole === "switch" && !!n.props.onPress,
   );

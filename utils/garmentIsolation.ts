@@ -1,5 +1,6 @@
 import { NativeModules } from "react-native";
 import ReactNativeBlobUtil from "react-native-blob-util";
+import { readPhoto, savePhoto } from "./photoStore";
 import type { BackgroundError } from "./backgroundRemoval";
 
 /**
@@ -75,20 +76,24 @@ export async function downloadGarmentModel(
 }
 
 /**
- * Keeps only the chosen garment of a base64 photo, on the device, and
- * resolves the transparent WebP, or the reason it couldn't be made.
+ * Keeps only the chosen garment of a photo file, on the device, and resolves
+ * the transparent WebP as a new photo file, or the reason it couldn't be made.
  */
 export async function isolateGarment(
-  image: string,
+  photo: string,
   part: GarmentPart,
 ): Promise<{ image: string } | { error: BackgroundError | "noModel" }> {
   const native = NativeModules.WardrobeBackground;
   if (!native?.isolateGarment) return { error: "unsupported" };
   if (!(await hasGarmentModel())) return { error: "noModel" };
   try {
-    const cutout = await native.isolateGarment(image, garmentModelPath(), part);
+    const cutout = await native.isolateGarment(
+      await readPhoto(photo),
+      garmentModelPath(),
+      part,
+    );
     return typeof cutout === "string" && cutout
-      ? { image: cutout }
+      ? { image: await savePhoto(cutout) }
       : { error: "failed" };
   } catch (error: any) {
     switch (error?.code) {

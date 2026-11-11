@@ -1,6 +1,7 @@
 import { Image, StyleSheet, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { theme } from "../utils/theme";
+import { photoUri } from "../utils/photoStore";
 
 /** A garment's square photo, or a shirt where it has none. */
 export function GarmentPhoto({
@@ -16,7 +17,7 @@ export function GarmentPhoto({
   return image ? (
     <View accessibilityLabel={label} style={frame}>
       <Image
-        source={{ uri: `data:image/*;base64,${image}` }}
+        source={{ uri: photoUri(image) }}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       />

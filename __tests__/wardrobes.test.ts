@@ -22,7 +22,7 @@ jest.mock("nanoid", () => ({ nanoid: jest.fn(() => "generated") }));
 const shirt = {
   id: "shirt",
   name: "Shirt",
-  image: "photo",
+  image: "photo.jpg",
   quantity: 3,
   category: 0,
   type: "Top",
@@ -123,7 +123,7 @@ test("migration and new backups preserve assignments, photos and Spanish across 
   };
   const state = normalizeWardrobe(old);
   const backup = createWardrobeBackup(state);
-  expect(backup.formatVersion).toBe(2);
+  expect(backup.formatVersion).toBe(3);
   const restored = readWardrobeBackup(JSON.parse(JSON.stringify(backup)));
   expect(restored).toEqual(state);
   expect(restored.settings.language).toBe(1);

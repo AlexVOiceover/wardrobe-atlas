@@ -19,6 +19,10 @@ jest.mock("react-native-blob-util", () => ({
   default: {
     fs: {
       dirs: { DocumentDir: "/docs" },
+      // The garment photo, read for the native tool; cutouts are saved anew.
+      readFile: async () => "/9j/photo",
+      writeFile: async () => undefined,
+      isDir: async () => true,
       stat: async (path: string) => {
         if (!(path in mockFiles)) throw new Error("missing");
         return { size: mockFiles[path] };
@@ -95,16 +99,17 @@ test("the model is downloaded, checked and kept; a bad download leaves nothing",
 });
 
 test("isolating needs the module and the model, and passes on each failure", async () => {
-  expect(await isolateGarment("/9j/photo", "upper")).toEqual({
+  expect(await isolateGarment("shirt.jpg", "upper")).toEqual({
     error: "unsupported",
   });
   const isolate = native(async () => "UklGRtop");
-  expect(await isolateGarment("/9j/photo", "upper")).toEqual({
+  expect(await isolateGarment("shirt.jpg", "upper")).toEqual({
     error: "noModel",
   });
   mockFiles[garmentModelPath()] = GARMENT_MODEL.size;
-  expect(await isolateGarment("/9j/photo", "upper")).toEqual({
-    image: "UklGRtop",
+  // The cutout is a new WebP photo file.
+  expect(await isolateGarment("shirt.jpg", "upper")).toEqual({
+    image: expect.stringMatching(/^[\w-]+\.webp$/),
   });
   expect(isolate).toHaveBeenLastCalledWith(
     "/9j/photo",
@@ -112,16 +117,16 @@ test("isolating needs the module and the model, and passes on each failure", asy
     "upper",
   );
   native(failWith("NO_SUBJECT"));
-  expect(await isolateGarment("/9j/photo", "lower")).toEqual({
+  expect(await isolateGarment("shirt.jpg", "lower")).toEqual({
     error: "noSubject",
   });
   native(failWith("OTHER"));
-  expect(await isolateGarment("/9j/photo", "lower")).toEqual({
+  expect(await isolateGarment("shirt.jpg", "lower")).toEqual({
     error: "failed",
   });
   // A model that can't be loaded is removed, so the next try downloads it.
   native(failWith("NO_MODEL"));
-  expect(await isolateGarment("/9j/photo", "lower")).toEqual({
+  expect(await isolateGarment("shirt.jpg", "lower")).toEqual({
     error: "noModel",
   });
   expect(mockFiles).toEqual({});

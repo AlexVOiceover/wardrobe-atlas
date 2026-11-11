@@ -31,6 +31,7 @@ import {
   styleNames,
 } from "../../utils/localization";
 import { captionText, theme } from "../../utils/theme";
+import { photoUri } from "../../utils/photoStore";
 
 /** Suggests a top, bottom, shoes and optionally an accessory to wear together. */
 export function SuggestOutfit() {
@@ -156,7 +157,7 @@ export function SuggestOutfit() {
                 >
                   {garment?.image ? (
                     <Image
-                      source={{ uri: `data:image/*;base64,${garment.image}` }}
+                      source={{ uri: photoUri(garment.image) }}
                       style={styles.photo}
                     />
                   ) : (
