@@ -14,7 +14,9 @@ import { normalizeClosetSort, normalizeOutfitSort } from "./sorts";
 import { normalizeWardrobes, validWardrobeId } from "./wardrobes";
 import { SEASONS } from "./data";
 import { STYLES, defaultStyles } from "./styles";
-export const DATA_FORMAT_VERSION = 2;
+import { isPhotoFile } from "./photoName";
+// 3: photos are files named in `image`, no longer base64 in the data.
+export const DATA_FORMAT_VERSION = 3;
 const record = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -115,13 +117,16 @@ export function normalizeWardrobe(state: unknown, version?: number): RootState {
           "category",
           "collection",
           "purchaseDate",
-          "image",
           "automaticColor",
           "primaryColor",
           "secondaryColor",
           "tertiaryColor",
           "logIds",
         ]),
+        // A photo file's name; anything else (an old base64 photo) is dropped.
+        image: isPhotoFile(record(value).image)
+          ? (record(value).image as string)
+          : "",
       })),
       logs: list(items.logs).map(value =>
         pick<logsType>(value, [

@@ -18,6 +18,7 @@ class MainApplication : Application(), ReactApplication {
         packages.add(WardrobeUpdatesPackage())
         packages.add(WardrobeTranslatorPackage())
         packages.add(WardrobeBackgroundPackage())
+        packages.add(WardrobeArchivePackage())
         mReactHost = DefaultReactHost.getDefaultReactHost(
           applicationContext,
           packages

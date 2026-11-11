@@ -45,7 +45,6 @@ jest.mock("react-native-paper", () => ({
 jest.mock("react-native-dropdown-picker", () => "Dropdown");
 jest.mock("react-native-image-picker", () => ({}));
 jest.mock("@somesoap/react-native-image-palette", () => ({}));
-jest.mock("react-native-blob-util", () => ({}));
 jest.mock("@bam.tech/react-native-image-resizer", () => ({}));
 jest.mock("../components/WardrobeSelector", () => ({
   WardrobeSelector: "WardrobeSelector",
@@ -674,7 +673,7 @@ test("Remove background replaces a shoe photo, Undo brings it back, and Save sto
       name: "Shoe",
       type: "Sneakers",
       category: 2,
-      image: "/9j/photo",
+      image: "photo.jpg",
       collection: [],
     },
     {
@@ -682,7 +681,7 @@ test("Remove background replaces a shoe photo, Undo brings it back, and Save sto
       name: "Cut",
       type: "Sneakers",
       category: 2,
-      image: "UklGRcut",
+      image: "cut.webp",
       collection: [],
     },
   ];
@@ -695,18 +694,18 @@ test("Remove background replaces a shoe photo, Undo brings it back, and Save sto
   await act(async () =>
     photoAction(tree, "Remove background")!.props.onPress(),
   );
-  expect(photo(tree)).toBe("/9j/photo");
+  expect(photo(tree)).toBe("photo.jpg");
   expect(shown(tree)).toContain("No garment found");
-  mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+  mockRemoveBackground.mockResolvedValueOnce({ image: "new.webp" });
   await act(async () =>
     photoAction(tree, "Remove background")!.props.onPress(),
   );
-  expect(mockRemoveBackground).toHaveBeenLastCalledWith("/9j/photo");
+  expect(mockRemoveBackground).toHaveBeenLastCalledWith("photo.jpg");
   expect(mockIsolateGarment).not.toHaveBeenCalled();
-  expect(photo(tree)).toBe("UklGRnew");
+  expect(photo(tree)).toBe("new.webp");
   act(() => photoAction(tree, "Undo")!.props.onPress());
-  expect(photo(tree)).toBe("/9j/photo");
-  mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+  expect(photo(tree)).toBe("photo.jpg");
+  mockRemoveBackground.mockResolvedValueOnce({ image: "new.webp" });
   await act(async () =>
     photoAction(tree, "Remove background")!.props.onPress(),
   );
@@ -714,7 +713,7 @@ test("Remove background replaces a shoe photo, Undo brings it back, and Save sto
   expect(mockDispatch).toHaveBeenCalledWith(
     expect.objectContaining({
       type: "itemsList/updateItem",
-      payload: expect.objectContaining({ id: "shoe", image: "UklGRnew" }),
+      payload: expect.objectContaining({ id: "shoe", image: "new.webp" }),
     }),
   );
 });
@@ -726,7 +725,7 @@ describe("Remove person and background", () => {
       name: "Fleece",
       type: "Sweater",
       category: 0,
-      image: "/9j/photo",
+      image: "photo.jpg",
       collection: [],
     },
     // An earlier cutout that still shows the person
@@ -735,7 +734,7 @@ describe("Remove person and background", () => {
       name: "Jeans",
       type: "Jeans",
       category: 1,
-      image: "UklGRold",
+      image: "old.webp",
       collection: [],
     },
   ];
@@ -754,21 +753,21 @@ describe("Remove person and background", () => {
     mockState.itemsList.items = items();
     let tree = edit("fleece");
     expect(photoAction(tree, "Remove background")).toBeUndefined();
-    mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRtop" });
+    mockIsolateGarment.mockResolvedValueOnce({ image: "top.webp" });
     await act(async () =>
       photoAction(tree, "Remove person and background")!.props.onPress(),
     );
-    expect(mockIsolateGarment).toHaveBeenLastCalledWith("/9j/photo", "upper");
+    expect(mockIsolateGarment).toHaveBeenLastCalledWith("photo.jpg", "upper");
     expect(mockRemoveBackground).not.toHaveBeenCalled();
     expect(tree.root.findByType("ImageViewer" as any).props.imageUrl).toBe(
-      "UklGRtop",
+      "top.webp",
     );
     tree = edit("jeans");
     mockIsolateGarment.mockResolvedValueOnce({ error: "noSubject" });
     await act(async () =>
       photoAction(tree, "Remove person and background")!.props.onPress(),
     );
-    expect(mockIsolateGarment).toHaveBeenLastCalledWith("UklGRold", "lower");
+    expect(mockIsolateGarment).toHaveBeenLastCalledWith("old.webp", "lower");
     expect(shown(tree)).toContain("No garment found");
   });
 
@@ -797,9 +796,9 @@ describe("Remove person and background", () => {
       photoAction(tree, "Downloading the garment model… 42%")!.props.disabled,
     ).toBe(true);
     mockGarmentModel.present = true;
-    mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRtop" });
+    mockIsolateGarment.mockResolvedValueOnce({ image: "top.webp" });
     await act(async () => finish(true));
-    expect(mockIsolateGarment).toHaveBeenCalledWith("/9j/photo", "upper");
+    expect(mockIsolateGarment).toHaveBeenCalledWith("photo.jpg", "upper");
     expect(photoAction(tree, "Undo")).toBeDefined();
   });
 
@@ -815,7 +814,7 @@ describe("Remove person and background", () => {
     expect(shown(tree)).toContain("Couldn't download the garment model");
     expect(mockIsolateGarment).not.toHaveBeenCalled();
     expect(tree.root.findByType("ImageViewer" as any).props.imageUrl).toBe(
-      "/9j/photo",
+      "photo.jpg",
     );
   });
 });
@@ -870,7 +869,7 @@ describe("Fix the cut-out", () => {
       name: "Trousers",
       type: "Trousers",
       category: 1,
-      image: "/9j/photo",
+      image: "photo.jpg",
       automaticColor: true,
       collection: [],
     },
@@ -894,13 +893,13 @@ describe("Fix the cut-out", () => {
     // A photo fills its frame; a cut-out is shown whole.
     expect(tree.root.findByType("ImageViewer" as any).props.fit).toBe("cover");
     expect(editor(tree)).toBeUndefined();
-    mockIsolateGarment.mockResolvedValueOnce({ image: "UklGRcut" });
+    mockIsolateGarment.mockResolvedValueOnce({ image: "cut.webp" });
     mockCutoutColors.mockResolvedValue(["#C8B49A"]);
     await act(async () =>
       photoAction(tree, "Remove person and background")!.props.onPress(),
     );
     // Automatic colors come from the garment, not the old background.
-    expect(mockCutoutColors).toHaveBeenLastCalledWith("UklGRcut");
+    expect(mockCutoutColors).toHaveBeenLastCalledWith("cut.webp");
     expect(primary(tree)).toBe("#C8B49A");
     expect(tree.root.findByType("ImageViewer" as any).props.fit).toBe(
       "contain",
@@ -908,25 +907,25 @@ describe("Fix the cut-out", () => {
     act(() => photoAction(tree, "Fix the cut-out")!.props.onPress());
     expect(editor(tree).props).toMatchObject({
       visible: true,
-      image: "UklGRcut",
-      original: "/9j/photo",
+      image: "cut.webp",
+      original: "photo.jpg",
     });
     mockCutoutColors.mockResolvedValue(["#B9A27F"]);
-    await act(async () => editor(tree).props.onDone("UklGRfixed"));
+    await act(async () => editor(tree).props.onDone("fixed.webp"));
     expect(editor(tree).props.visible).toBe(false);
-    expect(photo(tree)).toBe("UklGRfixed");
+    expect(photo(tree)).toBe("fixed.webp");
     expect(primary(tree)).toBe("#B9A27F");
     act(() => button(tree, "Save")!.props.onPress());
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "itemsList/updateItem",
-        payload: expect.objectContaining({ image: "UklGRfixed" }),
+        payload: expect.objectContaining({ image: "fixed.webp" }),
       }),
     );
   });
 
   test("a saved cutout can still be erased, but has no original to restore", () => {
-    mockState.itemsList.items = [{ ...items()[0], image: "UklGRsaved" }];
+    mockState.itemsList.items = [{ ...items()[0], image: "saved.webp" }];
     const tree = edit("trousers");
     act(() => photoAction(tree, "Fix the cut-out")!.props.onPress());
     expect(editor(tree).props.original).toBeUndefined();
@@ -940,7 +939,7 @@ describe("the photo", () => {
       name: "Shoe",
       type: "Sneakers",
       category: 2,
-      image: "/9j/photo",
+      image: "photo.jpg",
       collection: [],
     },
   ];
@@ -998,9 +997,9 @@ describe("the photo", () => {
     mockState.itemsList.items = items();
     const tree = edit("shoe");
     act(() => viewer(tree).props.onPress());
-    mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+    mockRemoveBackground.mockResolvedValueOnce({ image: "new.webp" });
     await act(async () => pressInView(tree, "Remove background"));
-    expect(viewer(tree).props.imageUrl).toBe("UklGRnew");
+    expect(viewer(tree).props.imageUrl).toBe("new.webp");
     expect(view(tree).props.visible).toBe(true);
     expect(viewButtons(tree)).toEqual([
       "Change photo",
@@ -1016,7 +1015,7 @@ describe("the photo", () => {
       true,
     );
     act(() => button(tree, "Undo")!.props.onPress());
-    expect(viewer(tree).props.imageUrl).toBe("/9j/photo");
+    expect(viewer(tree).props.imageUrl).toBe("photo.jpg");
     expect(shown(tree)).not.toContain("Background removed");
   });
 
@@ -1039,7 +1038,7 @@ describe("the photo", () => {
     mockState.itemsList.items = items();
     const tree = edit("shoe");
     act(() => viewer(tree).props.onPress());
-    mockRemoveBackground.mockResolvedValueOnce({ image: "UklGRnew" });
+    mockRemoveBackground.mockResolvedValueOnce({ image: "new.webp" });
     await act(async () => pressInView(tree, "Remove background"));
     act(() => pressInView(tree, "Remove photo"));
     expect(viewer(tree).props.imageUrl).toBe("");
@@ -1301,7 +1300,7 @@ describe("Batch D: garment form", () => {
         name: "Cut",
         type: "Sneakers",
         category: 2,
-        image: "UklGRcut",
+        image: "cut.webp",
         automaticColor: false,
         primaryColor: "#000000",
         collection: [],
@@ -1462,7 +1461,7 @@ describe("owner feedback on the garment form", () => {
         name: "Shoe",
         type: "Sneakers",
         category: 2,
-        image: "/9j/photo",
+        image: "photo.jpg",
         collection: [],
       },
     ];

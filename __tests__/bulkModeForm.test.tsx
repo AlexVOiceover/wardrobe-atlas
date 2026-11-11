@@ -45,9 +45,9 @@ jest.mock("@bam.tech/react-native-image-resizer", () => ({
     createResizedImage: async (uri: string) => ({ uri: `${uri}-small` }),
   },
 }));
-jest.mock("react-native-blob-util", () => ({
-  __esModule: true,
-  default: { fs: { readFile: async (uri: string) => `/9j/${uri}` } },
+// Each resized photo is kept as a photo file named after it.
+jest.mock("../utils/photoStore", () => ({
+  savePhotoFile: async (uri: string) => uri.replace(".jpg-small", "-small.jpg"),
 }));
 const mockExtractColors = jest.fn();
 jest.mock("../utils/extractColors", () => ({
@@ -68,7 +68,7 @@ beforeEach(() => {
   mockRemoveBackground.mockReset();
   mockExtractColors.mockReset();
   mockExtractColors.mockImplementation(async (image: string) =>
-    image.includes("a.jpg") ? ["#1F2A44", "#FFFFFF"] : [],
+    image.includes("a-small") ? ["#1F2A44", "#FFFFFF"] : [],
   );
 });
 
@@ -121,7 +121,7 @@ test("gallery: up to 30 photos with no count field, generated names and colors p
   expect(added()).toEqual([
     expect.objectContaining({
       name: "Navy Blazer",
-      image: "/9j/a.jpg-small",
+      image: "a-small.jpg",
       wardrobeId: "work",
       type: "Blazer",
       automaticColor: true,
@@ -153,7 +153,7 @@ test("a prefix numbers the names, and Remove backgrounds cuts out each photo", a
     assets: [{ uri: "a.jpg" }, { uri: "b.jpg" }],
   });
   mockRemoveBackground
-    .mockResolvedValueOnce({ image: "UklGRa" })
+    .mockResolvedValueOnce({ image: "a-cut.webp" })
     .mockResolvedValueOnce({ error: "noSubject" });
   const tree = await render();
   await act(async () =>
@@ -171,11 +171,12 @@ test("a prefix numbers the names, and Remove backgrounds cuts out each photo", a
   );
   await press(tree, "Choose photos");
   expect(mockRemoveBackground).toHaveBeenCalledTimes(2);
-  expect(mockExtractColors).toHaveBeenCalledWith("UklGRa");
+  expect(mockRemoveBackground).toHaveBeenCalledWith("a-small.jpg");
+  expect(mockExtractColors).toHaveBeenCalledWith("a-cut.webp");
   expect(added().map(g => [g.name, g.image])).toEqual([
-    ["Holiday 1", "UklGRa"],
+    ["Holiday 1", "a-cut.webp"],
     // Couldn't be cut out: keeps its photo
-    ["Holiday 2", "/9j/b.jpg-small"],
+    ["Holiday 2", "b-small.jpg"],
   ]);
 });
 

@@ -13,17 +13,6 @@ const mockAverage = jest.fn();
 jest.mock("@somesoap/react-native-image-palette", () => ({
   getSegmentsAverageColor: (...args: unknown[]) => mockAverage(...args),
 }));
-jest.mock("react-native-blob-util", () => ({
-  __esModule: true,
-  default: {
-    fs: {
-      dirs: { CacheDir: "/cache" },
-      writeFile: jest.fn(() => Promise.resolve()),
-      unlink: jest.fn(() => Promise.resolve()),
-    },
-  },
-}));
-const mockFs = require("react-native-blob-util").default.fs;
 jest.mock("react-native-paper", () => {
   const ReactForMock = require("react");
   const Input = Object.assign(
@@ -88,7 +77,7 @@ test("with a photo, the picker opens on the photo and saves the tapped color", a
         colorSelection={1}
         visible={true}
         setVisible={jest.fn()}
-        image="photo-data"
+        image="shirt.jpg"
       />,
     );
   });
@@ -107,17 +96,12 @@ test("with a photo, the picker opens on the photo and saves the tapped color", a
       nativeEvent: { locationX: 100, locationY: 50 },
     });
   });
-  expect(mockFs.writeFile).toHaveBeenCalledWith(
-    expect.stringMatching(/^\/cache\/picker_/),
-    "photo-data",
-    "base64",
-  );
-  // Jest's Image.getSize reports a 4:3 photo, so the 200-wide box is 150 tall
-  // and the tap sits at 50% across and 33% down.
-  expect(mockAverage).toHaveBeenCalledWith(
-    expect.stringMatching(/^file:\/\//),
-    [{ fromX: 49, toX: 52, fromY: 32, toY: 35 }],
-  );
+  // The color is read straight from the photo file. Jest's Image.getSize
+  // reports a 4:3 photo, so the 200-wide box is 150 tall and the tap sits at
+  // 50% across and 33% down.
+  expect(mockAverage).toHaveBeenCalledWith("file:///docs/photos/shirt.jpg", [
+    { fromX: 49, toX: 52, fromY: 32, toY: 35 },
+  ]);
   const use = view.root
     .findAllByType("Button" as any)
     .find(b => b.props.children === "Use color")!;
@@ -126,10 +110,6 @@ test("with a photo, the picker opens on the photo and saves the tapped color", a
     use.props.onPress();
   });
   expect(setColors).toHaveBeenCalledWith(["#123456", "#1F2A44"]);
-  await act(async () => {
-    view.unmount();
-  });
-  expect(mockFs.unlink).toHaveBeenCalled();
 });
 
 test("on the wheel the photo stays in view next to a live swatch", async () => {
@@ -142,7 +122,7 @@ test("on the wheel the photo stays in view next to a live swatch", async () => {
         colorSelection={0}
         visible={true}
         setVisible={jest.fn()}
-        image="photo-data"
+        image="shirt.jpg"
       />,
     );
   });
@@ -153,7 +133,7 @@ test("on the wheel the photo stays in view next to a live swatch", async () => {
   const photo = view.root.find(
     n => n.props.accessibilityLabel === "Photo" && !!n.props.source,
   );
-  expect(photo.props.source.uri).toBe("data:image/jpeg;base64,photo-data");
+  expect(photo.props.source.uri).toBe("file:///docs/photos/shirt.jpg");
   const swatch = () =>
     view.root.find(n => n.props.testID === "wheel-swatch" && !!n.props.style);
   await act(async () =>

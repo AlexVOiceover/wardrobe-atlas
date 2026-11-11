@@ -10,12 +10,25 @@ import { store, persistor } from "./redux/store";
 import { PersistGate } from "redux-persist/integration/react";
 import { startAutomaticUpdates } from "./utils/updateService";
 import { theme } from "./utils/theme";
+import { removeUnusedPhotos } from "./utils/photoStore";
+
+// Once the saved data has loaded, photo files no garment uses are deleted:
+// versions replaced before Save and photos of deleted garments.
+const tidyPhotos = () => {
+  removeUnusedPhotos(
+    store.getState().itemsList.items.map(garment => garment.image),
+  );
+};
 function App(): ReactElement {
   useEffect(() => startAutomaticUpdates(), []);
   return (
     <SafeAreaProvider>
       <ReduxProvider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
+        <PersistGate
+          loading={null}
+          persistor={persistor}
+          onBeforeLift={tidyPhotos}
+        >
           <PaperProvider
             theme={{
               ...MD3LightTheme,
@@ -60,7 +73,9 @@ function App(): ReactElement {
           >
             {/* The safe-area padding behind the status bar and system navigation
                 buttons takes the bar color, so the header and tab bar run to the edges. */}
-            <SafeAreaView style={[{ flex: 1, backgroundColor: theme.colors.bar }]}>
+            <SafeAreaView
+              style={[{ flex: 1, backgroundColor: theme.colors.bar }]}
+            >
               <StatusBar
                 barStyle="light-content"
                 backgroundColor={theme.colors.bar}

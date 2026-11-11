@@ -10,6 +10,7 @@ import { localization } from "../utils/localization";
 import { theme } from "../utils/theme";
 import { HeaderIcon } from "./PageHeader";
 import { ThemeText } from "./ThemeText";
+import { photoUri } from "../utils/photoStore";
 /**
  * The garment's photo on the whole screen, with everything that can be done
  * to it as labelled buttons. Buttons left out (undefined handlers) don't show.
@@ -59,7 +60,7 @@ export function PhotoView({
           {image !== "" && (
             <Image
               accessibilityLabel={localization.Photo[language]}
-              source={{ uri: `data:image/*;base64,${image}` }}
+              source={{ uri: photoUri(image) }}
               style={StyleSheet.absoluteFill}
               resizeMode="contain"
             />

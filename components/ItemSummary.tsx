@@ -7,6 +7,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import type { ItemSummaryProps } from "./ItemBox";
 import { captionText, theme } from "../utils/theme";
 import { ThemeText } from "./ThemeText";
+import { photoUri } from "../utils/photoStore";
 export function ItemSummary({
   image,
   name,
@@ -31,7 +32,7 @@ export function ItemSummary({
           {image ? (
             <Image
               accessibilityLabel={name}
-              source={{ uri: `data:image/*;base64,${image}` }}
+              source={{ uri: photoUri(image) }}
               style={styles.photo}
             />
           ) : (

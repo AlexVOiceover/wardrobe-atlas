@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Portal } from "react-native-paper";
 import { CutoutStroke, editCutout } from "../utils/backgroundRemoval";
+import { photoUri, readPhoto, savePhoto } from "../utils/photoStore";
 import { localization } from "../utils/localization";
 import { captionText, theme } from "../utils/theme";
 import { FilterChip } from "./FilterChip";
@@ -155,7 +156,10 @@ export function CutoutEditor({
   onCancel: () => void;
   onDone: (image: string) => void;
 }) {
-  const [current, setCurrent] = useState(image);
+  // The cutout being edited and the photo it came from, as base64 for the
+  // native editor; the result is saved as a new photo file on Done.
+  const [current, setCurrent] = useState("");
+  const [originalData, setOriginalData] = useState<string>();
   const [history, setHistory] = useState<string[]>([]);
   const [mode, setMode] = useState<CutoutStroke["mode"]>("erase");
   const [brush, setBrush] = useState(1);
@@ -171,17 +175,29 @@ export function CutoutEditor({
     if (!visible) return;
     setAsking(false);
     setZoom(NO_ZOOM);
-    setCurrent(image);
+    setCurrent("");
+    setOriginalData(undefined);
     setHistory([]);
     setMode("erase");
     setFailed(false);
     setPoints([]);
+    let open = true;
+    Promise.all([readPhoto(image), original ? readPhoto(original) : undefined])
+      .then(([cutout, photo]) => {
+        if (!open) return;
+        setCurrent(cutout);
+        setOriginalData(photo);
+      })
+      .catch(() => open && setFailed(true));
     Image.getSize(
-      `data:image/webp;base64,${image}`,
+      photoUri(image),
       (width, height) => height > 0 && setAspect(width / height),
       () => {},
     );
-  }, [visible, image]);
+    return () => {
+      open = false;
+    };
+  }, [visible, image, original]);
   const frame = fitImage(area, aspect);
   const shown = zoomedFrame(frame, zoom);
   // The responder is made once, so it reads the latest values from here.
@@ -193,9 +209,18 @@ export function CutoutEditor({
     mode,
     brush,
     current,
-    original,
+    original: originalData,
   });
-  latest.current = { busy, area, frame, zoom, mode, brush, current, original };
+  latest.current = {
+    busy: busy || !current,
+    area,
+    frame,
+    zoom,
+    mode,
+    brush,
+    current,
+    original: originalData,
+  };
   const stroke = useRef<Point[]>([]);
   // What the fingers are doing, and where a pinch started
   const gesture = useRef<{
@@ -358,9 +383,17 @@ export function CutoutEditor({
             <HeaderIcon
               name="checkmark"
               label={localization.Done[language]}
-              onPress={() =>
-                history.length > 0 ? onDone(current) : onCancel()
-              }
+              onPress={async () => {
+                if (history.length === 0) return onCancel();
+                setBusy(true);
+                try {
+                  onDone(await savePhoto(current));
+                } catch {
+                  setFailed(true);
+                } finally {
+                  setBusy(false);
+                }
+              }}
             />
           </View>
           <View
@@ -385,12 +418,16 @@ export function CutoutEditor({
                 },
               ]}
             >
-              <Image
-                accessibilityLabel={localization.Photo[language]}
-                source={{ uri: `data:image/webp;base64,${current}` }}
-                style={StyleSheet.absoluteFill}
-                resizeMode="stretch"
-              />
+              {current !== "" ? (
+                <Image
+                  accessibilityLabel={localization.Photo[language]}
+                  source={{ uri: `data:image/webp;base64,${current}` }}
+                  style={StyleSheet.absoluteFill}
+                  resizeMode="stretch"
+                />
+              ) : (
+                <ActivityIndicator style={StyleSheet.absoluteFill} />
+              )}
             </View>
             {/* The painted path, faint, and a ring showing the brush. */}
             {points.map((point, index) => (
@@ -403,7 +440,12 @@ export function CutoutEditor({
             {finger && (
               <View
                 pointerEvents="none"
-                style={[styles.dot, styles.ring, ringStyle, circle(finger, dot)]}
+                style={[
+                  styles.dot,
+                  styles.ring,
+                  ringStyle,
+                  circle(finger, dot),
+                ]}
               />
             )}
             {/* What the finger covers, magnified, away from the finger. */}

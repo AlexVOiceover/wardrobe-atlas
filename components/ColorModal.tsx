@@ -10,6 +10,7 @@ import { FilterChip } from "./FilterChip";
 import { PhotoColorPicker } from "./PhotoColorPicker";
 import { ThemeText } from "./ThemeText";
 import { theme } from "../utils/theme";
+import { photoUri } from "../utils/photoStore";
 const HEX_COLOR_PATTERN = /^#([0-9A-F]{3}){1,2}$/i;
 const ColorModal = ({
   setVisible,
@@ -103,7 +104,7 @@ const ColorModal = ({
               <View style={styles.compare}>
                 <Image
                   accessibilityLabel={localization.Photo[language]}
-                  source={{ uri: `data:image/jpeg;base64,${image}` }}
+                  source={{ uri: photoUri(image) }}
                   style={styles.comparePhoto}
                   resizeMode="contain"
                 />

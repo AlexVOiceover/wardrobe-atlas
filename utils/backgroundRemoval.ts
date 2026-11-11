@@ -1,4 +1,5 @@
 import { NativeModules } from "react-native";
+import { readPhoto, savePhoto } from "./photoStore";
 
 export type BackgroundError =
   | "preparing"
@@ -6,22 +7,23 @@ export type BackgroundError =
   | "unsupported"
   | "failed";
 
-// Cutouts are saved as WebP ("RIFF" header); original photos are JPEG.
-export const isCutout = (image?: string) => !!image?.startsWith("UklGR");
+// Cutouts are saved as WebP; original photos are JPEG.
+export const isCutout = (photo?: string) => !!photo?.endsWith(".webp");
 
 /**
- * Removes the background of a base64 photo on the device and resolves the
- * transparent WebP cutout, or the reason it couldn't be made.
+ * Removes the background of a photo file on the device and resolves the
+ * transparent WebP cutout as a new photo file, or the reason it couldn't be
+ * made.
  */
 export async function removeBackground(
-  image: string,
+  photo: string,
 ): Promise<{ image: string } | { error: BackgroundError }> {
   const remover = NativeModules.WardrobeBackground;
   if (!remover) return { error: "unsupported" };
   try {
-    const cutout = await remover.removeBackground(image);
+    const cutout = await remover.removeBackground(await readPhoto(photo));
     return typeof cutout === "string" && cutout
-      ? { image: cutout }
+      ? { image: await savePhoto(cutout) }
       : { error: "failed" };
   } catch (error: any) {
     switch (error?.code) {
@@ -46,7 +48,8 @@ export type CutoutStroke = {
 
 /**
  * Applies brush strokes to a cutout: "erase" clears, "restore" brings back
- * the original photo (when there is one). Resolves the edited WebP.
+ * the original photo (when there is one). Works on base64 images held by the
+ * cutout editor; resolves the edited WebP.
  */
 export async function editCutout(
   image: string,
@@ -62,12 +65,14 @@ export async function editCutout(
   }
 }
 
-/** Up to three main colors of a cutout, ignoring its transparent background. */
+/** Up to three main colors of a cutout file, ignoring its transparent background. */
 export async function cutoutColors(
-  image: string,
+  photo: string,
 ): Promise<string[] | undefined> {
   try {
-    const colors = await NativeModules.WardrobeBackground?.cutoutColors(image);
+    const native = NativeModules.WardrobeBackground;
+    if (!native?.cutoutColors) return undefined;
+    const colors = await native.cutoutColors(await readPhoto(photo));
     return Array.isArray(colors) && colors.length > 0 ? colors : undefined;
   } catch {
     return undefined;

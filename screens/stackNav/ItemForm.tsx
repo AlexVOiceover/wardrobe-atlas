@@ -37,7 +37,7 @@ import { SEASONS, seasonList, sizeList } from "../../utils/data";
 import { STYLES, defaultStyles } from "../../utils/styles";
 import { FilterChip } from "../../components/FilterChip";
 import { SectionHeading } from "../../components/SectionHeading";
-import ReactNativeBlobUtil from "react-native-blob-util";
+import { savePhotoFile } from "../../utils/photoStore";
 import ImageResizer from "@bam.tech/react-native-image-resizer";
 import {
   getCollectionSortValue,
@@ -482,9 +482,9 @@ export const ItemForm = ({
     }
   };
   // Automatic colors: every color read from the photo, up to three.
-  const colorsExtractor = async (base64: string) => {
+  const colorsExtractor = async (photo: string) => {
     const read = ++extraction.current;
-    const found = await extractColors(base64);
+    const found = await extractColors(photo);
     if (read !== extraction.current || found.length === 0) return;
     setColors(
       Array.from({ length: MAX_COLORS }, (_, index) => found[index] ?? ""),
@@ -514,16 +514,13 @@ export const ItemForm = ({
               null,
             )
               .then(async resized => {
-                const base64 = await ReactNativeBlobUtil.fs.readFile(
-                  resized.uri,
-                  "base64",
-                );
-                console.log("imageSize", resized.size);
-                setImageUrl(base64 || "");
+                // Kept as a photo file; the garment stores its name.
+                const photo = await savePhotoFile(resized.uri);
+                setImageUrl(photo);
                 setPhotoBeforeCutout(undefined);
                 setCutoutStatus("");
-                if (isAutoOn && base64) {
-                  colorsExtractor(base64);
+                if (isAutoOn) {
+                  colorsExtractor(photo);
                 }
                 setImageModalVisible(false);
               })
@@ -555,16 +552,13 @@ export const ItemForm = ({
                 null,
               )
                 .then(async resized => {
-                  const base64 = await ReactNativeBlobUtil.fs.readFile(
-                    resized.uri,
-                    "base64",
-                  );
-                  console.log("imageSize", resized.size);
-                  setImageUrl(base64 || "");
+                  // Kept as a photo file; the garment stores its name.
+                  const photo = await savePhotoFile(resized.uri);
+                  setImageUrl(photo);
                   setPhotoBeforeCutout(undefined);
                   setCutoutStatus("");
-                  if (isAutoOn && base64) {
-                    colorsExtractor(base64);
+                  if (isAutoOn) {
+                    colorsExtractor(photo);
                   }
                   setImageModalVisible(false);
                 })
@@ -962,7 +956,9 @@ export const ItemForm = ({
             {/* A tick box, so it's clear whether the garment is stored. */}
             <Pressable
               accessibilityRole="checkbox"
-              accessibilityLabel={localization.InStorage[storedSettings.language]}
+              accessibilityLabel={
+                localization.InStorage[storedSettings.language]
+              }
               accessibilityState={{ checked: stored }}
               onPress={() => setStored(!stored)}
               style={[styles.half, styles.storageBox]}
